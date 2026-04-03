@@ -1,0 +1,126 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #e9e9e9;
+  --card: #ffffff;
+  --muted: #f3f4f6;
+  --text: #111827;
+  --sub: rgba(17, 24, 39, 0.6);
+  --brand: #000;
+  --brand-hover: rgba(0, 0, 0, 0.75);
+  --radius-xl: 22px;
+  --radius-md: 10px;
+}
+
+.signin-container {
+  min-height: 50vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ececec;
+  padding: 20px;
+}
+
+.signin {
+  background: #fff;
+  width: 450px;
+  margin-top: 20px;
+  padding: 40px 30px;
+  border-radius: 20px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+}
+
+.signin-title {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 32px;
+  color: #222;
+  font-weight: 700;
+}
+
+.signin-group {
+  margin-bottom: 18px;
+  position: relative;
+}
+
+.signin-input {
+  width: 100%;
+  padding: 16px 18px;
+  font-size: 15px;
+  border-radius: 10px;
+  border: none;
+  background: #f2f4f5;
+  outline: none;
+  color: #333;
+}
+
+.signin-input::placeholder {
+  color: #aaa;
+  font-weight: 400;
+}
+
+.signin-group--icon .signin-eye {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #777;
+  font-size: 18px;
+}
+
+.signin-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  font-size: 14px;
+}
+
+.signin-remember {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #444;
+}
+
+.signin-forgot {
+  color: #007b83;
+  text-decoration: none;
+}
+
+.signin-btn {
+  width: 100%;
+  padding: 16px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.signin-btn:hover {
+  background: var(--brand-hover);
+}
+
+.login-error {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff2f2;
+  color: #c62f2f;
+  font-size: 14px;
+}
+
+.signin-hint {
+  margin-top: 16px;
+  font-size: 14px;
+  text-align: center;
+  color: rgba(17, 24, 39, 0.7);
+}

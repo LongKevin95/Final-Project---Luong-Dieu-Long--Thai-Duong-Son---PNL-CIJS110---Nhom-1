@@ -1,0 +1,24 @@
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  flex: 1;
+  min-height: 1vh;
+}
+
+.role-page {
+  min-height: 56vh;
+  padding-top: 42px;
+}
+
+.role-page h1 {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.role-page p {
+  color: #565656;
+}

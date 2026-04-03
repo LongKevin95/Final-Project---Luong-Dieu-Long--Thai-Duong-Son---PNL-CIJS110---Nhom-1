@@ -1,0 +1,86 @@
+import { useCallback, useMemo, useState } from "react";
+
+import {
+  loginWithCredentials,
+  registerUser,
+  updateUserRole,
+} from "../api/authApi";
+import AuthContext from "./auth-context";
+
+const AUTH_STORAGE_KEY = "ls-ecommerce-auth-user";
+
+function readStoredUser() {
+  try {
+    const storedUser = window.localStorage.getItem(AUTH_STORAGE_KEY);
+
+    if (!storedUser) {
+      return null;
+    }
+
+    return JSON.parse(storedUser);
+  } catch {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    return null;
+  }
+}
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(readStoredUser);
+
+  const login = useCallback(async (credentials) => {
+    const nextUser = await loginWithCredentials(credentials);
+
+    setUser(nextUser);
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextUser));
+
+    return nextUser;
+  }, []);
+
+  const register = useCallback(async (payload) => {
+    const nextUser = await registerUser(payload);
+
+    setUser(nextUser);
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextUser));
+
+    return nextUser;
+  }, []);
+
+  const updateRole = useCallback(
+    async (role) => {
+      if (!user?.email) {
+        throw new Error("Bạn cần đăng nhập trước khi cập nhật vai trò.");
+      }
+
+      const nextUser = await updateUserRole(user.email, role);
+      setUser(nextUser);
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextUser));
+
+      return nextUser;
+    },
+    [user],
+  );
+
+  const logout = useCallback(() => {
+    setUser(null);
+    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      user,
+      isAuthenticated: Boolean(user),
+      isCustomer: user?.role === "customer",
+      isVendor: user?.role === "vendor",
+      isAdmin: user?.role === "admin",
+      login,
+      register,
+      updateRole,
+      logout,
+    }),
+    [login, logout, register, updateRole, user],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export default AuthProvider;
