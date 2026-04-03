@@ -11,7 +11,7 @@ const DEMO_ADMIN_ACCOUNT = Object.freeze({
 const DEMO_CUSTOMER_ACCOUNT = Object.freeze({
   id: "customer-demo-1",
   name: "Test Customer",
-  email: "test@mail.com",
+  email: "test@gmail.com",
   password: "123456",
   role: "customer",
 });
