@@ -1,9 +1,8 @@
 function ProductManager() {
   return (
-    <main className="o-container role-page">
-      <h1>Product Manager</h1>
+    <div className="admin-panel">
       <p>Admin can create, edit, and remove products in this section.</p>
-    </main>
+    </div>
   );
 }
 

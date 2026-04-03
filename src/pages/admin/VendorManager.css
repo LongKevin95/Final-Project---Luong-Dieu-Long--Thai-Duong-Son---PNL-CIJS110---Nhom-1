@@ -1,0 +1,176 @@
+:root {
+  --admin-bg: #f6f7fb;
+  --admin-card: #ffffff;
+  --admin-border: #e5e7eb;
+  --admin-text: #1f2937;
+  --admin-muted: #6b7280;
+  --admin-primary: #2563eb;
+  --admin-danger: #dc2626;
+}
+
+.admin-page {
+  display: grid;
+}
+
+.admin-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.admin-page__header h2 {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+.admin-page__header p {
+  color: var(--admin-muted);
+}
+
+.admin-page__filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.admin-page__filters input,
+.admin-page__filters select {
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  min-width: 220px;
+}
+
+.admin-card {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 12px 30px rgba(31, 41, 55, 0.08);
+}
+
+.admin-table {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-table__row {
+  display: grid;
+  grid-template-columns: 40px 1.4fr 1.2fr 1.6fr 1fr 1.3fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fafafa;
+  font-size: 14px;
+}
+
+.admin-table__head {
+  background: #f0f2f7;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.admin-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ghost-btn {
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--admin-text);
+}
+
+.ghost-btn--danger {
+  border-color: rgba(220, 38, 38, 0.4);
+  color: var(--admin-danger);
+}
+
+.status-pill {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-pill--pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #b45309;
+}
+
+.status-pill--active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #15803d;
+}
+
+.status-pill--suspended {
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+}
+
+.admin-status {
+  padding: 16px;
+  color: var(--admin-muted);
+}
+
+.admin-status--error {
+  color: var(--admin-danger);
+}
+
+@media (max-width: 960px) {
+  .admin-page__header {
+    flex-direction: column;
+  }
+
+  .admin-page__filters {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .admin-page__filters input,
+  .admin-page__filters select {
+    min-width: unset;
+  }
+
+  .admin-table__row {
+    grid-template-columns: 40px 1fr 1fr;
+    grid-template-areas:
+      "index shop status"
+      "owner email actions";
+  }
+
+  .admin-table__row span:nth-child(1) {
+    grid-area: index;
+  }
+
+  .admin-table__row span:nth-child(2) {
+    grid-area: shop;
+  }
+
+  .admin-table__row span:nth-child(3) {
+    grid-area: owner;
+  }
+
+  .admin-table__row span:nth-child(4) {
+    grid-area: email;
+  }
+
+  .admin-table__row span:nth-child(5) {
+    grid-area: status;
+  }
+
+  .admin-table__row span:nth-child(6) {
+    grid-area: actions;
+  }
+}

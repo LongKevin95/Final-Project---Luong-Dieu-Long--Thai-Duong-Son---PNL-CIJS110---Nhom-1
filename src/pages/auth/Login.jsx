@@ -18,7 +18,8 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fromLocation = location.state?.from;
-  const redirectTarget = `${fromLocation?.pathname ?? "/"}${fromLocation?.search ?? ""}${fromLocation?.hash ?? ""}`;
+  const defaultTarget = user?.role === "admin" ? "/admin" : "/";
+  const redirectTarget = `${fromLocation?.pathname ?? defaultTarget}${fromLocation?.search ?? ""}${fromLocation?.hash ?? ""}`;
   const fromLabel = redirectTarget === "/" ? "trang chủ" : redirectTarget;
 
   if (user) {
@@ -45,8 +46,10 @@ export default function Login() {
     setErrorMessage("");
 
     try {
-      await login(formValues);
-      navigate(redirectTarget, { replace: true });
+      const nextUser = await login(formValues);
+      const fallbackTarget = nextUser?.role === "admin" ? "/admin" : "/";
+      const nextTarget = `${fromLocation?.pathname ?? fallbackTarget}${fromLocation?.search ?? ""}${fromLocation?.hash ?? ""}`;
+      navigate(nextTarget, { replace: true });
     } catch (error) {
       setErrorMessage(
         error?.message ??

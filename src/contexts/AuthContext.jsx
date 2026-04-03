@@ -8,9 +8,16 @@ import {
 import AuthContext from "./auth-context";
 
 const AUTH_STORAGE_KEY = "ls-ecommerce-auth-user";
+const AUTH_LOGOUT_KEY = "ls-ecommerce-logout";
 
 function readStoredUser() {
   try {
+    if (window.sessionStorage.getItem(AUTH_LOGOUT_KEY)) {
+      window.sessionStorage.removeItem(AUTH_LOGOUT_KEY);
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+      return null;
+    }
+
     const storedUser = window.localStorage.getItem(AUTH_STORAGE_KEY);
 
     if (!storedUser) {

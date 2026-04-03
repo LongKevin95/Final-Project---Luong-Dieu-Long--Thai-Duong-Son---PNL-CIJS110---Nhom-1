@@ -238,7 +238,7 @@ function Header() {
                   )}
 
                   {user?.role === "admin" && (
-                    <Link className="user-menu__item" to="/admin/dashboard">
+                    <Link className="user-menu__item" to="/admin">
                       Admin Dashboard
                     </Link>
                   )}
@@ -304,7 +304,7 @@ function Header() {
               {user?.role === "admin" && (
                 <li>
                   <NavLink
-                    to="/admin/dashboard"
+                    to="/admin"
                     className={({ isActive }) =>
                       isActive
                         ? "header-nav__link is-active"

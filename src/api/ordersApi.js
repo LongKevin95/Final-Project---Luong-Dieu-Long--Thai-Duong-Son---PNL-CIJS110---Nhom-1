@@ -1,6 +1,6 @@
 import { fetchResourceData } from "./resourceApi";
 
-export const getProducts = async () => {
+export const getOrders = async () => {
   const payload = await fetchResourceData();
-  return payload?.products ?? [];
+  return payload?.orders ?? [];
 };
