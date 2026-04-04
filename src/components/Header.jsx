@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../hooks/useAuth";
+import { useCart } from "../hooks/useCart";
 import "./Header.css";
 
 const categories = [
@@ -14,7 +15,8 @@ const categories = [
 ];
 
 function Header() {
-  const { user, logout, isCustomer } = useAuth();
+  const { user, logout, isCustomer, isVendor } = useAuth();
+  const { totalItems } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -72,12 +74,12 @@ function Header() {
       return;
     }
 
-    if (user.role === "admin") {
+    if (user?.roles?.includes("admin")) {
       window.alert("Tài khoản admin không đăng ký trở thành vendor.");
       return;
     }
 
-    if (user.role === "vendor") {
+    if (user?.roles?.includes("vendor")) {
       navigate("/vendor/dashboard");
       return;
     }
@@ -85,15 +87,17 @@ function Header() {
     navigate("/vendor/onboarding");
   };
 
+  const canPurchase = isCustomer || isVendor;
+
   const requireCustomerAccess = () => {
     if (!user) {
       navigate("/login", { state: { from: location } });
       return false;
     }
 
-    if (!isCustomer) {
+    if (!canPurchase) {
       window.alert(
-        "Chỉ tài khoản customer mới có thể dùng giỏ hàng và wishlist.",
+        "Chỉ tài khoản customer hoặc vendor mới có thể dùng giỏ hàng và wishlist.",
       );
       return false;
     }
@@ -103,6 +107,11 @@ function Header() {
 
   const handleCustomerShortcut = (label) => {
     if (!requireCustomerAccess()) {
+      return;
+    }
+
+    if (label === "Giỏ hàng") {
+      navigate("/cart");
       return;
     }
 
@@ -191,7 +200,7 @@ function Header() {
                 onClick={() => handleCustomerShortcut("Giỏ hàng")}
               >
                 <span className="header-action__label">Cart</span>
-                <span className="header-action__badge">0</span>
+                <span className="header-action__badge">{totalItems}</span>
               </button>
 
               <button
@@ -237,13 +246,13 @@ function Header() {
                     </Link>
                   )}
 
-                  {user?.role === "admin" && (
+                  {user?.roles?.includes("admin") && (
                     <Link className="user-menu__item" to="/admin">
                       Admin Dashboard
                     </Link>
                   )}
 
-                  {user?.role === "vendor" && (
+                  {user?.roles?.includes("vendor") && (
                     <Link className="user-menu__item" to="/vendor/dashboard">
                       Vendor Dashboard
                     </Link>
@@ -301,7 +310,7 @@ function Header() {
                 </div>
               </li>
 
-              {user?.role === "admin" && (
+              {user?.roles?.includes("admin") && (
                 <li>
                   <NavLink
                     to="/admin"

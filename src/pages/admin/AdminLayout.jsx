@@ -1,12 +1,13 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
+import { useAuth } from "../../hooks/useAuth";
 import "./AdminLayout.css";
 
 const navItems = [
   { label: "Dashboard", path: "/admin" },
   { label: "Orders", path: "/admin/orders" },
   { label: "Products", path: "/admin/products" },
-  { label: "Customers", path: "/admin/users" },
+  { label: "Customers", path: "/admin/customers" },
   { label: "Vendors", path: "/admin/vendors" },
 ];
 
@@ -14,7 +15,7 @@ const titleMap = [
   { path: "/admin/vendors", title: "Vendor Management" },
   { path: "/admin/orders", title: "Orders Management" },
   { path: "/admin/products", title: "Products Management" },
-  { path: "/admin/users", title: "Customer Management" },
+  { path: "/admin/customers", title: "Customer Management" },
   { path: "/admin", title: "Dashboard Management" },
 ];
 
@@ -25,10 +26,18 @@ function resolveTitle(pathname) {
 
 export default function AdminLayout() {
   const location = useLocation();
+  const { user } = useAuth();
   const title = resolveTitle(location.pathname);
+  const displayName = user?.name || user?.email || "Admin";
+  const avatarLetter = displayName.trim().charAt(0).toUpperCase() || "A";
+  const roleLabel = user?.roles?.includes("admin") ? "Admin" : "User";
 
   const handleLogout = () => {
     window.sessionStorage.setItem("ls-ecommerce-logout", "1");
+    window.location.assign("/");
+  };
+
+  const handleGoHomepage = () => {
     window.location.assign("/");
   };
 
@@ -63,6 +72,13 @@ export default function AdminLayout() {
           </button>
           <button
             type="button"
+            className="admin-sidebar__action"
+            onClick={handleGoHomepage}
+          >
+            Home
+          </button>
+          <button
+            type="button"
             className="admin-sidebar__action admin-sidebar__action--logout"
             onClick={handleLogout}
           >
@@ -78,11 +94,11 @@ export default function AdminLayout() {
             <h1>{title}</h1>
             <div className="admin-profile">
               <div className="admin-profile__meta">
-                <span>Anna</span>
-                <small>Admin</small>
+                <span>{displayName}</span>
+                <small>{roleLabel}</small>
               </div>
               <div className="admin-profile__avatar" aria-hidden="true">
-                A
+                {avatarLetter}
               </div>
             </div>
           </header>

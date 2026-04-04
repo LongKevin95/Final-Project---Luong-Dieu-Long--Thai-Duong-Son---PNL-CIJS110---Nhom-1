@@ -93,9 +93,16 @@
 }
 
 .stock-state {
-  color: #00a314;
   font-size: 16px;
   font-weight: 500;
+}
+
+.stock-state--in {
+  color: #00a314;
+}
+
+.stock-state--out {
+  color: #d7263d;
 }
 
 .product-info__price {
@@ -215,6 +222,11 @@
 
 .action-btn--primary:hover {
   background: #242424;
+}
+
+.action-btn--primary:disabled {
+  background: #bbbbbb;
+  cursor: not-allowed;
 }
 
 .action-btn--icon {
@@ -344,4 +356,48 @@
   .related-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.stock-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.stock-modal {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.stock-modal p {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.stock-modal button {
+  background: #1e40af;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s ease;
+}
+
+.stock-modal button:hover {
+  background: #1d4ed8;
 }

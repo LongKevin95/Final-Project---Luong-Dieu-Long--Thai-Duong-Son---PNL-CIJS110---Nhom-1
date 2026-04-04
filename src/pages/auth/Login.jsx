@@ -18,7 +18,7 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fromLocation = location.state?.from;
-  const defaultTarget = user?.role === "admin" ? "/admin" : "/";
+  const defaultTarget = user?.roles?.includes("admin") ? "/admin" : "/";
   const redirectTarget = `${fromLocation?.pathname ?? defaultTarget}${fromLocation?.search ?? ""}${fromLocation?.hash ?? ""}`;
   const fromLabel = redirectTarget === "/" ? "trang chủ" : redirectTarget;
 
@@ -47,7 +47,9 @@ export default function Login() {
 
     try {
       const nextUser = await login(formValues);
-      const fallbackTarget = nextUser?.role === "admin" ? "/admin" : "/";
+      const fallbackTarget = nextUser?.roles?.includes("admin")
+        ? "/admin"
+        : "/";
       const nextTarget = `${fromLocation?.pathname ?? fallbackTarget}${fromLocation?.search ?? ""}${fromLocation?.hash ?? ""}`;
       navigate(nextTarget, { replace: true });
     } catch (error) {

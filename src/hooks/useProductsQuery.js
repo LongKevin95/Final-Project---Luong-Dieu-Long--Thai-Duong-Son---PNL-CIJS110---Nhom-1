@@ -4,7 +4,7 @@ import { getProducts } from "../api/productApi";
 
 export function useProductsQuery() {
   return useQuery({
-    queryKey: ["products"],
+    queryKey: ["products", "public"],
     queryFn: getProducts,
     staleTime: 1000 * 60 * 5,
   });

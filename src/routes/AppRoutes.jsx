@@ -1,7 +1,9 @@
-import { Routes, Route } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import Home from "../pages/customer/Home";
 import ProductDetail from "../pages/customer/ProductDetail";
+import Cart from "../pages/customer/Cart";
+import Checkout from "../pages/customer/Checkout";
 import Login from "../pages/auth/Login";
 import Signup from "../pages/auth/Signup";
 import AdminLayout from "../pages/admin/AdminLayout";
@@ -13,6 +15,9 @@ import UsersManager from "../pages/admin/UsersManager";
 import VendorDashboard from "../pages/vendor/VendorDashboard";
 import VendorProducts from "../pages/vendor/VendorProducts";
 import VendorOnboarding from "../pages/vendor/VendorOnboarding";
+import VendorLayout from "../pages/vendor/VendorLayout";
+import VendorOrders from "../pages/vendor/VendorOrders";
+import VendorProfile from "../pages/vendor/VendorProfile";
 import PublicLayout from "../components/PublicLayout";
 import PrivateRoute from "./PrivateRoute";
 import RoleRoute from "./RoleRoute";
@@ -23,6 +28,8 @@ export default function AppRoutes() {
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
       </Route>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
@@ -52,29 +59,28 @@ export default function AppRoutes() {
         <Route path="products" element={<ProductManager />} />
         <Route path="vendors" element={<VendorManager />} />
         <Route path="orders" element={<OrdersManager />} />
-        <Route path="users" element={<UsersManager />} />
+        <Route path="customers" element={<UsersManager />} />
+      </Route>
+
+      <Route
+        path="/vendor"
+        element={
+          <PrivateRoute>
+            <RoleRoute role="vendor">
+              <VendorLayout />
+            </RoleRoute>
+          </PrivateRoute>
+        }
+      >
+        <Route index element={<VendorDashboard />} />
+        <Route path="products" element={<VendorProducts />} />
+        <Route path="orders" element={<VendorOrders />} />
+        <Route path="profile" element={<VendorProfile />} />
       </Route>
 
       <Route
         path="/vendor/dashboard"
-        element={
-          <PrivateRoute>
-            <RoleRoute role="vendor">
-              <VendorDashboard />
-            </RoleRoute>
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/vendor/products"
-        element={
-          <PrivateRoute>
-            <RoleRoute role="vendor">
-              <VendorProducts />
-            </RoleRoute>
-          </PrivateRoute>
-        }
+        element={<Navigate to="/vendor" replace />}
       />
     </Routes>
   );

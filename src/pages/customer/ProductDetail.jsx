@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import ProductCard from "../../components/ProductCard";
 import { useAuth } from "../../hooks/useAuth";
+import { useCart } from "../../hooks/useCart";
 import { useProductsQuery } from "../../hooks/useProductsQuery";
 import "./ProductDetail.css";
 
@@ -15,13 +16,16 @@ const fallbackImage = "/favicon.svg";
 
 function ProductDetail() {
   const { id } = useParams();
-  const { user, isCustomer } = useAuth();
+  const { user, isCustomer, isVendor } = useAuth();
+  const { addToCart } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
 
   const { data: products = [], isLoading, isError } = useProductsQuery();
 
   const [quantity, setQuantity] = useState(1);
+  const [showStockModal, setShowStockModal] = useState(false);
+  const [stockMessage, setStockMessage] = useState("");
   const [selectedColorByProduct, setSelectedColorByProduct] = useState({});
   const [selectedSizeByProduct, setSelectedSizeByProduct] = useState({});
 
@@ -59,15 +63,23 @@ function ProductDetail() {
     return images.slice(0, 4);
   }, [product]);
 
+  const productColors = Array.isArray(product?.colors) ? product.colors : [];
+  const productSizes = Array.isArray(product?.sizes) ? product.sizes : [];
+  const isOutOfStock =
+    Number(product?.stock) <= 0 ||
+    String(product?.status ?? "").toLowerCase() === "out of stock";
+
+  const canPurchase = isCustomer || isVendor;
+
   const requireCustomerAccess = () => {
     if (!user) {
       navigate("/login", { state: { from: location } });
       return false;
     }
 
-    if (!isCustomer) {
+    if (!canPurchase) {
       window.alert(
-        "Chỉ tài khoản customer mới có thể thêm vào giỏ hàng, mua ngay hoặc lưu yêu thích.",
+        "Chỉ tài khoản customer hoặc vendor mới có thể thêm vào giỏ hàng, mua ngay hoặc lưu yêu thích.",
       );
       return false;
     }
@@ -77,12 +89,34 @@ function ProductDetail() {
 
   const handleAddToCart = () => {
     if (!requireCustomerAccess()) return;
-    window.alert("Added to cart");
+
+    if (isOutOfStock) {
+      window.alert("Sản phẩm hiện đang hết hàng.");
+      return;
+    }
+
+    addToCart(product, quantity, {
+      color: selectedColor,
+      size: selectedSize,
+    });
+
+    window.alert("Đã thêm vào giỏ hàng.");
   };
 
   const handleBuyNow = () => {
     if (!requireCustomerAccess()) return;
-    window.alert("Proceed to checkout");
+
+    if (isOutOfStock) {
+      window.alert("Sản phẩm hiện đang hết hàng.");
+      return;
+    }
+
+    addToCart(product, quantity, {
+      color: selectedColor,
+      size: selectedSize,
+    });
+
+    navigate("/checkout");
   };
 
   const handleWishlist = () => {
@@ -158,8 +192,10 @@ function ProductDetail() {
             <span className="rating-count">
               ({product.reviews || 0} Reviews)
             </span>
-            <span className="stock-state">
-              {product.stock > 0 ? "In Stock" : "Out of Stock"}
+            <span
+              className={`stock-state ${isOutOfStock ? "stock-state--out" : "stock-state--in"}`}
+            >
+              {isOutOfStock ? "Out of Stock" : "In Stock"}
             </span>
           </div>
 
@@ -169,50 +205,54 @@ function ProductDetail() {
 
           <p className="product-info__description">{product.description}</p>
 
-          <div className="option-row">
-            <h3>Colours:</h3>
-            <div className="color-options">
-              {product.colors.map((colorValue) => (
-                <button
-                  key={colorValue}
-                  type="button"
-                  className={`color-option ${
-                    selectedColor === colorValue ? "is-active" : ""
-                  }`}
-                  style={{ "--swatch-color": colorValue }}
-                  onClick={() =>
-                    setSelectedColorByProduct((prevState) => ({
-                      ...prevState,
-                      [id]: colorValue,
-                    }))
-                  }
-                >
-                  <span className="sr-only">{colorValue}</span>
-                </button>
-              ))}
+          {productColors.length > 0 && (
+            <div className="option-row">
+              <h3>Colours:</h3>
+              <div className="color-options">
+                {productColors.map((colorValue) => (
+                  <button
+                    key={colorValue}
+                    type="button"
+                    className={`color-option ${
+                      selectedColor === colorValue ? "is-active" : ""
+                    }`}
+                    style={{ "--swatch-color": colorValue }}
+                    onClick={() =>
+                      setSelectedColorByProduct((prevState) => ({
+                        ...prevState,
+                        [id]: colorValue,
+                      }))
+                    }
+                  >
+                    <span className="sr-only">{colorValue}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="option-row">
-            <h3>Size:</h3>
-            <div className="size-options">
-              {product.sizes.map((size) => (
-                <button
-                  key={size}
-                  type="button"
-                  className={selectedSize === size ? "is-active" : ""}
-                  onClick={() =>
-                    setSelectedSizeByProduct((prevState) => ({
-                      ...prevState,
-                      [id]: size,
-                    }))
-                  }
-                >
-                  {size}
-                </button>
-              ))}
+          {productSizes.length > 0 && (
+            <div className="option-row">
+              <h3>Size:</h3>
+              <div className="size-options">
+                {productSizes.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    className={selectedSize === size ? "is-active" : ""}
+                    onClick={() =>
+                      setSelectedSizeByProduct((prevState) => ({
+                        ...prevState,
+                        [id]: size,
+                      }))
+                    }
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="actions-row">
             <div
@@ -229,7 +269,15 @@ function ProductDetail() {
               <span>{quantity}</span>
               <button
                 type="button"
-                onClick={() => setQuantity((value) => value + 1)}
+                onClick={() => {
+                  const currentStock = Number(product?.stock ?? 0);
+                  if (quantity >= currentStock) {
+                    setStockMessage(`Chỉ còn ${currentStock} sản phẩm.`);
+                    setShowStockModal(true);
+                  } else {
+                    setQuantity((value) => value + 1);
+                  }
+                }}
               >
                 +
               </button>
@@ -238,6 +286,7 @@ function ProductDetail() {
             <button
               type="button"
               className="action-btn action-btn--primary"
+              disabled={isOutOfStock}
               onClick={handleBuyNow}
             >
               Buy Now
@@ -246,6 +295,7 @@ function ProductDetail() {
             <button
               type="button"
               className="action-btn action-btn--primary"
+              disabled={isOutOfStock}
               onClick={handleAddToCart}
             >
               Add To Cart
@@ -267,10 +317,10 @@ function ProductDetail() {
             </p>
           )}
 
-          {user && !isCustomer && (
+          {user && !canPurchase && (
             <p className="product-detail-helper product-detail-helper--warning">
               Tài khoản {user.role} không thể thực hiện các thao tác mua hàng
-              của customer.
+              của customer hoặc vendor.
             </p>
           )}
 
@@ -300,6 +350,18 @@ function ProductDetail() {
           </div>
         )}
       </section>
+
+      {showStockModal && (
+        <div
+          className="stock-modal-overlay"
+          onClick={() => setShowStockModal(false)}
+        >
+          <div className="stock-modal" onClick={(e) => e.stopPropagation()}>
+            <p>{stockMessage}</p>
+            <button onClick={() => setShowStockModal(false)}>Đóng</button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -45,6 +45,17 @@
   min-width: 220px;
 }
 
+.btn-vendor-delete-all {
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  color: var(--admin-text);
+}
+
 .admin-card {
   background: var(--admin-card);
   border: 1px solid var(--admin-border);
@@ -53,14 +64,14 @@
   box-shadow: 0 12px 30px rgba(31, 41, 55, 0.08);
 }
 
-.admin-table {
+.manage-vendor-table {
   display: grid;
   gap: 8px;
 }
 
-.admin-table__row {
+.manage-vendor-table__row {
   display: grid;
-  grid-template-columns: 40px 1.4fr 1.2fr 1.6fr 1fr 1.3fr;
+  grid-template-columns: 40px 1.4fr 1.5fr 1fr 1fr 1.3fr;
   gap: 12px;
   align-items: center;
   padding: 12px;
@@ -69,7 +80,7 @@
   font-size: 14px;
 }
 
-.admin-table__head {
+.manage-vendor-table__head {
   background: #f0f2f7;
   font-weight: 600;
   color: var(--admin-text);
@@ -78,6 +89,42 @@
 .admin-actions {
   display: flex;
   gap: 8px;
+}
+
+.admin-action-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-action-select {
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.admin-action-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.admin-action-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #111;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: admin-action-spin 0.8s linear infinite;
+}
+
+@keyframes admin-action-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .ghost-btn {
@@ -108,12 +155,22 @@
   color: #b45309;
 }
 
+.status-pill--approved {
+  background: rgba(34, 197, 94, 0.15);
+  color: #15803d;
+}
+
 .status-pill--active {
   background: rgba(34, 197, 94, 0.15);
   color: #15803d;
 }
 
-.status-pill--suspended {
+.status-pill--rejected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+}
+
+.status-pill--banned {
   background: rgba(239, 68, 68, 0.15);
   color: #b91c1c;
 }
@@ -125,6 +182,96 @@
 
 .admin-status--error {
   color: var(--admin-danger);
+}
+
+.admin-delete-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1200;
+}
+
+.admin-delete-modal {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid var(--admin-border);
+  box-shadow: 0 16px 36px rgba(17, 24, 39, 0.18);
+}
+
+.admin-delete-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-delete-modal__header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2b2b2b;
+}
+
+.admin-delete-modal__close {
+  border: 0;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-delete-modal p {
+  margin: 0;
+  padding: 22px 16px;
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--admin-text);
+  text-align: center;
+}
+
+.admin-delete-modal__actions {
+  padding: 0 16px 16px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.admin-delete-modal__btn {
+  min-width: 170px;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: 500;
+  border: 1px solid var(--admin-border);
+  cursor: pointer;
+}
+
+.admin-delete-modal__btn:disabled,
+.admin-delete-modal__close:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.admin-delete-modal__btn--cancel {
+  background: #fff;
+  color: #111;
+  border-color: var(--admin-border);
+}
+
+.admin-delete-modal__btn--delete {
+  background: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
 }
 
 @media (max-width: 960px) {
@@ -143,34 +290,35 @@
     min-width: unset;
   }
 
-  .admin-table__row {
+  .manage-vendor-table__row {
     grid-template-columns: 40px 1fr 1fr;
     grid-template-areas:
       "index shop status"
-      "owner email actions";
+      "email created created"
+      "actions actions actions";
   }
 
-  .admin-table__row span:nth-child(1) {
+  .manage-vendor-table__row span:nth-child(1) {
     grid-area: index;
   }
 
-  .admin-table__row span:nth-child(2) {
+  .manage-vendor-table__row span:nth-child(2) {
     grid-area: shop;
   }
 
-  .admin-table__row span:nth-child(3) {
-    grid-area: owner;
+  .manage-vendor-table__row span:nth-child(4) {
+    grid-area: created;
   }
 
-  .admin-table__row span:nth-child(4) {
+  .manage-vendor-table__row span:nth-child(3) {
     grid-area: email;
   }
 
-  .admin-table__row span:nth-child(5) {
+  .manage-vendor-table__row span:nth-child(5) {
     grid-area: status;
   }
 
-  .admin-table__row span:nth-child(6) {
+  .manage-vendor-table__row span:nth-child(6) {
     grid-area: actions;
   }
 }

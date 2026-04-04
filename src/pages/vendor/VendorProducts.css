@@ -1,0 +1,237 @@
+.vendor-products-page {
+  display: grid;
+  gap: 20px;
+  position: relative;
+}
+
+.vendor-products-page.is-saving {
+  pointer-events: none;
+}
+
+.vendor-products-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  background: #fff;
+}
+
+.vendor-products-card h2 {
+  margin: 0 0 14px;
+  font-size: 20px;
+}
+
+.vendor-products-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.vendor-products-form label {
+  font-weight: bold;
+}
+
+.vendor-products-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: contents;
+}
+
+.vendor-products-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.vendor-products-form input,
+.vendor-products-form select,
+.vendor-products-form textarea,
+.vendor-products-table select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.vendor-products-form .is-full {
+  grid-column: 1 / -1;
+}
+
+.vendor-products-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.vendor-products-actions button {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.vendor-products-actions button[type="button"] {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.vendor-products-actions button[type="submit"] {
+  background: #2563eb;
+  color: #fff;
+}
+
+.vendor-products-actions button.is-saving {
+  opacity: 0.5;
+}
+
+.vendor-products-error {
+  grid-column: 1 / -1;
+  color: #dc2626;
+  margin: 0;
+}
+
+.vendor-products-table {
+  display: grid;
+  gap: 8px;
+}
+
+.vendor-products-table__row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 0.7fr 1fr 1.3fr 0.9fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.vendor-products-table__head {
+  font-weight: 600;
+  background: #eff6ff;
+}
+
+.vendor-action-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vendor-action-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #111;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: vendor-action-spin 0.8s linear infinite;
+}
+
+@keyframes vendor-action-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vendor-products-empty {
+  margin: 8px 0 0;
+  color: #64748b;
+}
+
+.vendor-status-pill {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vendor-status-pill--active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #166534;
+}
+
+.vendor-status-pill--pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #b45309;
+}
+
+.vendor-status-pill--inactive {
+  background: rgba(100, 116, 139, 0.15);
+  color: #334155;
+}
+
+.vendor-status-pill--rejected {
+  background: rgba(220, 38, 38, 0.15);
+  color: #b91c1c;
+}
+
+.vendor-status-pill--out-of-stock {
+  background: rgba(249, 115, 22, 0.15);
+  color: #c2410c;
+}
+
+.vendor-status-pill--banned {
+  background: rgba(220, 38, 38, 0.15);
+  color: #b91c1c;
+}
+
+.vendor-status-pill--draft {
+  background: rgba(148, 163, 184, 0.18);
+  color: #475569;
+}
+
+.vendor-reason-text {
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.vendor-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.vendor-pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #475569;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.vendor-pagination-btn:hover:not(:disabled) {
+  background: #1e40af;
+  color: #fff;
+  border-color: #1e40af;
+}
+
+.vendor-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vendor-pagination-info {
+  font-size: 14px;
+  color: #475569;
+  font-weight: 500;
+}
+
+@media (max-width: 960px) {
+  .vendor-products-form {
+    grid-template-columns: 1fr;
+  }
+
+  .vendor-products-table__row {
+    grid-template-columns: 1fr;
+  }
+}

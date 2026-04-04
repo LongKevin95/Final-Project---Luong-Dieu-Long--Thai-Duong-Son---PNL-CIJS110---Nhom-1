@@ -1,9 +1,8 @@
 function VendorDashboard() {
   return (
-    <main className="o-container role-page">
-      <h1>Vendor Dashboard</h1>
-      <p>This area is available for users with role "vendor" only.</p>
-    </main>
+    <div className="vendor-panel">
+      <p>Dashboard cho vendor sẽ được bổ sung ở bước tiếp theo.</p>
+    </div>
   );
 }
 

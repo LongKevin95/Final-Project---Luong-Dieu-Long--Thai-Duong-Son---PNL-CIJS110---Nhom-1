@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { getProducts } from "../api/productApi";
+import { getAllProducts } from "../api/productApi";
 
 export function useAdminProductsQuery() {
   return useQuery({
-    queryKey: ["products"],
-    queryFn: getProducts,
+    queryKey: ["products", "admin"],
+    queryFn: getAllProducts,
     staleTime: 1000 * 60 * 5,
   });
 }
