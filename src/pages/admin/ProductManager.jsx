@@ -192,6 +192,7 @@ export default function ProductManager() {
           <div className="admin-products-table">
             <div className="admin-products-table__row admin-products-table__head">
               <span>Item</span>
+              <span>Shop</span>
               <span>ID</span>
               <span>Price</span>
               <span>Stock</span>
@@ -212,6 +213,12 @@ export default function ProductManager() {
                 <div className="admin-products-table__row" key={product.id}>
                   <span>
                     <Link to={`/product/${product.id}`}>{product.title}</Link>
+                  </span>
+                  <span>
+                    {product.shopName ||
+                      (product.vendorEmail
+                        ? String(product.vendorEmail).split("@")[0]
+                        : "Marketplace")}
                   </span>
                   <span>{product.id || "N/A"}</span>
                   <span>${Number(product.price ?? 0)}</span>

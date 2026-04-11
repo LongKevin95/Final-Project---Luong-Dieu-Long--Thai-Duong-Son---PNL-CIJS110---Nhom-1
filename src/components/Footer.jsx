@@ -45,10 +45,10 @@ function Footer() {
                 <Link to="/login">Login / Register</Link>
               </li>
               <li>
-                <a href="#">Cart</a>
+                <Link to="/cart">Cart</Link>
               </li>
               <li>
-                <a href="#">Wishlist</a>
+                <Link to="/wishlist">Wishlist</Link>
               </li>
               <li>
                 <Link to="/vendor/dashboard">Vendor</Link>

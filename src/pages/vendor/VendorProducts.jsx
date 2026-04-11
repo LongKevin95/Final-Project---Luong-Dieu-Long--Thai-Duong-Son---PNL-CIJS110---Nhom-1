@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -14,24 +14,51 @@ import "./VendorProducts.css";
 
 const defaultForm = {
   title: "",
-  category: "",
+  category: "fashion-nam",
   description: "",
   price: "",
   stock: "",
-  thumbnail: "",
-  imagesText: "",
   colorsText: "",
   sizesText: "",
+  brand: "",
+  material: "",
+  model: "",
+  warrantyMonths: "",
+  expiryDate: "",
+  weight: "",
 };
 
-const fallbackCategories = [
-  "electronics",
-  "fashion",
-  "home",
-  "beauty",
-  "sports",
-  "books",
-  "other",
+const categoryOptions = [
+  {
+    value: "fashion-nam",
+    label: "Fashion nam",
+    flags: { useSizes: true, useColors: true, useFashionFields: true },
+  },
+  {
+    value: "fashion-nu",
+    label: "Fashion nu",
+    flags: { useSizes: true, useColors: true, useFashionFields: true },
+  },
+  {
+    value: "do-gia-dung",
+    label: "Do gia dung",
+    flags: { useSizes: false, useColors: false, useHomeFields: true },
+  },
+  {
+    value: "dien-tu",
+    label: "Dien tu",
+    flags: { useSizes: false, useColors: false, useElectronicsFields: true },
+  },
+  {
+    value: "thuc-pham",
+    label: "Thuc pham",
+    flags: { useSizes: false, useColors: false, useFoodFields: true },
+  },
+  {
+    value: "test-san-pham",
+    label: "Test san pham",
+    flags: { useSizes: false, useColors: false },
+  },
 ];
 
 function parseInputList(text) {
@@ -61,6 +88,7 @@ function readFileAsDataUrl(file) {
 
 export default function VendorProducts() {
   const queryClient = useQueryClient();
+  const location = useLocation();
   const { user } = useAuth();
   const { data: products = [], isLoading, isError } = useAdminProductsQuery();
 
@@ -76,6 +104,8 @@ export default function VendorProducts() {
   const vendorEmail = String(user?.email ?? "")
     .trim()
     .toLowerCase();
+  const vendorShopName =
+    user?.name || (vendorEmail ? vendorEmail.split("@")[0] : "My Shop");
 
   const vendorProducts = useMemo(() => {
     return products.filter((product) => {
@@ -96,15 +126,72 @@ export default function VendorProducts() {
 
   const categories = useMemo(() => {
     const fromData = products
-      .map((product) =>
-        String(product?.category ?? "")
-          .trim()
-          .toLowerCase(),
-      )
+      .map((product) => String(product?.category ?? "").trim().toLowerCase())
       .filter(Boolean);
+    const predefinedValues = categoryOptions.map((item) => item.value);
 
-    return [...new Set([...fallbackCategories, ...fromData])];
+    return [...new Set([...predefinedValues, ...fromData])];
   }, [products]);
+
+  const selectedCategoryConfig = useMemo(() => {
+    return (
+      categoryOptions.find((item) => item.value === form.category) ??
+      categoryOptions[0]
+    );
+  }, [form.category]);
+
+  const editingProduct = useMemo(() => {
+    if (!editingId) {
+      return null;
+    }
+
+    return (
+      vendorProducts.find((product) => String(product?.id) === String(editingId)) ??
+      null
+    );
+  }, [editingId, vendorProducts]);
+
+  const editProductIdFromQuery = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return String(params.get("edit") ?? "").trim();
+  }, [location.search]);
+
+  function startEditingProduct(product) {
+    setEditingId(String(product.id));
+    setForm({
+      title: product.title ?? "",
+      category: product.category ?? "",
+      description: product.description ?? "",
+      price: String(product.price ?? ""),
+      stock: String(product.stock ?? 0),
+      colorsText: Array.isArray(product.colors) ? product.colors.join(", ") : "",
+      sizesText: Array.isArray(product.sizes) ? product.sizes.join(", ") : "",
+      brand: String(product?.attributes?.brand ?? ""),
+      material: String(product?.attributes?.material ?? ""),
+      model: String(product?.attributes?.model ?? ""),
+      warrantyMonths: String(product?.attributes?.warrantyMonths ?? ""),
+      expiryDate: String(product?.attributes?.expiryDate ?? ""),
+      weight: String(product?.attributes?.weight ?? ""),
+    });
+    setSelectedFiles([]);
+    setErrorMessage("");
+  }
+
+  useEffect(() => {
+    if (!editProductIdFromQuery || editingId) {
+      return;
+    }
+
+    const productToEdit = vendorProducts.find(
+      (product) => String(product?.id ?? "") === editProductIdFromQuery,
+    );
+
+    if (!productToEdit) {
+      return;
+    }
+
+    startEditingProduct(productToEdit);
+  }, [editProductIdFromQuery, editingId, vendorProducts]);
 
   function handleInputChange(event) {
     const { name, value } = event.target;
@@ -138,7 +225,6 @@ export default function VendorProducts() {
     const category = form.category.trim().toLowerCase();
     const price = Number(form.price);
     const stock = Number(form.stock);
-    const manualImages = parseInputList(form.imagesText);
 
     if (!title || !description || !category) {
       setErrorMessage("Vui lòng nhập title, category và description.");
@@ -167,17 +253,56 @@ export default function VendorProducts() {
         selectedFiles.map((file) => readFileAsDataUrl(file)),
       );
 
-      const images = [...new Set([...manualImages, ...uploadedImages])];
+      const previousImages = Array.isArray(editingProduct?.images)
+        ? editingProduct.images
+        : editingProduct?.image
+          ? [editingProduct.image]
+          : [];
+      const images =
+        uploadedImages.length > 0
+          ? [...new Set(uploadedImages)]
+          : [...new Set(previousImages)];
 
       if (images.length === 0) {
-        setErrorMessage("Bạn cần chọn tối thiểu 1 ảnh sản phẩm.");
+        setErrorMessage("Bạn cần upload tối thiểu 1 ảnh sản phẩm.");
         setIsSaving(false);
         return;
       }
 
-      const thumbnail = form.thumbnail.trim() || images[0];
-      const colors = normalizeHexColors(form.colorsText);
-      const sizes = parseInputList(form.sizesText);
+      const thumbnail = images[0];
+      const colors = selectedCategoryConfig.flags.useColors
+        ? normalizeHexColors(form.colorsText)
+        : [];
+      const sizes = selectedCategoryConfig.flags.useSizes
+        ? parseInputList(form.sizesText)
+        : [];
+
+      if (selectedCategoryConfig.flags.useSizes && sizes.length === 0) {
+        setErrorMessage("Danh muc fashion can nhap it nhat 1 size.");
+        setIsSaving(false);
+        return;
+      }
+
+      const attributes = {};
+
+      if (selectedCategoryConfig.flags.useFashionFields) {
+        attributes.brand = form.brand.trim();
+        attributes.material = form.material.trim();
+      }
+
+      if (selectedCategoryConfig.flags.useElectronicsFields) {
+        attributes.model = form.model.trim();
+        attributes.warrantyMonths = Number(form.warrantyMonths || 0);
+      }
+
+      if (selectedCategoryConfig.flags.useFoodFields) {
+        attributes.expiryDate = form.expiryDate;
+        attributes.weight = form.weight.trim();
+      }
+
+      if (selectedCategoryConfig.flags.useHomeFields) {
+        attributes.material = form.material.trim();
+      }
 
       const payload = {
         title,
@@ -190,6 +315,8 @@ export default function VendorProducts() {
         colors,
         sizes,
         vendorEmail,
+        shopName: vendorShopName,
+        attributes,
       };
 
       if (editingId) {
@@ -234,25 +361,7 @@ export default function VendorProducts() {
       setProcessingProductId(targetProductId);
 
       if (action === "edit") {
-        setEditingId(String(product.id));
-        setForm({
-          title: product.title ?? "",
-          category: product.category ?? "",
-          description: product.description ?? "",
-          price: String(product.price ?? ""),
-          stock: String(product.stock ?? 0),
-          thumbnail: product.image ?? "",
-          imagesText: Array.isArray(product.images)
-            ? product.images.join("\n")
-            : "",
-          colorsText: Array.isArray(product.colors)
-            ? product.colors.join(", ")
-            : "",
-          sizesText: Array.isArray(product.sizes)
-            ? product.sizes.join(", ")
-            : "",
-        });
-        setSelectedFiles([]);
+        startEditingProduct(product);
         return;
       }
 
@@ -338,10 +447,10 @@ export default function VendorProducts() {
                 value={form.category}
                 onChange={handleInputChange}
               >
-                <option value="">Chọn category</option>
                 {categories.map((category) => (
                   <option key={category} value={category}>
-                    {category}
+                    {categoryOptions.find((item) => item.value === category)
+                      ?.label ?? category}
                   </option>
                 ))}
               </select>
@@ -380,17 +489,6 @@ export default function VendorProducts() {
             </label>
 
             <label>
-              Thumbnail URL
-              <input
-                name="thumbnail"
-                type="text"
-                placeholder="Để trống sẽ lấy ảnh đầu tiên"
-                value={form.thumbnail}
-                onChange={handleInputChange}
-              />
-            </label>
-
-            <label>
               Upload images
               <input
                 type="file"
@@ -400,37 +498,121 @@ export default function VendorProducts() {
               />
             </label>
 
-            <label className="is-full">
-              Images URL (mỗi dòng hoặc ngăn cách bằng dấu phẩy)
-              <textarea
-                name="imagesText"
-                rows="3"
-                value={form.imagesText}
-                onChange={handleInputChange}
-              />
-            </label>
+            {selectedCategoryConfig.flags.useColors && (
+              <label>
+                Colors (hex)
+                <input
+                  name="colorsText"
+                  type="text"
+                  placeholder="#000000, #ff8800"
+                  value={form.colorsText}
+                  onChange={handleInputChange}
+                />
+              </label>
+            )}
 
-            <label>
-              Colors (hex)
-              <input
-                name="colorsText"
-                type="text"
-                placeholder="#000000, #ff8800"
-                value={form.colorsText}
-                onChange={handleInputChange}
-              />
-            </label>
+            {selectedCategoryConfig.flags.useSizes && (
+              <label>
+                Sizes
+                <input
+                  name="sizesText"
+                  type="text"
+                  placeholder="S, M, L hoặc Standard, Combo..."
+                  value={form.sizesText}
+                  onChange={handleInputChange}
+                />
+              </label>
+            )}
 
-            <label>
-              Sizes (optional)
-              <input
-                name="sizesText"
-                type="text"
-                placeholder="S, M, L hoặc Standard, Combo..."
-                value={form.sizesText}
-                onChange={handleInputChange}
-              />
-            </label>
+            {selectedCategoryConfig.flags.useFashionFields && (
+              <>
+                <label>
+                  Brand
+                  <input
+                    name="brand"
+                    type="text"
+                    placeholder="VD: Zara, H&M"
+                    value={form.brand}
+                    onChange={handleInputChange}
+                  />
+                </label>
+
+                <label>
+                  Material
+                  <input
+                    name="material"
+                    type="text"
+                    placeholder="Cotton, Linen..."
+                    value={form.material}
+                    onChange={handleInputChange}
+                  />
+                </label>
+              </>
+            )}
+
+            {selectedCategoryConfig.flags.useElectronicsFields && (
+              <>
+                <label>
+                  Model
+                  <input
+                    name="model"
+                    type="text"
+                    placeholder="VD: X200 Pro"
+                    value={form.model}
+                    onChange={handleInputChange}
+                  />
+                </label>
+
+                <label>
+                  Warranty (months)
+                  <input
+                    name="warrantyMonths"
+                    type="number"
+                    min="0"
+                    value={form.warrantyMonths}
+                    onChange={handleInputChange}
+                  />
+                </label>
+              </>
+            )}
+
+            {selectedCategoryConfig.flags.useFoodFields && (
+              <>
+                <label>
+                  Expiry date
+                  <input
+                    name="expiryDate"
+                    type="date"
+                    value={form.expiryDate}
+                    onChange={handleInputChange}
+                  />
+                </label>
+
+                <label>
+                  Weight / Volume
+                  <input
+                    name="weight"
+                    type="text"
+                    placeholder="500g, 1L..."
+                    value={form.weight}
+                    onChange={handleInputChange}
+                  />
+                </label>
+              </>
+            )}
+
+            {selectedCategoryConfig.flags.useHomeFields && (
+              <label>
+                Material
+                <input
+                  name="material"
+                  type="text"
+                  placeholder="Nhựa, gỗ, inox..."
+                  value={form.material}
+                  onChange={handleInputChange}
+                />
+              </label>
+            )}
 
             {errorMessage && (
               <p className="vendor-products-error">{errorMessage}</p>

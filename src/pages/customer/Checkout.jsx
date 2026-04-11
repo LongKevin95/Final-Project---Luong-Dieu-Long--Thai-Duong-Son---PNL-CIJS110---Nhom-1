@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
-import { updateProductById } from "../../api/productApi";
+import { createOrder } from "../../api/ordersApi";
+import { getAllProducts, updateProductById } from "../../api/productApi";
 import "./Checkout.css";
 
 const currency = new Intl.NumberFormat("en-US", {
@@ -24,20 +26,18 @@ const initialFormData = {
   zipCode: "",
   phone: "",
   email: "",
-  cardNumber: "",
-  expirationDate: "",
-  securityCode: "",
-  nameOnCard: "",
+  paymentMethod: "cash",
 };
 
 function Checkout() {
   const { user, isCustomer, isVendor } = useAuth();
+  const queryClient = useQueryClient();
   const { items, subtotal, deleteAllItems, buildCartItemKey } = useCart();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState(initialFormData);
 
-  const canPurchase = isCustomer || isVendor;
+  const canPurchase = isCustomer && !isVendor;
   const shipping = items.length > 0 ? DELIVERY_FEE : 0;
   const total = subtotal + shipping;
 
@@ -48,7 +48,7 @@ function Checkout() {
     }
 
     if (!canPurchase) {
-      window.alert("Chỉ customer hoặc vendor mới có thể checkout.");
+      window.alert("Chi tai khoan customer moi co the checkout.");
       return false;
     }
 
@@ -62,6 +62,17 @@ function Checkout() {
       [name]: value,
     }));
   };
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/login", { state: { from: "/checkout" }, replace: true });
+      return;
+    }
+
+    if (!canPurchase) {
+      navigate("/", { replace: true });
+    }
+  }, [canPurchase, navigate, user]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -84,10 +95,6 @@ function Checkout() {
       "zipCode",
       "phone",
       "email",
-      "cardNumber",
-      "expirationDate",
-      "securityCode",
-      "nameOnCard",
     ];
 
     const hasEmptyField = requiredFields.some(
@@ -101,19 +108,70 @@ function Checkout() {
 
     // Trừ stock cho từng sản phẩm khi thanh toán thành công
     try {
-      for (const item of items) {
-        const currentStock = Number(item.stock ?? 0);
-        const quantityToDeduct = Number(item.quantity ?? 0);
+      const products = await getAllProducts();
+      const stockByProductId = new Map(
+        products.map((product) => [
+          String(product?.id ?? ""),
+          Number(product?.stock ?? 0),
+        ]),
+      );
 
-        if (currentStock >= quantityToDeduct) {
-          await updateProductById({
-            id: item.id,
-            updates: {
-              stock: currentStock - quantityToDeduct,
-            },
-          });
+      for (const item of items) {
+        const productId = String(item?.productId ?? "").trim();
+        const quantityToDeduct = Number(item?.quantity ?? 0);
+        const currentStock = Number(stockByProductId.get(productId) ?? 0);
+
+        if (!productId || quantityToDeduct <= 0) {
+          window.alert("Dữ liệu giỏ hàng không hợp lệ. Vui lòng thử lại.");
+          return;
+        }
+
+        if (currentStock < quantityToDeduct) {
+          window.alert(
+            `Sản phẩm trong giỏ đã thay đổi tồn kho. Chỉ còn ${currentStock} sản phẩm cho mã ${productId}.`,
+          );
+          navigate("/cart");
+          return;
         }
       }
+
+      for (const item of items) {
+        const productId = String(item?.productId ?? "").trim();
+        const quantityToDeduct = Number(item?.quantity ?? 0);
+        const currentStock = Number(stockByProductId.get(productId) ?? 0);
+
+        await updateProductById({
+          id: productId,
+          updates: {
+            stock: currentStock - quantityToDeduct,
+          },
+        });
+      }
+
+      await createOrder({
+        customerEmail: String(user?.email ?? "")
+          .trim()
+          .toLowerCase(),
+        customerName: user?.name ?? user?.email ?? "Customer",
+        status: "pending",
+        paymentMethod: formData.paymentMethod,
+        items: items.map((item) => ({
+          productId: String(item?.productId ?? ""),
+          title: item?.title ?? "Product",
+          image: item?.image ?? "/favicon.svg",
+          quantity: Number(item?.quantity ?? 0),
+          price: Number(item?.price ?? 0),
+          vendorEmail: String(item?.vendorEmail ?? "")
+            .trim()
+            .toLowerCase(),
+          shopName: item?.shopName ?? "Shop",
+          color: item?.color ?? "Default",
+          size: item?.size ?? "M",
+        })),
+        total,
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
     } catch (error) {
       console.error("Lỗi khi cập nhật stock:", error);
       window.alert(
@@ -236,53 +294,36 @@ function Checkout() {
 
           <h2>Payment</h2>
 
-          <label>
-            Card number
-            <input
-              type="text"
-              name="cardNumber"
-              value={formData.cardNumber}
-              onChange={handleChange}
-              placeholder="Card number"
-            />
-          </label>
-
-          <div className="checkout-grid-two">
-            <label>
-              Expiration date (MM/YY)
+          <div className="checkout-payment-options">
+            <label className="checkout-payment-option">
               <input
-                type="text"
-                name="expirationDate"
-                value={formData.expirationDate}
+                type="radio"
+                name="paymentMethod"
+                value="cash"
+                checked={formData.paymentMethod === "cash"}
                 onChange={handleChange}
-                placeholder="MM/YY"
               />
+              <span>Cash on Delivery (COD)</span>
             </label>
-            <label>
-              Security code
+
+            <label className="checkout-payment-option">
               <input
-                type="text"
-                name="securityCode"
-                value={formData.securityCode}
+                type="radio"
+                name="paymentMethod"
+                value="card"
+                checked={formData.paymentMethod === "card"}
                 onChange={handleChange}
-                placeholder="CVV"
               />
+              <span>Card Payment</span>
             </label>
           </div>
 
-          <label>
-            Name on card
-            <input
-              type="text"
-              name="nameOnCard"
-              value={formData.nameOnCard}
-              onChange={handleChange}
-              placeholder="Name on card"
-            />
-          </label>
+          <p className="checkout-payment-note">
+            Ban chi can chon phuong thuc thanh toan, khong can nhap thong tin the.
+          </p>
 
           <button type="submit" className="checkout-submit">
-            Complete Payment
+            Place Order
           </button>
         </section>
 

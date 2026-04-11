@@ -3,20 +3,33 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../hooks/useAuth";
 import { useCart } from "../hooks/useCart";
+import { useProductsQuery } from "../hooks/useProductsQuery";
+import { useTheme } from "../hooks/useTheme";
+import { useWishlist } from "../hooks/useWishlist";
 import "./Header.css";
 
-const categories = [
-  { value: "", label: "All" },
-  { value: "Fashion Women", label: "Woman's Fashion" },
-  { value: "Fashion Men", label: "Men's Fashion" },
-  { value: "Electronics", label: "Electronics" },
-  { value: "Home", label: "Home & Lifestyle" },
-  { value: "Beauty", label: "Health & Beauty" },
-];
+function formatCategoryLabel(value) {
+  const normalized = String(value ?? "")
+    .trim()
+    .replaceAll("-", " ");
+
+  if (!normalized) {
+    return "All";
+  }
+
+  return normalized
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+    .join(" ");
+}
 
 function Header() {
   const { user, logout, isCustomer, isVendor } = useAuth();
+  const { data: products = [] } = useProductsQuery();
   const { totalItems } = useCart();
+  const { totalItems: wishlistTotal } = useWishlist();
+  const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -31,6 +44,21 @@ function Header() {
 
   const activeCategory = searchParams.get("category") ?? "";
   const activeKeyword = searchParams.get("q") ?? "";
+
+  const categories = useMemo(() => {
+    const categoryValues = products
+      .map((product) => String(product?.category ?? "").trim().toLowerCase())
+      .filter(Boolean);
+    const uniqueValues = [...new Set(categoryValues)];
+
+    return [
+      { value: "", label: "All" },
+      ...uniqueValues.map((value) => ({
+        value,
+        label: formatCategoryLabel(value),
+      })),
+    ];
+  }, [products]);
 
   const buildHomeQuery = (
     nextCategory = activeCategory,
@@ -87,7 +115,8 @@ function Header() {
     navigate("/vendor/onboarding");
   };
 
-  const canPurchase = isCustomer || isVendor;
+  const canPurchase = isCustomer && !isVendor;
+  const showCustomerActions = Boolean(user) && canPurchase;
 
   const requireCustomerAccess = () => {
     if (!user) {
@@ -97,7 +126,7 @@ function Header() {
 
     if (!canPurchase) {
       window.alert(
-        "Chỉ tài khoản customer hoặc vendor mới có thể dùng giỏ hàng và wishlist.",
+        "Chi tai khoan customer moi co the mua hang, dung gio hang va wishlist.",
       );
       return false;
     }
@@ -112,6 +141,11 @@ function Header() {
 
     if (label === "Giỏ hàng") {
       navigate("/cart");
+      return;
+    }
+
+    if (label === "Wishlist") {
+      navigate("/wishlist");
       return;
     }
 
@@ -133,6 +167,9 @@ function Header() {
         </div>
 
         <div className="topbar-links">
+          <button type="button" onClick={toggleTheme} className="topbar-theme">
+            {isDark ? "Light" : "Dark"}
+          </button>
           <button type="button">Eng</button>
           <button type="button">Faqs</button>
 
@@ -193,27 +230,31 @@ function Header() {
                 Search
               </Link>
 
-              <button
-                type="button"
-                className="header-action header-action--cart"
-                aria-label="Cart"
-                onClick={() => handleCustomerShortcut("Giỏ hàng")}
-              >
-                <span className="header-action__label">Cart</span>
-                <span className="header-action__badge">{totalItems}</span>
-              </button>
+              {showCustomerActions && (
+                <button
+                  type="button"
+                  className="header-action header-action--cart"
+                  aria-label="Cart"
+                  onClick={() => handleCustomerShortcut("Giỏ hàng")}
+                >
+                  <span className="header-action__label">Cart</span>
+                  <span className="header-action__badge">{totalItems}</span>
+                </button>
+              )}
 
-              <button
-                type="button"
-                className="header-action header-action--wishlist"
-                aria-label="Wishlist"
-                onClick={() => handleCustomerShortcut("Wishlist")}
-              >
-                <span className="header-action__label">Wishlist</span>
-                <span className="header-action__badge header-action__badge--wishlist">
-                  0
-                </span>
-              </button>
+              {showCustomerActions && (
+                <button
+                  type="button"
+                  className="header-action header-action--wishlist"
+                  aria-label="Wishlist"
+                  onClick={() => handleCustomerShortcut("Wishlist")}
+                >
+                  <span className="header-action__label">Wishlist</span>
+                  <span className="header-action__badge header-action__badge--wishlist">
+                    {wishlistTotal}
+                  </span>
+                </button>
+              )}
 
               <div className="header-user" id="headerUser">
                 <button
@@ -258,6 +299,18 @@ function Header() {
                     </Link>
                   )}
 
+                  {user && canPurchase && (
+                    <Link className="user-menu__item" to="/my-orders">
+                      My Orders
+                    </Link>
+                  )}
+
+                  {user && (
+                    <Link className="user-menu__item" to="/profile">
+                      Profile Settings
+                    </Link>
+                  )}
+
                   {user && (
                     <button
                       className="user-menu__item"
@@ -276,6 +329,17 @@ function Header() {
             <ul className="header-nav__list">
               <li>
                 <NavLink to="/">Home</NavLink>
+              </li>
+
+              <li>
+                <NavLink
+                  to="/shops"
+                  className={({ isActive }) =>
+                    isActive ? "header-nav__link is-active" : "header-nav__link"
+                  }
+                >
+                  Shops
+                </NavLink>
               </li>
 
               <li className="header-nav__item header-nav__item--categories">

@@ -13,6 +13,13 @@ const currency = new Intl.NumberFormat("en-US", {
 function ProductCard({ product }) {
   const image = product?.image || fallbackImage;
   const isOnSale = Number(product?.discountPercentage) > 0;
+  const shopLabel =
+    product?.shopName ||
+    product?.vendorName ||
+    (product?.vendorEmail ? String(product.vendorEmail).split("@")[0] : "L&S Store");
+  const shopAvatar = String(product?.vendorAvatarUrl ?? "").trim();
+  const shopInitial = String(shopLabel ?? "S").trim().charAt(0).toUpperCase() || "S";
+  const ratingStars = Math.max(1, Math.round(Number(product.rating ?? 0)));
 
   return (
     <article className="product-card">
@@ -42,8 +49,17 @@ function ProductCard({ product }) {
         </div>
 
         <div className="product-card__meta">
+          <span className="product-card__shop">
+            <span className="product-card__shop-avatar" aria-hidden="true">
+              {shopAvatar ? <img src={shopAvatar} alt="" loading="lazy" /> : <span>{shopInitial}</span>}
+            </span>
+            Shop: {shopLabel}
+          </span>
+        </div>
+
+        <div className="product-card__meta product-card__meta--rating">
           <span className="product-card__rating">
-            {"*".repeat(Math.max(1, Math.round(product.rating || 0)))}
+            {"★".repeat(ratingStars)}
           </span>
           <span className="product-card__reviews">
             ({product.reviews || 0})

@@ -176,8 +176,63 @@ export async function updateUserRole(email, role) {
   return publicUser;
 }
 
+export async function updateUserProfile(email, updates = {}) {
+  const normalizedEmail = String(email ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (!normalizedEmail) {
+    throw new Error("Thiếu email tài khoản để cập nhật profile.");
+  }
+
+  const { payload, users, dataId } = await fetchUsersPayload();
+  const normalizedUsers = users.map(normalizeUser);
+
+  let updatedUser = null;
+
+  const nextUsers = normalizedUsers.map((user) => {
+    if (String(user?.email ?? "").trim().toLowerCase() !== normalizedEmail) {
+      return user;
+    }
+
+    const merged = {
+      ...user,
+      name: String(updates?.name ?? user?.name ?? "").trim(),
+      phone: String(updates?.phone ?? user?.phone ?? "").trim(),
+      avatarUrl: String(updates?.avatarUrl ?? user?.avatarUrl ?? "").trim(),
+      address: String(updates?.address ?? user?.address ?? "").trim(),
+      bio: String(updates?.bio ?? user?.bio ?? "").trim(),
+      shopName: String(updates?.shopName ?? user?.shopName ?? "").trim(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const isVendor = Array.isArray(merged.roles) && merged.roles.includes("vendor");
+
+    if (isVendor && !merged.shopName) {
+      merged.shopName = merged.name || merged.email.split("@")[0] || "My Shop";
+    }
+
+    updatedUser = merged;
+    return merged;
+  });
+
+  if (!updatedUser) {
+    throw new Error("Không tìm thấy tài khoản để cập nhật profile.");
+  }
+
+  await updateResourceData({
+    resourceName: USERS_RESOURCE_NAME,
+    dataId,
+    payload: buildNextUsersPayload(payload, nextUsers),
+  });
+
+  const { password: PASSWORD, role: _legacyRole, ...publicUser } = updatedUser;
+  return publicUser;
+}
+
 export default {
   loginWithCredentials,
   registerUser,
   updateUserRole,
+  updateUserProfile,
 };

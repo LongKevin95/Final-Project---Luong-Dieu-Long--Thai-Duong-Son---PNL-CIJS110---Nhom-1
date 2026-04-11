@@ -47,6 +47,35 @@
   font-size: 15px;
 }
 
+.checkout-payment-options {
+  display: grid;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.checkout-payment-option {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #d9e1ee;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f8fbff;
+  margin-bottom: 0 !important;
+}
+
+.checkout-payment-option input {
+  width: auto;
+  height: auto;
+  margin: 0;
+}
+
+.checkout-payment-note {
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 13px;
+}
+
 .checkout-grid-two,
 .checkout-grid-three {
   display: grid;

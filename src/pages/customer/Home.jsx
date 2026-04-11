@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import ProductCard from "../../components/ProductCard";
 import { useProductsQuery } from "../../hooks/useProductsQuery";
+import { useUsersQuery } from "../../hooks/useUsersQuery";
 import "./Home.css";
 
 const timerItems = [
@@ -16,6 +17,7 @@ function Home() {
   const [searchParams] = useSearchParams();
 
   const { data: products = [], isLoading, isError, error } = useProductsQuery();
+  const { data: users = [] } = useUsersQuery();
 
   const errorMessage = error?.message ?? "Unable to load products.";
 
@@ -23,6 +25,15 @@ function Home() {
   const category = searchParams.get("category") ?? "";
 
   const filteredProducts = useMemo(() => {
+    const vendorMap = new Map(
+      users.map((item) => [
+        String(item?.email ?? "")
+          .trim()
+          .toLowerCase(),
+        item,
+      ]),
+    );
+
     return products.filter((product) => {
       const titleMatch = keyword
         ? product.title.toLowerCase().includes(keyword)
@@ -33,8 +44,23 @@ function Home() {
         : true;
 
       return titleMatch && categoryMatch;
+    }).map((product) => {
+      const vendorEmail = String(product?.vendorEmail ?? "")
+        .trim()
+        .toLowerCase();
+      const vendorProfile = vendorMap.get(vendorEmail);
+
+      if (!vendorProfile) {
+        return product;
+      }
+
+      return {
+        ...product,
+        shopName: vendorProfile?.shopName || vendorProfile?.name || product?.shopName,
+        vendorAvatarUrl: vendorProfile?.avatarUrl || product?.vendorAvatarUrl,
+      };
     });
-  }, [products, keyword, category]);
+  }, [products, users, keyword, category]);
 
   const flashSalesProducts = filteredProducts.slice(0, 8);
   const bestSellingProducts = filteredProducts.slice(0, 4);
@@ -162,7 +188,7 @@ function Home() {
 
           <div className="music-banner__countdown" aria-hidden="true">
             <span>23h</span>
-            <span>05m</span>N
+            <span>05m</span>
             <span>59s</span>
           </div>
 

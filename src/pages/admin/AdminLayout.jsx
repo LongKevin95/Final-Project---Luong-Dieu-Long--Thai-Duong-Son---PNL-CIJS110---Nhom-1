@@ -5,18 +5,10 @@ import "./AdminLayout.css";
 
 const navItems = [
   { label: "Dashboard", path: "/admin" },
-  { label: "Orders", path: "/admin/orders" },
-  { label: "Products", path: "/admin/products" },
-  { label: "Customers", path: "/admin/customers" },
-  { label: "Vendors", path: "/admin/vendors" },
 ];
 
 const titleMap = [
-  { path: "/admin/vendors", title: "Vendor Management" },
-  { path: "/admin/orders", title: "Orders Management" },
-  { path: "/admin/products", title: "Products Management" },
-  { path: "/admin/customers", title: "Customer Management" },
-  { path: "/admin", title: "Dashboard Management" },
+  { path: "/admin", title: "Dashboard" },
 ];
 
 function resolveTitle(pathname) {
@@ -39,6 +31,10 @@ export default function AdminLayout() {
 
   const handleGoHomepage = () => {
     window.location.assign("/");
+  };
+
+  const handleGoProfile = () => {
+    window.location.assign("/#/profile");
   };
 
   return (
@@ -64,11 +60,12 @@ export default function AdminLayout() {
           ))}
         </nav>
         <div className="admin-sidebar__footer">
-          <button type="button" className="admin-sidebar__action">
-            Settings
-          </button>
-          <button type="button" className="admin-sidebar__action">
-            Get Help
+          <button
+            type="button"
+            className="admin-sidebar__action"
+            onClick={handleGoProfile}
+          >
+            Profile
           </button>
           <button
             type="button"

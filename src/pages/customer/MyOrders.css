@@ -1,0 +1,152 @@
+.my-orders-page {
+  padding-top: 28px;
+  padding-bottom: 40px;
+}
+
+.my-orders-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+}
+
+.my-orders-card {
+  margin-top: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
+}
+
+.my-orders-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.my-orders-card__header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.my-orders-card__header span {
+  color: #64748b;
+}
+
+.my-orders-empty {
+  margin: 0;
+  color: #64748b;
+}
+
+.my-orders-table {
+  display: grid;
+  gap: 8px;
+}
+
+.my-orders-row {
+  display: grid;
+  grid-template-columns: 1fr 0.8fr 0.55fr 1fr 0.8fr 0.8fr 1.2fr 0.8fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.my-orders-shop {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.my-orders-shop__avatar {
+  inline-size: 22px;
+  block-size: 22px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #cbd5e1;
+  color: #0f172a;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.my-orders-shop__avatar img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.my-orders-row--head {
+  background: #eff6ff;
+  font-weight: 600;
+}
+
+.my-orders-pill {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.my-orders-pill--pending,
+.my-orders-pill--processing {
+  background: rgba(245, 158, 11, 0.15);
+  color: #92400e;
+}
+
+.my-orders-pill--completed,
+.my-orders-pill--delivered {
+  background: rgba(34, 197, 94, 0.15);
+  color: #166534;
+}
+
+.my-orders-pill--delivery {
+  background: rgba(14, 116, 144, 0.18);
+  color: #0e7490;
+}
+
+.my-orders-pill--cancelled,
+.my-orders-pill--canceled {
+  background: rgba(220, 38, 38, 0.15);
+  color: #b91c1c;
+}
+
+.my-orders-input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.my-orders-btn {
+  border: 0;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #fff;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.my-orders-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.my-orders-status-note {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #0e7490;
+}
+
+@media (max-width: 980px) {
+  .my-orders-row {
+    grid-template-columns: 1fr;
+  }
+}

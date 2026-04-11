@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
 import { useProductsQuery } from "../../hooks/useProductsQuery";
+import { useUsersQuery } from "../../hooks/useUsersQuery";
 import "./Cart.css";
 
 const currency = new Intl.NumberFormat("en-US", {
@@ -17,6 +18,7 @@ const DELIVERY_FEE = 5;
 function Cart() {
   const { user, isCustomer, isVendor } = useAuth();
   const { data: products = [] } = useProductsQuery();
+  const { data: users = [] } = useUsersQuery();
   const {
     items,
     subtotal,
@@ -41,8 +43,32 @@ function Cart() {
     [products],
   );
 
-  const canPurchase = isCustomer || isVendor;
+  const vendorMapByEmail = useMemo(
+    () =>
+      new Map(
+        users.map((item) => [
+          String(item?.email ?? "")
+            .trim()
+            .toLowerCase(),
+          item,
+        ]),
+      ),
+    [users],
+  );
+
+  const canPurchase = isCustomer && !isVendor;
   const total = subtotal + (items.length > 0 ? DELIVERY_FEE : 0);
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/login", { state: { from: "/cart" }, replace: true });
+      return;
+    }
+
+    if (!canPurchase) {
+      navigate("/", { replace: true });
+    }
+  }, [canPurchase, navigate, user]);
 
   const requireAccess = () => {
     if (!user) {
@@ -51,7 +77,7 @@ function Cart() {
     }
 
     if (!canPurchase) {
-      window.alert("Chỉ customer hoặc vendor mới có thể dùng giỏ hàng.");
+      window.alert("Chi tai khoan customer moi co the dung gio hang.");
       return false;
     }
 
@@ -91,6 +117,18 @@ function Cart() {
           ) : (
             items.map((item) => {
               const itemKey = buildCartItemKey(item);
+              const vendorEmail = String(item?.vendorEmail ?? "")
+                .trim()
+                .toLowerCase();
+              const vendorProfile = vendorMapByEmail.get(vendorEmail);
+              const shopName =
+                vendorProfile?.shopName ||
+                vendorProfile?.name ||
+                item?.shopName ||
+                (vendorEmail ? vendorEmail.split("@")[0] : "L&S Store");
+              const shopAvatar = String(vendorProfile?.avatarUrl ?? "").trim();
+              const shopInitial =
+                String(shopName ?? "S").trim().charAt(0).toUpperCase() || "S";
               const currentStock = Number(
                 stockByProductId.get(String(item.productId)) ?? item.stock ?? 0,
               );
@@ -118,6 +156,16 @@ function Cart() {
                     </p>
                     <p>
                       Color: <span>{item.color}</span>
+                    </p>
+                    <p className="cart-item__shop">
+                      <span className="cart-item__shop-avatar" aria-hidden="true">
+                        {shopAvatar ? (
+                          <img src={shopAvatar} alt="" loading="lazy" />
+                        ) : (
+                          <span>{shopInitial}</span>
+                        )}
+                      </span>
+                      Shop: <span>{shopName}</span>
                     </p>
                     <strong>{currency.format(item.price)}</strong>
                   </div>

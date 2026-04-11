@@ -1,12 +1,25 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 
+import AuthContext from "./auth-context";
 import CartContext from "./cart-context";
 
-const CART_STORAGE_KEY = "ls-ecommerce-cart-items";
+const CART_STORAGE_KEY_PREFIX = "ls-ecommerce-cart-items";
 
-function readStoredCartItems() {
+function buildCartStorageKey(userEmail) {
+  const normalizedEmail = String(userEmail ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (!normalizedEmail) {
+    return `${CART_STORAGE_KEY_PREFIX}::guest`;
+  }
+
+  return `${CART_STORAGE_KEY_PREFIX}::${normalizedEmail}`;
+}
+
+function readStoredCartItems(storageKey) {
   try {
-    const storedItems = window.localStorage.getItem(CART_STORAGE_KEY);
+    const storedItems = window.localStorage.getItem(storageKey);
 
     if (!storedItems) {
       return [];
@@ -27,7 +40,7 @@ function readStoredCartItems() {
         Number(item.quantity) > 0,
     );
   } catch {
-    window.localStorage.removeItem(CART_STORAGE_KEY);
+    window.localStorage.removeItem(storageKey);
     return [];
   }
 }
@@ -42,6 +55,13 @@ function normalizeCartItem(product, quantity, selectedOptions = {}) {
     title: product.title,
     price: Number(product.price) || 0,
     quantity: nextQuantity,
+    vendorEmail: String(product.vendorEmail ?? "")
+      .trim()
+      .toLowerCase(),
+    shopName:
+      product.shopName ||
+      product.vendorName ||
+      (product.vendorEmail ? String(product.vendorEmail).split("@")[0] : "L&S Store"),
     image:
       product.image ||
       (Array.isArray(product.images) ? product.images[0] : "") ||
@@ -56,15 +76,23 @@ function buildCartItemKey(item) {
 }
 
 export function CartProvider({ children }) {
-  const [items, setItems] = useState(readStoredCartItems);
+  const auth = useContext(AuthContext);
+  const userEmail = auth?.user?.email;
+  const storageKey = useMemo(() => buildCartStorageKey(userEmail), [userEmail]);
+
+  const [items, setItems] = useState(() => readStoredCartItems(storageKey));
+
+  useEffect(() => {
+    setItems(readStoredCartItems(storageKey));
+  }, [storageKey]);
 
   const syncItems = useCallback((updater) => {
     setItems((previousItems) => {
       const nextItems = updater(previousItems);
-      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(nextItems));
+      window.localStorage.setItem(storageKey, JSON.stringify(nextItems));
       return nextItems;
     });
-  }, []);
+  }, [storageKey]);
 
   const addToCart = useCallback(
     (product, quantity = 1, selectedOptions = {}) => {

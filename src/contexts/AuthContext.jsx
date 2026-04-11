@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import {
   loginWithCredentials,
   registerUser,
+  updateUserProfile,
   updateUserRole,
 } from "../api/authApi";
 import AuthContext from "./auth-context";
@@ -67,6 +68,21 @@ export function AuthProvider({ children }) {
     [user],
   );
 
+  const updateProfile = useCallback(
+    async (updates) => {
+      if (!user?.email) {
+        throw new Error("Bạn cần đăng nhập trước khi cập nhật profile.");
+      }
+
+      const nextUser = await updateUserProfile(user.email, updates);
+      setUser(nextUser);
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextUser));
+
+      return nextUser;
+    },
+    [user],
+  );
+
   const logout = useCallback(() => {
     setUser(null);
     window.localStorage.removeItem(AUTH_STORAGE_KEY);
@@ -82,9 +98,10 @@ export function AuthProvider({ children }) {
       login,
       register,
       updateRole,
+      updateProfile,
       logout,
     }),
-    [login, logout, register, updateRole, user],
+    [login, logout, register, updateProfile, updateRole, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
