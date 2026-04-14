@@ -39,10 +39,19 @@ function normalizeUser(user) {
       ? [user.role]
       : [];
   const { role: _legacyRole, ...rest } = user;
+  const normalizedStatus = String(rest?.status ?? "")
+    .trim()
+    .toLowerCase();
+
+  const nextStatus = ["banned", "rejected"].includes(normalizedStatus)
+    ? normalizedStatus
+    : "active";
 
   return {
     ...rest,
     roles,
+    status: nextStatus,
+    reason: nextStatus === "active" ? null : (rest?.reason ?? null),
   };
 }
 
@@ -148,15 +157,13 @@ export async function updateUserRole(email, role) {
       ? user.roles
       : [...user.roles, role];
 
-    const nextStatus =
-      role === "vendor" && !["approved", "rejected"].includes(user.status)
-        ? "pending"
-        : user.status;
+    const nextStatus = user.status;
 
     return {
       ...user,
       roles: nextRoles,
       status: nextStatus,
+      reason: nextStatus === "active" ? null : (user?.reason ?? null),
     };
   });
 
@@ -191,7 +198,11 @@ export async function updateUserProfile(email, updates = {}) {
   let updatedUser = null;
 
   const nextUsers = normalizedUsers.map((user) => {
-    if (String(user?.email ?? "").trim().toLowerCase() !== normalizedEmail) {
+    if (
+      String(user?.email ?? "")
+        .trim()
+        .toLowerCase() !== normalizedEmail
+    ) {
       return user;
     }
 
@@ -206,7 +217,8 @@ export async function updateUserProfile(email, updates = {}) {
       updatedAt: new Date().toISOString(),
     };
 
-    const isVendor = Array.isArray(merged.roles) && merged.roles.includes("vendor");
+    const isVendor =
+      Array.isArray(merged.roles) && merged.roles.includes("vendor");
 
     if (isVendor && !merged.shopName) {
       merged.shopName = merged.name || merged.email.split("@")[0] || "My Shop";

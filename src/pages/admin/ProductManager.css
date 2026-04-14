@@ -6,7 +6,7 @@
 
 .admin-products-table {
   display: grid;
-  gap: 8px;
+  gap: 2px;
 }
 
 .admin-products-table__row {
@@ -33,6 +33,7 @@
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 13px;
+  
 }
 
 .admin-reason-input:disabled {

@@ -46,7 +46,7 @@ export const getUsers = async () => {
   return users;
 };
 
-export const updateVendorStatus = async ({ email, status }) => {
+export const updateVendorStatus = async ({ email, status, reason = null }) => {
   const normalizedEmail = String(email ?? "")
     .trim()
     .toLowerCase();
@@ -55,9 +55,14 @@ export const updateVendorStatus = async ({ email, status }) => {
     throw new Error("Missing vendor email.");
   }
 
-  const nextStatus = String(status ?? "")
+  const normalizedStatus = String(status ?? "")
     .trim()
     .toLowerCase();
+  const normalizedReason = String(reason ?? "").trim();
+  const nextStatus = ["active", "rejected"].includes(normalizedStatus)
+    ? normalizedStatus
+    : "active";
+  const nextReason = nextStatus === "active" ? null : normalizedReason || null;
 
   const { dataId, users } = await fetchUsersSnapshot();
   const nextUsers = users.map((user) => {
@@ -72,6 +77,7 @@ export const updateVendorStatus = async ({ email, status }) => {
     return {
       ...user,
       status: nextStatus,
+      reason: nextReason,
     };
   });
 
@@ -84,7 +90,11 @@ export const updateVendorStatus = async ({ email, status }) => {
   });
 };
 
-export const updateCustomerStatus = async ({ email, status }) => {
+export const updateCustomerStatus = async ({
+  email,
+  status,
+  reason = null,
+}) => {
   const normalizedEmail = String(email ?? "")
     .trim()
     .toLowerCase();
@@ -96,8 +106,9 @@ export const updateCustomerStatus = async ({ email, status }) => {
   const normalizedStatus = String(status ?? "")
     .trim()
     .toLowerCase();
+  const normalizedReason = String(reason ?? "").trim();
 
-  const nextStatus = ["active", "banned"].includes(normalizedStatus)
+  const nextStatus = ["active", "banned", "rejected"].includes(normalizedStatus)
     ? normalizedStatus
     : "active";
 
@@ -114,6 +125,7 @@ export const updateCustomerStatus = async ({ email, status }) => {
     return {
       ...user,
       status: nextStatus,
+      reason: nextStatus === "active" ? null : normalizedReason || null,
     };
   });
 

@@ -58,26 +58,31 @@
 
 .admin-card {
   background: var(--admin-card);
-  border: 1px solid var(--admin-border);
-  border-radius: 12px;
-  padding: 16px;
+  /* border: 1px solid var(--admin-border); */
   box-shadow: 0 12px 30px rgba(31, 41, 55, 0.08);
 }
 
 .manage-vendor-table {
   display: grid;
-  gap: 8px;
+  gap: 2px;
 }
 
 .manage-vendor-table__row {
   display: grid;
-  grid-template-columns: 40px 1.4fr 1.5fr 1fr 1fr 1.3fr;
-  gap: 12px;
+  grid-template-columns: 40px 1.2fr 1.5fr 1fr 1fr 1.3fr;
+
   align-items: center;
   padding: 12px;
-  border-radius: 10px;
   background: #fafafa;
   font-size: 14px;
+}
+
+.manage-vendor-table__row > span {
+  margin-right: 8px;
+}
+
+.manage-vendor-table--accounts .manage-vendor-table__row {
+  grid-template-columns: 30px 0.8fr 1.2fr 1.2fr 0.6fr 0.8fr 0.6fr 1.1fr 0.6fr;
 }
 
 .manage-vendor-table__head {
@@ -97,11 +102,82 @@
   gap: 8px;
 }
 
+.admin-action-menu {
+  position: relative;
+}
+
+.admin-action-trigger {
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.admin-action-trigger__arrow {
+  font-size: 11px;
+  line-height: 1;
+  color: var(--admin-muted);
+}
+
+.admin-action-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.admin-action-menu__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  min-width: 120px;
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(31, 41, 55, 0.12);
+}
+
+.admin-action-menu__item {
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.admin-action-menu__item:hover {
+  background: #f3f4f6;
+}
+
+.admin-action-menu__item--disabled,
+.admin-action-menu__item--disabled:hover,
+.admin-action-menu__item--disabled:disabled {
+  color: var(--admin-muted);
+  background: #f9fafb;
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='none' stroke='%23dc2626' stroke-width='2'/%3E%3Cpath d='M6 14L14 6' stroke='%23dc2626' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
+      10 10,
+    not-allowed;
+  opacity: 0.8;
+}
+
 .admin-action-select {
   border: 1px solid var(--admin-border);
   background: #fff;
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 6px 6px;
   font-size: 13px;
   color: var(--admin-text);
   cursor: pointer;
@@ -110,6 +186,26 @@
 .admin-action-select:disabled {
   cursor: not-allowed;
   opacity: 0.65;
+}
+
+.admin-action-select--approve-disabled {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='none' stroke='%23dc2626' stroke-width='2'/%3E%3Cpath d='M6 14L14 6' stroke='%23dc2626' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
+      10 10,
+    not-allowed;
+}
+
+.admin-reason-input {
+  width: 100%;
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.admin-reason-input:disabled {
+  opacity: 0.7;
 }
 
 .admin-action-spinner {
@@ -298,6 +394,16 @@
       "actions actions actions";
   }
 
+  .manage-vendor-table--accounts .manage-vendor-table__row {
+    grid-template-columns: 40px 1fr 1fr;
+    grid-template-areas:
+      "index id role"
+      "shop email email"
+      "created status status"
+      "reason reason reason"
+      "actions actions actions";
+  }
+
   .manage-vendor-table__row span:nth-child(1) {
     grid-area: index;
   }
@@ -319,6 +425,42 @@
   }
 
   .manage-vendor-table__row span:nth-child(6) {
+    grid-area: actions;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(4) {
+    grid-area: shop;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(2) {
+    grid-area: id;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(3) {
+    grid-area: shop;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(4) {
+    grid-area: email;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(5) {
+    grid-area: role;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(6) {
+    grid-area: created;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(7) {
+    grid-area: status;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(8) {
+    grid-area: reason;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(9) {
     grid-area: actions;
   }
 }

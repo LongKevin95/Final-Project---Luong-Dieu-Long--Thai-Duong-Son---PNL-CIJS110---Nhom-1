@@ -5,9 +5,15 @@ import "./AdminLayout.css";
 
 const navItems = [
   { label: "Dashboard", path: "/admin" },
+  { label: "Orders", path: "/admin/orders" },
+  { label: "Products", path: "/admin/products" },
+  { label: "Accounts", path: "/admin/accounts" },
 ];
 
 const titleMap = [
+  { path: "/admin/orders", title: "Orders Management" },
+  { path: "/admin/products", title: "Products Management" },
+  { path: "/admin/accounts", title: "Accounts Management" },
   { path: "/admin", title: "Dashboard" },
 ];
 

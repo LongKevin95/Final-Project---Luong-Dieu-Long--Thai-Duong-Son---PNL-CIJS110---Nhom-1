@@ -15,6 +15,9 @@ import Login from "../pages/auth/Login";
 import Signup from "../pages/auth/Signup";
 import AdminLayout from "../pages/admin/AdminLayout";
 import Dashboard from "../pages/admin/Dashboard";
+import AccountsManager from "../pages/admin/AccountsManager";
+import ProductManager from "../pages/admin/ProductManager";
+import OrdersManager from "../pages/admin/OrdersManager";
 import VendorDashboard from "../pages/vendor/VendorDashboard";
 import VendorProducts from "../pages/vendor/VendorProducts";
 import VendorOnboarding from "../pages/vendor/VendorOnboarding";
@@ -83,6 +86,17 @@ export default function AppRoutes() {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="products" element={<ProductManager />} />
+        <Route path="orders" element={<OrdersManager />} />
+        <Route path="accounts" element={<AccountsManager />} />
+        <Route
+          path="vendors"
+          element={<Navigate to="/admin/accounts" replace />}
+        />
+        <Route
+          path="customers"
+          element={<Navigate to="/admin/accounts" replace />}
+        />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Route>
 
