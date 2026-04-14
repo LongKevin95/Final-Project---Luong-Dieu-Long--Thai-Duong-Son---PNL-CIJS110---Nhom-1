@@ -50,6 +50,10 @@ function normalizeStatus(status) {
     .trim()
     .toLowerCase();
 
+  if (normalizedStatus === PRODUCT_STATUS.BANNED) {
+    return PRODUCT_STATUS.REJECTED;
+  }
+
   if (Object.values(PRODUCT_STATUS).includes(normalizedStatus)) {
     return normalizedStatus;
   }
@@ -145,7 +149,7 @@ function normalizeProduct(product) {
 
   if (stock <= 0) {
     if (
-      [PRODUCT_STATUS.INACTIVE, PRODUCT_STATUS.REJECTED, PRODUCT_STATUS.BANNED].includes(
+      [PRODUCT_STATUS.PENDING, PRODUCT_STATUS.INACTIVE, PRODUCT_STATUS.REJECTED].includes(
         normalizedStatus,
       )
     ) {
@@ -197,15 +201,13 @@ export const getProducts = async () => {
 
 export const createProduct = async (payload) => {
   const { products } = await fetchProductsSnapshot();
-  const stock = Number(payload?.stock ?? 0);
-  const nextStatus =
-    stock <= 0 ? PRODUCT_STATUS.OUT_OF_STOCK : PRODUCT_STATUS.ACTIVE;
 
   const nextProduct = normalizeProduct({
     ...payload,
     id: payload?.id ?? `prod-${Date.now()}`,
     category: normalizeCategory(payload?.category),
-    status: nextStatus,
+    status: PRODUCT_STATUS.PENDING,
+    reason: null,
     shopName:
       payload?.shopName ||
       (payload?.vendorEmail

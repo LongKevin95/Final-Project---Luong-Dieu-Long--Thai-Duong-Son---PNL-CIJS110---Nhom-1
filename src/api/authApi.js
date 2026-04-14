@@ -96,7 +96,7 @@ export async function registerUser({ name, email, password }) {
   }
 
   const nextUser = normalizeUser({
-    id: `customer-${Date.now()}`,
+    id: `${Date.now()}`,
     name: normalizedName,
     email: normalizedEmail,
     password: normalizedPassword,

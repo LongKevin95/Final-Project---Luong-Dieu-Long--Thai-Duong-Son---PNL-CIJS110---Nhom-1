@@ -25,7 +25,7 @@ function formatStatus(status) {
     case PRODUCT_STATUS.OUT_OF_STOCK:
       return "Out of stock";
     case PRODUCT_STATUS.BANNED:
-      return "Banned";
+      return "Rejected";
     default:
       return "Unknown";
   }
@@ -100,11 +100,6 @@ export default function ProductManager() {
       return;
     }
 
-    if (action === "ban" && !reason) {
-      window.alert("Vui lòng nhập lý do khóa sản phẩm trước khi tiến hành!");
-      return;
-    }
-
     try {
       setProcessingId(normalizedId);
 
@@ -128,16 +123,6 @@ export default function ProductManager() {
           id: normalizedId,
           updates: {
             status: PRODUCT_STATUS.REJECTED,
-            reason,
-          },
-        });
-      }
-
-      if (action === "ban") {
-        await updateProductById({
-          id: normalizedId,
-          updates: {
-            status: PRODUCT_STATUS.BANNED,
             reason,
           },
         });
@@ -172,7 +157,6 @@ export default function ProductManager() {
             <option value={PRODUCT_STATUS.INACTIVE}>Inactive</option>
             <option value={PRODUCT_STATUS.REJECTED}>Rejected</option>
             <option value={PRODUCT_STATUS.OUT_OF_STOCK}>Out of stock</option>
-            <option value={PRODUCT_STATUS.BANNED}>Banned</option>
           </select>
         </div>
       </div>
@@ -260,7 +244,6 @@ export default function ProductManager() {
                         <option value="">Select</option>
                         <option value="approve">Approve</option>
                         <option value="reject">Reject</option>
-                        <option value="ban">Ban</option>
                       </select>
                       {isProcessing && (
                         <span className="admin-action-spinner" />

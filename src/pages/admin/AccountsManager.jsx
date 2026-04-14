@@ -76,6 +76,20 @@ function formatCreatedSince(createdAt) {
   return date.toLocaleDateString("en-GB");
 }
 
+function getCreatedAtTimestamp(createdAt) {
+  if (!createdAt) {
+    return 0;
+  }
+
+  const date = new Date(createdAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return 0;
+  }
+
+  return date.getTime();
+}
+
 export default function AccountsManager() {
   const queryClient = useQueryClient();
   const { data: users = [], isLoading, isError } = useUsersQuery();
@@ -85,6 +99,8 @@ export default function AccountsManager() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [keyword, setKeyword] = useState("");
   const [reasonByEmail, setReasonByEmail] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (!openActionEmail) {
@@ -137,7 +153,12 @@ export default function AccountsManager() {
           status: normalizeStatusByRole(role, user?.status),
           reason: user?.reason ?? null,
         };
-      });
+      })
+      .sort(
+        (accountA, accountB) =>
+          getCreatedAtTimestamp(accountB.createdAt) -
+          getCreatedAtTimestamp(accountA.createdAt),
+      );
   }, [users]);
 
   const filteredAccounts = useMemo(() => {
@@ -159,6 +180,25 @@ export default function AccountsManager() {
         );
     });
   }, [accounts, keyword, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, keyword]);
+
+  const paginatedAccounts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+
+    return filteredAccounts.slice(startIndex, endIndex);
+  }, [filteredAccounts, currentPage, itemsPerPage]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredAccounts.length / itemsPerPage));
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   async function handleUpdateStatus(account, status) {
     const normalizedEmail = String(account?.email ?? "")
@@ -248,7 +288,7 @@ export default function AccountsManager() {
               <span>Reason</span>
               <span>Actions</span>
             </div>
-            {filteredAccounts.map((account, index) => {
+            {paginatedAccounts.map((account, index) => {
               const accountEmail = String(account.email ?? "")
                 .trim()
                 .toLowerCase();
@@ -261,7 +301,7 @@ export default function AccountsManager() {
                   className="manage-vendor-table__row"
                   key={account.id ?? account.email}
                 >
-                  <span>{index + 1}</span>
+                  <span>{(currentPage - 1) * itemsPerPage + index + 1}</span>
                   <span>{account.id || "N/A"}</span>
                   <span>{account.accountName}</span>
                   <span>{account.email}</span>
@@ -367,12 +407,39 @@ export default function AccountsManager() {
                 </div>
               );
             })}
+            {paginatedAccounts.length === 0 && filteredAccounts.length > 0 && (
+              <p className="admin-status">Không có tài khoản phù hợp.</p>
+            )}
             {filteredAccounts.length === 0 && (
               <p className="admin-status">Không có tài khoản phù hợp.</p>
             )}
+            <div className="admin-pagination">
+              <button
+                type="button"
+                className="admin-pagination-btn"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              <span className="admin-pagination-info">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                className="admin-pagination-btn"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </section>
     </div>
   );
 }
+

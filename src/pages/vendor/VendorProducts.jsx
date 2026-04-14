@@ -418,7 +418,7 @@ export default function VendorProducts() {
       case PRODUCT_STATUS.OUT_OF_STOCK:
         return "Out of stock";
       case PRODUCT_STATUS.BANNED:
-        return "Banned";
+        return "Rejected";
       default:
         return "Unknown";
     }
@@ -661,10 +661,7 @@ export default function VendorProducts() {
               const isRowUpdating =
                 processingProductId &&
                 String(processingProductId) === String(product.id);
-              const isBannedOrRejected =
-                String(product?.status ?? "")
-                  .trim()
-                  .toLowerCase() === PRODUCT_STATUS.BANNED ||
+              const isRejected =
                 String(product?.status ?? "")
                   .trim()
                   .toLowerCase() === PRODUCT_STATUS.REJECTED;
@@ -704,7 +701,7 @@ export default function VendorProducts() {
                         }}
                       >
                         <option value="">Select</option>
-                        {!isBannedOrRejected && (
+                        {!isRejected && (
                           <option value="edit">Edit</option>
                         )}
                         {isInactive ? (

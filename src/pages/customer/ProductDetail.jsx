@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import ProductCard from "../../components/ProductCard";
 import { addProductReview, upsertVendorReply } from "../../api/productApi";
+import { useAdminProductsQuery } from "../../hooks/useAdminProductsQuery";
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
 import { useOrdersQuery } from "../../hooks/useOrdersQuery";
@@ -21,14 +22,22 @@ const fallbackImage = "/favicon.svg";
 
 function ProductDetail() {
   const { id } = useParams();
-  const { user, isCustomer, isVendor } = useAuth();
+  const { user, isAdmin, isCustomer, isVendor } = useAuth();
   const { addToCart } = useCart();
   const { hasInWishlist, toggleWishlistItem } = useWishlist();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
+  const canInspectHiddenProducts = isAdmin || isVendor;
 
   const { data: products = [], isLoading, isError } = useProductsQuery();
+  const {
+    data: adminProducts = [],
+    isLoading: isAdminProductsLoading,
+    isError: isAdminProductsError,
+  } = useAdminProductsQuery({
+    enabled: canInspectHiddenProducts,
+  });
   const { data: users = [] } = useUsersQuery();
   const { data: orders = [] } = useOrdersQuery();
 
@@ -80,9 +89,49 @@ function ProductDetail() {
   const product = useMemo(
     () => {
       const matched = products.find((item) => String(item.id) === String(id)) ?? null;
-      return matched ? withVendorDisplay(matched) : null;
+
+      if (matched) {
+        return withVendorDisplay(matched);
+      }
+
+      if (!canInspectHiddenProducts) {
+        return null;
+      }
+
+      const adminMatched =
+        adminProducts.find((item) => String(item.id) === String(id)) ?? null;
+
+      if (!adminMatched) {
+        return null;
+      }
+
+      if (isAdmin) {
+        return withVendorDisplay(adminMatched);
+      }
+
+      const productVendorEmail = String(adminMatched?.vendorEmail ?? "")
+        .trim()
+        .toLowerCase();
+      const currentUserEmail = String(user?.email ?? "")
+        .trim()
+        .toLowerCase();
+
+      if (isVendor && productVendorEmail === currentUserEmail) {
+        return withVendorDisplay(adminMatched);
+      }
+
+      return null;
     },
-    [products, id, withVendorDisplay],
+    [
+      adminProducts,
+      canInspectHiddenProducts,
+      id,
+      isAdmin,
+      isVendor,
+      products,
+      user?.email,
+      withVendorDisplay,
+    ],
   );
 
   const relatedProducts = useMemo(
@@ -335,7 +384,7 @@ function ProductDetail() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || (canInspectHiddenProducts && isAdminProductsLoading)) {
     return (
       <main className="product-detail-page o-container">
         <div className="product-detail-loader">Loading product detail...</div>
@@ -343,7 +392,7 @@ function ProductDetail() {
     );
   }
 
-  if (isError) {
+  if (isError || (canInspectHiddenProducts && isAdminProductsError)) {
     return (
       <main className="product-detail-page o-container">
         <div className="product-detail-loader product-detail-loader--error">
