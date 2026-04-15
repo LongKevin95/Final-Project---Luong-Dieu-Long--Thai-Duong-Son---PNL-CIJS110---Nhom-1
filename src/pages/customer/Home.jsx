@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import ProductCard from "../../components/ProductCard";
+import { formatProductCategoryLabel } from "../../api/productApi";
 import { useProductsQuery } from "../../hooks/useProductsQuery";
 import { useUsersQuery } from "../../hooks/useUsersQuery";
 import "./Home.css";
@@ -12,6 +13,16 @@ const timerItems = [
   { label: "Minutes", value: "59" },
   { label: "Seconds", value: "59" },
 ];
+
+function normalizeSearchText(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll("đ", "d")
+    .replaceAll("Đ", "d")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
 
 function Home() {
   const [searchParams] = useSearchParams();
@@ -25,6 +36,7 @@ function Home() {
   const category = searchParams.get("category") ?? "";
 
   const filteredProducts = useMemo(() => {
+    const normalizedKeyword = normalizeSearchText(keyword);
     const vendorMap = new Map(
       users.map((item) => [
         String(item?.email ?? "")
@@ -34,32 +46,44 @@ function Home() {
       ]),
     );
 
-    return products.filter((product) => {
-      const titleMatch = keyword
-        ? product.title.toLowerCase().includes(keyword)
-        : true;
+    return products
+      .filter((product) => {
+        const title = String(product?.title ?? "");
+        const categoryValue = String(product?.category ?? "");
+        const categoryLabel = formatProductCategoryLabel(categoryValue);
 
-      const categoryMatch = category
-        ? product.category.toLowerCase() === category.toLowerCase()
-        : true;
+        const searchableFields = [title, categoryValue, categoryLabel]
+          .map(normalizeSearchText)
+          .filter(Boolean);
 
-      return titleMatch && categoryMatch;
-    }).map((product) => {
-      const vendorEmail = String(product?.vendorEmail ?? "")
-        .trim()
-        .toLowerCase();
-      const vendorProfile = vendorMap.get(vendorEmail);
+        const keywordMatch = normalizedKeyword
+          ? searchableFields.some((field) => field.includes(normalizedKeyword))
+          : true;
 
-      if (!vendorProfile) {
-        return product;
-      }
+        const categoryMatch = category
+          ? String(product?.category ?? "").toLowerCase() ===
+            category.toLowerCase()
+          : true;
 
-      return {
-        ...product,
-        shopName: vendorProfile?.shopName || vendorProfile?.name || product?.shopName,
-        vendorAvatarUrl: vendorProfile?.avatarUrl || product?.vendorAvatarUrl,
-      };
-    });
+        return keywordMatch && categoryMatch;
+      })
+      .map((product) => {
+        const vendorEmail = String(product?.vendorEmail ?? "")
+          .trim()
+          .toLowerCase();
+        const vendorProfile = vendorMap.get(vendorEmail);
+
+        if (!vendorProfile) {
+          return product;
+        }
+
+        return {
+          ...product,
+          shopName:
+            vendorProfile?.shopName || vendorProfile?.name || product?.shopName,
+          vendorAvatarUrl: vendorProfile?.avatarUrl || product?.vendorAvatarUrl,
+        };
+      });
   }, [products, users, keyword, category]);
 
   const flashSalesProducts = filteredProducts.slice(0, 8);
@@ -71,7 +95,8 @@ function Home() {
 
     const labels = [];
     if (keyword) labels.push(`keyword "${keyword}"`);
-    if (category) labels.push(`category "${category}"`);
+    if (category)
+      labels.push(`category "${formatProductCategoryLabel(category)}"`);
 
     return labels.join(" | ");
   }, [keyword, category]);
@@ -115,7 +140,7 @@ function Home() {
     <main className="home-page o-container">
       <section className="hero-banner">
         <div className="hero-banner__content">
-          <div className="hero-banner__label">iPhone 14 Series</div>
+          <div className="hero-banner__label">iPhone 17 Series</div>
           <h1>Up to 10% off Voucher</h1>
           <Link
             className="hero-banner__cta"
@@ -127,14 +152,20 @@ function Home() {
           </Link>
         </div>
 
-        <div className="hero-banner__visual" aria-hidden="true"></div>
+        <div className="hero-banner__visual" aria-hidden="true">
+          <img
+            src="https://www.apple.com/v/iphone-17-pro/e/images/meta/iphone-17-pro_overview__eumhhclcpuaa_og.png"
+            alt=""
+            sizes=""
+            srcset=""
+          />
+        </div>
+        <div className="hero-dots" aria-hidden="true">
+          <span></span>
+          <span className="is-active"></span>
+          <span></span>
+        </div>
       </section>
-
-      <div className="hero-dots" aria-hidden="true">
-        <span></span>
-        <span className="is-active"></span>
-        <span></span>
-      </div>
 
       {searchSummary && (
         <p className="home-search-summary">Filtering by: {searchSummary}</p>
@@ -148,10 +179,18 @@ function Home() {
           </div>
 
           <div className="sale-timer" aria-label="Countdown">
-            {timerItems.map((item) => (
-              <div className="sale-timer__item" key={item.label}>
-                <strong>{item.value}</strong>
-                <span>{item.label}</span>
+            {timerItems.map((item, index) => (
+              <div className="sale-timer__group" key={item.label}>
+                <div className="sale-timer__item">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+
+                {index < timerItems.length - 1 && (
+                  <span className="sale-timer__separator" aria-hidden="true">
+                    :
+                  </span>
+                )}
               </div>
             ))}
           </div>

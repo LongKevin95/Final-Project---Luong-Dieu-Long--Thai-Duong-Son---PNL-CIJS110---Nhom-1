@@ -19,8 +19,29 @@ export const PRODUCT_CATEGORIES = [
   "do-gia-dung",
   "dien-tu",
   "thuc-pham",
-  "test-san-pham",
+  "others",
 ];
+
+export const PRODUCT_CATEGORY_LABELS = {
+  "fashion-nam": "Men Fashion",
+  "fashion-nu": "Women Fashion",
+  "do-gia-dung": "Home",
+  "dien-tu": "Electronics",
+  "thuc-pham": "Food",
+  others: "Others",
+};
+
+const PIKACHU_PRODUCT_TITLE = "gau bong pikachu";
+
+function normalizeSearchText(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll("đ", "d")
+    .replaceAll("Đ", "d")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
 
 function normalizeCategory(category) {
   const normalizedValue = String(category ?? "")
@@ -35,14 +56,26 @@ function normalizeCategory(category) {
 
   const mapper = {
     electronics: "dien-tu",
-    beauty: "thuc-pham",
     home: "do-gia-dung",
     food: "thuc-pham",
+    other: "others",
+    others: "others",
+    misc: "others",
+    miscellaneous: "others",
+    khac: "others",
+    fashion: "fashion-nam",
     "fashion-men": "fashion-nam",
+    "men-fashion": "fashion-nam",
     "fashion-women": "fashion-nu",
+    "women-fashion": "fashion-nu",
   };
 
-  return mapper[normalizedValue] ?? "test-san-pham";
+  return mapper[normalizedValue] ?? "fashion-nam";
+}
+
+export function formatProductCategoryLabel(category) {
+  const normalizedCategory = normalizeCategory(category);
+  return PRODUCT_CATEGORY_LABELS[normalizedCategory] ?? normalizedCategory;
 }
 
 function normalizeStatus(status) {
@@ -97,7 +130,6 @@ async function fetchProductsSnapshot() {
   }
 
   return {
-    payload: {},
     products: [],
     dataId: null,
   };
@@ -134,13 +166,18 @@ function normalizeProduct(product) {
   const stock = Number(product?.stock ?? 0);
   const normalizedStatus = normalizeStatus(product?.status);
   const resolvedCategory = normalizeCategory(product?.category);
+  const normalizedTitle = normalizeSearchText(product?.title);
+  const resolvedSpecialCategory =
+    normalizedTitle === PIKACHU_PRODUCT_TITLE ? "others" : resolvedCategory;
 
   const normalizedProduct = {
     ...product,
-    category: resolvedCategory,
+    category: resolvedSpecialCategory,
     shopName:
       product?.shopName ||
-      (product?.vendorEmail ? String(product.vendorEmail).split("@")[0] : "L&S Store"),
+      (product?.vendorEmail
+        ? String(product.vendorEmail).split("@")[0]
+        : "L&S Store"),
     rating: Number(averageRating.toFixed(1)),
     reviews: reviewsData.length,
     reviewsData,
@@ -149,9 +186,11 @@ function normalizeProduct(product) {
 
   if (stock <= 0) {
     if (
-      [PRODUCT_STATUS.PENDING, PRODUCT_STATUS.INACTIVE, PRODUCT_STATUS.REJECTED].includes(
-        normalizedStatus,
-      )
+      [
+        PRODUCT_STATUS.PENDING,
+        PRODUCT_STATUS.INACTIVE,
+        PRODUCT_STATUS.REJECTED,
+      ].includes(normalizedStatus)
     ) {
       return {
         ...normalizedProduct,
@@ -171,20 +210,24 @@ function normalizeProduct(product) {
   };
 }
 
-async function persistProducts(nextProducts) {
-  const { payload, dataId } = await fetchProductsSnapshot();
-  const normalizedProducts = nextProducts.map(normalizeProduct);
+async function writeProductsSnapshot(snapshot, nextProducts) {
+  const { payload, dataId } = snapshot;
 
   await updateResourceData({
     resourceName: PRODUCTS_RESOURCE_NAME,
     dataId,
     payload: {
       ...(payload ?? {}),
-      products: normalizedProducts,
+      products: nextProducts,
     },
   });
 
-  await syncShopsFromProducts(normalizedProducts);
+  await syncShopsFromProducts(nextProducts);
+}
+
+async function persistProducts(nextProducts) {
+  const snapshot = await fetchProductsSnapshot();
+  await writeProductsSnapshot(snapshot, nextProducts);
 }
 
 export const getAllProducts = async () => {
@@ -195,7 +238,9 @@ export const getAllProducts = async () => {
 export const getProducts = async () => {
   const products = await getAllProducts();
   return products.filter((product) =>
-    [PRODUCT_STATUS.ACTIVE, PRODUCT_STATUS.OUT_OF_STOCK].includes(product.status),
+    [PRODUCT_STATUS.ACTIVE, PRODUCT_STATUS.OUT_OF_STOCK].includes(
+      product.status,
+    ),
   );
 };
 
@@ -252,6 +297,75 @@ export const updateProductById = async ({ id, updates }) => {
   return updatedProduct;
 };
 
+export const deductProductStocksForCheckout = async ({ items }) => {
+  const cartItems = Array.isArray(items) ? items : [];
+
+  if (cartItems.length === 0) {
+    throw new Error("Cart is empty.");
+  }
+
+  const deductions = new Map();
+
+  cartItems.forEach((item) => {
+    const productId = String(item?.productId ?? item?.id ?? "").trim();
+    const quantityToDeduct = Number(item?.quantity ?? 0);
+
+    if (!productId || quantityToDeduct <= 0) {
+      throw new Error("Dữ liệu giỏ hàng không hợp lệ. Vui lòng thử lại.");
+    }
+
+    deductions.set(
+      productId,
+      Number(deductions.get(productId) ?? 0) + quantityToDeduct,
+    );
+  });
+
+  const snapshot = await fetchProductsSnapshot();
+  const { products } = snapshot;
+  const productById = new Map(
+    products.map((product) => [String(product?.id ?? "").trim(), product]),
+  );
+
+  for (const [productId, quantityToDeduct] of deductions) {
+    const currentProduct = productById.get(productId);
+
+    if (!currentProduct) {
+      throw new Error(
+        `Không tìm thấy sản phẩm với mã ${productId}. Vui lòng thử lại.`,
+      );
+    }
+
+    const currentStock = Number(currentProduct?.stock ?? 0);
+
+    if (currentStock < quantityToDeduct) {
+      throw new Error(
+        `Sản phẩm ${productId} chỉ còn ${currentStock} sản phẩm trong kho.`,
+      );
+    }
+  }
+
+  const updatedAt = new Date().toISOString();
+  const nextProducts = products.map((product) => {
+    const productId = String(product?.id ?? "").trim();
+    const quantityToDeduct = deductions.get(productId);
+
+    if (!quantityToDeduct) {
+      return normalizeProduct(product);
+    }
+
+    const currentStock = Number(product?.stock ?? 0);
+
+    return normalizeProduct({
+      ...product,
+      stock: currentStock - quantityToDeduct,
+      updatedAt,
+    });
+  });
+
+  await writeProductsSnapshot(snapshot, nextProducts);
+  return nextProducts;
+};
+
 export const removeProductById = async (id) => {
   const normalizedId = String(id ?? "").trim();
 
@@ -278,7 +392,8 @@ export const addProductReview = async ({ productId, review }) => {
     customerEmail: String(review?.customerEmail ?? "")
       .trim()
       .toLowerCase(),
-    customerName: String(review?.customerName ?? "Customer").trim() || "Customer",
+    customerName:
+      String(review?.customerName ?? "Customer").trim() || "Customer",
     comment: String(review?.comment ?? "").trim(),
     stars: Math.min(5, Math.max(1, Number(review?.stars ?? 0))),
     createdAt: new Date().toISOString(),

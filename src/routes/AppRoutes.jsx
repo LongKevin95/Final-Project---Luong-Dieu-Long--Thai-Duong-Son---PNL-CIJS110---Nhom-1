@@ -111,7 +111,11 @@ export default function AppRoutes() {
         }
       >
         <Route index element={<VendorDashboard />} />
-        <Route path="users" element={<VendorUsers />} />
+        <Route path="customers" element={<VendorUsers />} />
+        <Route
+          path="users"
+          element={<Navigate to="/vendor/customers" replace />}
+        />
         <Route path="products" element={<VendorProducts />} />
         <Route path="orders" element={<VendorOrders />} />
         <Route path="profile" element={<VendorProfile />} />

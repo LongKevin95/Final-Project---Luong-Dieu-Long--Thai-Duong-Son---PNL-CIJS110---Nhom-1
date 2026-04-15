@@ -5,7 +5,9 @@
   border-radius: 12px;
   padding: 12px;
   box-shadow: 0 10px 20px rgba(2, 6, 23, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .product-card:hover {
@@ -17,12 +19,12 @@
   position: relative;
   display: grid;
   place-items: center;
-  height: 240px;
+  /* height: 240px; */
   aspect-ratio: 1 / 1;
   background: #f4f4f4;
   border-radius: 8px;
   overflow: hidden;
-  padding: 14px;
+
 }
 
 .product-card__media img {
@@ -68,10 +70,11 @@
 }
 
 .product-card__price-row {
-  margin-top: 8px;
+  margin: 8px 0 0 8px;
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .product-card__price {
@@ -94,7 +97,10 @@
 }
 
 .product-card__meta--rating {
-  margin-top: 6px;
+  margin-top: 0;
+  margin-right: 8px;
+  margin-left: auto;
+  flex-wrap: nowrap;
 }
 
 .product-card__shop {

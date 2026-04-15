@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { PRODUCT_STATUS, updateProductById } from "../../api/productApi";
+import {
+  PRODUCT_STATUS,
+  formatProductCategoryLabel,
+  updateProductById,
+} from "../../api/productApi";
 import { useAdminProductsQuery } from "../../hooks/useAdminProductsQuery";
 import { useAuth } from "../../hooks/useAuth";
 import "./VendorDashboard.css";
@@ -9,7 +13,8 @@ import "./VendorDashboard.css";
 export default function VendorProfile() {
   const queryClient = useQueryClient();
   const { user, updateProfile } = useAuth();
-  const { data: products = [] } = useAdminProductsQuery();
+  const { data: products = [], isLoading: isProductsLoading } =
+    useAdminProductsQuery();
 
   const [draftStockById, setDraftStockById] = useState({});
   const [processingProductId, setProcessingProductId] = useState("");
@@ -134,7 +139,8 @@ export default function VendorProfile() {
         id: productId,
         updates: {
           stock: nextStock,
-          status: nextStock > 0 ? PRODUCT_STATUS.ACTIVE : PRODUCT_STATUS.OUT_OF_STOCK,
+          status:
+            nextStock > 0 ? PRODUCT_STATUS.ACTIVE : PRODUCT_STATUS.OUT_OF_STOCK,
         },
       });
 
@@ -247,7 +253,11 @@ export default function VendorProfile() {
         </div>
 
         {vendorProducts.length === 0 ? (
-          <p className="vendor-panel-empty">Your shop has no products yet.</p>
+          <p className="vendor-panel-empty">
+            {isProductsLoading
+              ? "Loading data..."
+              : "Your shop has no products yet."}
+          </p>
         ) : (
           <div className="vendor-table">
             <div className="vendor-table__row vendor-table__row--head">
@@ -270,7 +280,7 @@ export default function VendorProfile() {
               return (
                 <div key={productId} className="vendor-table__row">
                   <span>{product.title}</span>
-                  <span>{product.category}</span>
+                  <span>{formatProductCategoryLabel(product.category)}</span>
                   <span>{Number(product.stock ?? 0)}</span>
                   <span>
                     <input
@@ -287,7 +297,9 @@ export default function VendorProfile() {
                     />
                   </span>
                   <span>
-                    <span className={`vendor-pill vendor-pill--${normalizedStatus}`}>
+                    <span
+                      className={`vendor-pill vendor-pill--${normalizedStatus}`}
+                    >
                       {String(product?.status ?? "unknown")}
                     </span>
                   </span>

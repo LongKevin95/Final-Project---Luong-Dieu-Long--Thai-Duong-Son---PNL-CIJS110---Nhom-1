@@ -46,8 +46,7 @@
 
 .vendor-products-form input,
 .vendor-products-form select,
-.vendor-products-form textarea,
-.vendor-products-table select {
+.vendor-products-form textarea {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   padding: 10px 12px;
@@ -115,6 +114,52 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.vendor-action-btn {
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.vendor-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.vendor-action-btn--icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.vendor-action-btn--icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  color: currentColor;
+}
+
+.vendor-action-btn--edit {
+  background: #3b82f6;
+}
+
+.vendor-action-btn--hide {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.vendor-action-btn--show {
+  background: #3b82f6;
+}
+
+.vendor-action-btn--delete {
+  background: #dc2626;
 }
 
 .vendor-action-spinner {

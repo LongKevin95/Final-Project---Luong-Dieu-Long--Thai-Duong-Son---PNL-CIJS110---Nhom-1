@@ -3,7 +3,11 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
 import ProductCard from "../../components/ProductCard";
-import { addProductReview, upsertVendorReply } from "../../api/productApi";
+import {
+  addProductReview,
+  formatProductCategoryLabel,
+  upsertVendorReply,
+} from "../../api/productApi";
 import { useAdminProductsQuery } from "../../hooks/useAdminProductsQuery";
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
@@ -68,7 +72,9 @@ function ProductDetail() {
       return {
         ...productItem,
         shopName:
-          vendorProfile?.shopName || vendorProfile?.name || productItem?.shopName,
+          vendorProfile?.shopName ||
+          vendorProfile?.name ||
+          productItem?.shopName,
         vendorAvatarUrl:
           vendorProfile?.avatarUrl || productItem?.vendorAvatarUrl,
       };
@@ -86,53 +92,51 @@ function ProductDetail() {
   const [replyTextByReview, setReplyTextByReview] = useState({});
   const [processingReplyKey, setProcessingReplyKey] = useState("");
 
-  const product = useMemo(
-    () => {
-      const matched = products.find((item) => String(item.id) === String(id)) ?? null;
+  const product = useMemo(() => {
+    const matched =
+      products.find((item) => String(item.id) === String(id)) ?? null;
 
-      if (matched) {
-        return withVendorDisplay(matched);
-      }
+    if (matched) {
+      return withVendorDisplay(matched);
+    }
 
-      if (!canInspectHiddenProducts) {
-        return null;
-      }
-
-      const adminMatched =
-        adminProducts.find((item) => String(item.id) === String(id)) ?? null;
-
-      if (!adminMatched) {
-        return null;
-      }
-
-      if (isAdmin) {
-        return withVendorDisplay(adminMatched);
-      }
-
-      const productVendorEmail = String(adminMatched?.vendorEmail ?? "")
-        .trim()
-        .toLowerCase();
-      const currentUserEmail = String(user?.email ?? "")
-        .trim()
-        .toLowerCase();
-
-      if (isVendor && productVendorEmail === currentUserEmail) {
-        return withVendorDisplay(adminMatched);
-      }
-
+    if (!canInspectHiddenProducts) {
       return null;
-    },
-    [
-      adminProducts,
-      canInspectHiddenProducts,
-      id,
-      isAdmin,
-      isVendor,
-      products,
-      user?.email,
-      withVendorDisplay,
-    ],
-  );
+    }
+
+    const adminMatched =
+      adminProducts.find((item) => String(item.id) === String(id)) ?? null;
+
+    if (!adminMatched) {
+      return null;
+    }
+
+    if (isAdmin) {
+      return withVendorDisplay(adminMatched);
+    }
+
+    const productVendorEmail = String(adminMatched?.vendorEmail ?? "")
+      .trim()
+      .toLowerCase();
+    const currentUserEmail = String(user?.email ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (isVendor && productVendorEmail === currentUserEmail) {
+      return withVendorDisplay(adminMatched);
+    }
+
+    return null;
+  }, [
+    adminProducts,
+    canInspectHiddenProducts,
+    id,
+    isAdmin,
+    isVendor,
+    products,
+    user?.email,
+    withVendorDisplay,
+  ]);
 
   const relatedProducts = useMemo(
     () =>
@@ -181,7 +185,9 @@ function ProductDetail() {
   const vendorShopLabel =
     product?.shopName ||
     product?.vendorName ||
-    (product?.vendorEmail ? String(product.vendorEmail).split("@")[0] : "L&S Store");
+    (product?.vendorEmail
+      ? String(product.vendorEmail).split("@")[0]
+      : "L&S Store");
   const isVendorOwnerOfProduct =
     isVendor &&
     String(user?.email ?? "")
@@ -418,7 +424,7 @@ function ProductDetail() {
       <nav className="breadcrumb" aria-label="Breadcrumb">
         <Link to="/">Account</Link>
         <span>&gt;</span>
-        <span>{product.category}</span>
+        <span>{formatProductCategoryLabel(product.category)}</span>
         <span>&gt;</span>
         <strong>{product.title}</strong>
       </nav>
@@ -450,7 +456,9 @@ function ProductDetail() {
               <span className="rating-stars">
                 {"★".repeat(Math.max(1, Math.round(product.rating || 0)))}
               </span>
-              <span className="rating-count">({product.reviews || 0} Reviews)</span>
+              <span className="rating-count">
+                ({product.reviews || 0} Reviews)
+              </span>
               <span
                 className={`stock-state ${
                   isOutOfStock ? "stock-state--out" : "stock-state--in"
@@ -460,7 +468,9 @@ function ProductDetail() {
               </span>
             </div>
 
-            <div className="product-info__price">{currency.format(product.price)}</div>
+            <div className="product-info__price">
+              {currency.format(product.price)}
+            </div>
 
             <p className="product-info__description">{product.description}</p>
             <p className="product-shop-label">Sold by: {vendorShopLabel}</p>
@@ -543,7 +553,14 @@ function ProductDetail() {
                 </button>
               </div>
 
-              {isCustomerAccount ? (
+              {isVendorOwnerOfProduct ? (
+                <Link
+                  className="action-btn action-btn--primary action-btn--link"
+                  to={`/vendor/products?edit=${product.id}`}
+                >
+                  Edit my product
+                </Link>
+              ) : (
                 <>
                   <button
                     type="button"
@@ -563,39 +580,33 @@ function ProductDetail() {
                     Add To Cart
                   </button>
 
-                  <button
-                    type="button"
-                    className="action-btn action-btn--icon"
-                    onClick={handleWishlist}
-                  >
-                    {isFavorite ? "Unfav" : "Fav"}
-                  </button>
+                  {isCustomerAccount && (
+                    <button
+                      type="button"
+                      className="action-btn action-btn--icon"
+                      onClick={handleWishlist}
+                    >
+                      {isFavorite ? "Unfav" : "Fav"}
+                    </button>
+                  )}
                 </>
-              ) : isVendorOwnerOfProduct ? (
-                <Link className="action-btn action-btn--primary action-btn--link" to={`/vendor/products?edit=${product.id}`}>
-                  Edit my product
-                </Link>
-              ) : (
-                <button type="button" className="action-btn action-btn--icon" disabled>
-                  View only
-                </button>
               )}
             </div>
 
             {!user && (
               <p className="product-detail-helper">
-                Bạn có thể xem chi tiết trước. Hãy đăng nhập customer để mua hàng,
-                thêm vào giỏ hoặc lưu vào danh sách yêu thích.
+                Bạn có thể xem chi tiết trước. Hãy đăng nhập customer để mua
+                hàng, thêm vào giỏ hoặc lưu vào danh sách yêu thích.
               </p>
             )}
 
-          {user && !canPurchase && (
-            <p className="product-detail-helper product-detail-helper--warning">
-              Tai khoan {(user.roles ?? []).join(", ") || "khong xac dinh"} khong co
-              quyen mua hang. Vendor chi duoc xem chi tiet va quan ly san pham cua
-              shop minh.
-            </p>
-          )}
+            {user && !canPurchase && (
+              <p className="product-detail-helper product-detail-helper--warning">
+                Tai khoan {(user.roles ?? []).join(", ") || "khong xac dinh"}{" "}
+                khong co quyen mua hang. Vendor chi duoc xem chi tiet va quan ly
+                san pham cua shop minh.
+              </p>
+            )}
 
             <div className="delivery-box">
               <div className="delivery-box__item">
@@ -608,7 +619,6 @@ function ProductDetail() {
               </div>
             </div>
           </div>
-
         </div>
       </section>
 
@@ -617,7 +627,8 @@ function ProductDetail() {
 
         <div className="product-reviews__layout">
           <div className="product-reviews__list-wrap">
-            {Array.isArray(product?.reviewsData) && product.reviewsData.length > 0 ? (
+            {Array.isArray(product?.reviewsData) &&
+            product.reviewsData.length > 0 ? (
               <div className="product-reviews__list">
                 {product.reviewsData.map((reviewItem, index) => (
                   <article
@@ -673,7 +684,9 @@ function ProductDetail() {
                 ))}
               </div>
             ) : (
-              <p className="product-detail-helper">Chua co danh gia nao cho san pham nay.</p>
+              <p className="product-detail-helper">
+                Chua co danh gia nao cho san pham nay.
+              </p>
             )}
           </div>
 
@@ -685,7 +698,9 @@ function ProductDetail() {
               </p>
             )}
             {!user && (
-              <p className="product-review-note">Dang nhap de danh gia san pham.</p>
+              <p className="product-review-note">
+                Dang nhap de danh gia san pham.
+              </p>
             )}
             {user && !userPurchasedThisProduct && (
               <p className="product-review-note">

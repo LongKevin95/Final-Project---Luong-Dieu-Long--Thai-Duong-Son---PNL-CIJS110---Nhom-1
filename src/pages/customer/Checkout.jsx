@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
 import { createOrder } from "../../api/ordersApi";
-import { getAllProducts, updateProductById } from "../../api/productApi";
+import { deductProductStocksForCheckout } from "../../api/productApi";
 import "./Checkout.css";
 
 const currency = new Intl.NumberFormat("en-US", {
@@ -36,6 +36,7 @@ function Checkout() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState(initialFormData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const canPurchase = isCustomer && !isVendor;
   const shipping = items.length > 0 ? DELIVERY_FEE : 0;
@@ -77,6 +78,10 @@ function Checkout() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    if (isSubmitting) {
+      return;
+    }
+
     if (!requireAccess()) return;
 
     if (items.length === 0) {
@@ -106,55 +111,36 @@ function Checkout() {
       return;
     }
 
-    // Trừ stock cho từng sản phẩm khi thanh toán thành công
+    // Trừ stock cho toàn bộ giỏ hàng trong một lần ghi để giảm thời gian xử lý
+    setIsSubmitting(true);
+
     try {
-      const products = await getAllProducts();
-      const stockByProductId = new Map(
-        products.map((product) => [
-          String(product?.id ?? ""),
-          Number(product?.stock ?? 0),
-        ]),
-      );
+      await deductProductStocksForCheckout({ items });
 
-      for (const item of items) {
-        const productId = String(item?.productId ?? "").trim();
-        const quantityToDeduct = Number(item?.quantity ?? 0);
-        const currentStock = Number(stockByProductId.get(productId) ?? 0);
-
-        if (!productId || quantityToDeduct <= 0) {
-          window.alert("Dữ liệu giỏ hàng không hợp lệ. Vui lòng thử lại.");
-          return;
-        }
-
-        if (currentStock < quantityToDeduct) {
-          window.alert(
-            `Sản phẩm trong giỏ đã thay đổi tồn kho. Chỉ còn ${currentStock} sản phẩm cho mã ${productId}.`,
-          );
-          navigate("/cart");
-          return;
-        }
-      }
-
-      for (const item of items) {
-        const productId = String(item?.productId ?? "").trim();
-        const quantityToDeduct = Number(item?.quantity ?? 0);
-        const currentStock = Number(stockByProductId.get(productId) ?? 0);
-
-        await updateProductById({
-          id: productId,
-          updates: {
-            stock: currentStock - quantityToDeduct,
-          },
-        });
-      }
+      const shippingAddress = {
+        fullName:
+          `${String(formData.firstName ?? "").trim()} ${String(formData.lastName ?? "").trim()}`.trim(),
+        phone: String(formData.phone ?? "").trim(),
+        address: String(formData.address ?? "").trim(),
+        city: String(formData.city ?? "").trim(),
+        state: String(formData.state ?? "").trim(),
+        zipCode: String(formData.zipCode ?? "").trim(),
+        country: String(formData.country ?? "").trim(),
+      };
 
       await createOrder({
         customerEmail: String(user?.email ?? "")
           .trim()
           .toLowerCase(),
-        customerName: user?.name ?? user?.email ?? "Customer",
+        customerName:
+          shippingAddress.fullName || user?.name || user?.email || "Customer",
+        contactEmail: String(formData.email ?? "")
+          .trim()
+          .toLowerCase(),
+        customerPhone: shippingAddress.phone,
         status: "pending",
         paymentMethod: formData.paymentMethod,
+        shippingAddress,
         items: items.map((item) => ({
           productId: String(item?.productId ?? ""),
           title: item?.title ?? "Product",
@@ -178,6 +164,8 @@ function Checkout() {
         "Có lỗi xảy ra khi cập nhật số lượng sản phẩm. Vui lòng thử lại.",
       );
       return;
+    } finally {
+      setIsSubmitting(false);
     }
 
     window.alert("Thanh toán thành công!");
@@ -319,11 +307,24 @@ function Checkout() {
           </div>
 
           <p className="checkout-payment-note">
-            Ban chi can chon phuong thuc thanh toan, khong can nhap thong tin the.
+            Ban chi can chon phuong thuc thanh toan, khong can nhap thong tin
+            the.
           </p>
 
-          <button type="submit" className="checkout-submit">
-            Place Order
+          <button
+            type="submit"
+            className="checkout-submit"
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <span className="checkout-submit__spinner" aria-hidden="true" />
+                <span>Processing...</span>
+              </>
+            ) : (
+              <span>Place Order</span>
+            )}
           </button>
         </section>
 

@@ -4,12 +4,11 @@ import { useAdminProductsQuery } from "../../hooks/useAdminProductsQuery";
 import { useAuth } from "../../hooks/useAuth";
 import { useOrdersQuery } from "../../hooks/useOrdersQuery";
 import {
-  extractOrderItems,
-  getItemProductId,
+  extractVendorOrderItems,
   isOrderOfVendor,
   normalizeOrderStatus,
   resolveOrderCustomer,
-  resolveOrderTotal,
+  resolveVendorSubtotal,
 } from "./vendorDataUtils";
 import "./VendorDashboard.css";
 
@@ -21,8 +20,9 @@ const currency = new Intl.NumberFormat("en-US", {
 
 function VendorDashboard() {
   const { user } = useAuth();
-  const { data: products = [] } = useAdminProductsQuery();
-  const { data: orders = [] } = useOrdersQuery();
+  const { data: products = [], isLoading: isProductsLoading } =
+    useAdminProductsQuery();
+  const { data: orders = [], isLoading: isOrdersLoading } = useOrdersQuery();
 
   const vendorEmail = String(user?.email ?? "")
     .trim()
@@ -38,7 +38,10 @@ function VendorDashboard() {
   }, [products, vendorEmail]);
 
   const vendorProductIds = useMemo(
-    () => new Set(vendorProducts.map((product) => String(product?.id ?? "").trim())),
+    () =>
+      new Set(
+        vendorProducts.map((product) => String(product?.id ?? "").trim()),
+      ),
     [vendorProducts],
   );
 
@@ -52,15 +55,17 @@ function VendorDashboard() {
         }),
       )
       .map((order) => {
-        const items = extractOrderItems(order).filter((item) =>
-          vendorProductIds.has(getItemProductId(item)),
+        const items = extractVendorOrderItems(
+          order,
+          vendorEmail,
+          vendorProductIds,
         );
 
         return {
           ...order,
           items,
           status: normalizeOrderStatus(order?.status),
-          total: resolveOrderTotal(order),
+          total: resolveVendorSubtotal(items),
           customer: resolveOrderCustomer(order),
         };
       });
@@ -75,10 +80,9 @@ function VendorDashboard() {
     const pendingOrders = vendorOrders.filter(
       (order) => order.status === "pending",
     ).length;
-    const totalRevenue = vendorOrders.reduce(
-      (sum, order) => sum + Number(order.total ?? 0),
-      0,
-    );
+    const totalRevenue = vendorOrders
+      .filter((order) => order.status === "completed")
+      .reduce((sum, order) => sum + Number(order.total ?? 0), 0);
     const uniqueCustomers = new Set(
       vendorOrders
         .map((order) => order.customer?.email)
@@ -133,7 +137,11 @@ function VendorDashboard() {
         </div>
 
         {recentOrders.length === 0 ? (
-          <p className="vendor-panel-empty">No order data for this shop yet.</p>
+          <p className="vendor-panel-empty">
+            {isProductsLoading || isOrdersLoading
+              ? "Loading data..."
+              : "No order data for this shop yet."}
+          </p>
         ) : (
           <div className="vendor-table">
             <div className="vendor-table__row vendor-table__row--five vendor-table__row--head">

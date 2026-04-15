@@ -64,7 +64,9 @@ export default function MyOrders() {
 
   const handleCustomerCancelOrder = async (order) => {
     const orderId = String(order?.id ?? "").trim();
-    const status = String(order?.status ?? "").trim().toLowerCase();
+    const status = String(order?.status ?? "")
+      .trim()
+      .toLowerCase();
 
     if (!orderId || status === "cancelled" || status === "canceled") {
       return;
@@ -82,6 +84,7 @@ export default function MyOrders() {
 
       await updateOrderById({
         id: orderId,
+        actor: "customer",
         updates: {
           status: "cancelled",
           cancellation: {
@@ -137,7 +140,8 @@ export default function MyOrders() {
             {myOrders.map((order, index) => {
               const orderId = String(order?.id ?? "");
               const status = String(order?.status ?? "").toLowerCase();
-              const isCancelled = status === "cancelled" || status === "canceled";
+              const isCancelled =
+                status === "cancelled" || status === "canceled";
               const isPending = status === "pending";
               const orderItems = Array.isArray(order?.items) ? order.items : [];
 
@@ -153,7 +157,8 @@ export default function MyOrders() {
                   orderItem?.shopName ||
                   (vendorEmail ? vendorEmail.split("@")[0] : "Shop");
                 const avatarUrl = String(vendorProfile?.avatarUrl ?? "").trim();
-                const shopKey = vendorEmail || String(shopName).trim().toLowerCase();
+                const shopKey =
+                  vendorEmail || String(shopName).trim().toLowerCase();
 
                 if (!shopKey || uniqueShopMap.has(shopKey)) {
                   continue;
@@ -183,7 +188,10 @@ export default function MyOrders() {
                   <span>{orderItems.length}</span>
                   <span>
                     <span className="my-orders-shop">
-                      <span className="my-orders-shop__avatar" aria-hidden="true">
+                      <span
+                        className="my-orders-shop__avatar"
+                        aria-hidden="true"
+                      >
                         {firstShopAvatar ? (
                           <img src={firstShopAvatar} alt="" loading="lazy" />
                         ) : (
@@ -198,7 +206,9 @@ export default function MyOrders() {
                   </span>
                   <span>{currency.format(Number(order?.total ?? 0))}</span>
                   <span>
-                    <span className={`my-orders-pill my-orders-pill--${status}`}>
+                    <span
+                      className={`my-orders-pill my-orders-pill--${status}`}
+                    >
                       {status || "pending"}
                     </span>
                   </span>
@@ -231,10 +241,16 @@ export default function MyOrders() {
                     <button
                       type="button"
                       className="my-orders-btn"
-                      disabled={!isPending || isCancelled || processingOrderId === orderId}
+                      disabled={
+                        !isPending ||
+                        isCancelled ||
+                        processingOrderId === orderId
+                      }
                       onClick={() => handleCustomerCancelOrder(order)}
                     >
-                      {processingOrderId === orderId ? "Cancelling..." : "Cancel"}
+                      {processingOrderId === orderId
+                        ? "Cancelling..."
+                        : "Cancel"}
                     </button>
                   </span>
                 </div>

@@ -16,9 +16,15 @@ function ProductCard({ product }) {
   const shopLabel =
     product?.shopName ||
     product?.vendorName ||
-    (product?.vendorEmail ? String(product.vendorEmail).split("@")[0] : "L&S Store");
+    (product?.vendorEmail
+      ? String(product.vendorEmail).split("@")[0]
+      : "L&S Store");
   const shopAvatar = String(product?.vendorAvatarUrl ?? "").trim();
-  const shopInitial = String(shopLabel ?? "S").trim().charAt(0).toUpperCase() || "S";
+  const shopInitial =
+    String(shopLabel ?? "S")
+      .trim()
+      .charAt(0)
+      .toUpperCase() || "S";
   const ratingStars = Math.max(1, Math.round(Number(product.rating ?? 0)));
 
   return (
@@ -46,23 +52,27 @@ function ProductCard({ product }) {
               {currency.format(product.oldPrice)}
             </span>
           )}
+
+          <div className="product-card__meta product-card__meta--rating">
+            <span className="product-card__rating">
+              {"★".repeat(ratingStars)}
+            </span>
+            <span className="product-card__reviews">
+              ({product.reviews || 0})
+            </span>
+          </div>
         </div>
 
         <div className="product-card__meta">
           <span className="product-card__shop">
             <span className="product-card__shop-avatar" aria-hidden="true">
-              {shopAvatar ? <img src={shopAvatar} alt="" loading="lazy" /> : <span>{shopInitial}</span>}
+              {shopAvatar ? (
+                <img src={shopAvatar} alt="" loading="lazy" />
+              ) : (
+                <span>{shopInitial}</span>
+              )}
             </span>
             Shop: {shopLabel}
-          </span>
-        </div>
-
-        <div className="product-card__meta product-card__meta--rating">
-          <span className="product-card__rating">
-            {"★".repeat(ratingStars)}
-          </span>
-          <span className="product-card__reviews">
-            ({product.reviews || 0})
           </span>
         </div>
       </div>

@@ -17,7 +17,7 @@
 }
 
 .signin-container {
-  min-height: 50vh;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -28,7 +28,7 @@
 .signin {
   background: #fff;
   width: 450px;
-  margin-top: 20px;
+  margin-bottom: 80px;
   padding: 40px 30px;
   border-radius: 20px;
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);

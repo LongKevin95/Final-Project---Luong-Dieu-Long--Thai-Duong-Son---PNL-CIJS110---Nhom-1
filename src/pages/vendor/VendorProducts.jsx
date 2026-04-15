@@ -31,32 +31,32 @@ const defaultForm = {
 const categoryOptions = [
   {
     value: "fashion-nam",
-    label: "Fashion nam",
+    label: "Men Fashion",
     flags: { useSizes: true, useColors: true, useFashionFields: true },
   },
   {
     value: "fashion-nu",
-    label: "Fashion nu",
+    label: "Women Fashion",
     flags: { useSizes: true, useColors: true, useFashionFields: true },
   },
   {
     value: "do-gia-dung",
-    label: "Do gia dung",
+    label: "Home",
     flags: { useSizes: false, useColors: false, useHomeFields: true },
   },
   {
     value: "dien-tu",
-    label: "Dien tu",
+    label: "Electronics",
     flags: { useSizes: false, useColors: false, useElectronicsFields: true },
   },
   {
     value: "thuc-pham",
-    label: "Thuc pham",
+    label: "Food",
     flags: { useSizes: false, useColors: false, useFoodFields: true },
   },
   {
-    value: "test-san-pham",
-    label: "Test san pham",
+    value: "others",
+    label: "Others",
     flags: { useSizes: false, useColors: false },
   },
 ];
@@ -84,6 +84,104 @@ function readFileAsDataUrl(file) {
     reader.onerror = () => reject(new Error("Không thể đọc ảnh vừa chọn."));
     reader.readAsDataURL(file);
   });
+}
+
+function EditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M14 5h-5a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h6a4 4 0 0 0 4-4v-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m15 4 5 5M12 12l8-8M11 13l-1 3 3-1"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r="2.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M3 3 21 21"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10.7 6.2A10.6 10.6 0 0 1 12 6c6.5 0 10 6 10 6a17.5 17.5 0 0 1-3.2 3.9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6.1 6.9A17.8 17.8 0 0 0 2 12s3.5 6 10 6c1.1 0 2.1-.2 3.1-.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10.6 10.6a2 2 0 0 0 2.8 2.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M6 6 18 18M18 6 6 18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
 }
 
 export default function VendorProducts() {
@@ -126,7 +224,11 @@ export default function VendorProducts() {
 
   const categories = useMemo(() => {
     const fromData = products
-      .map((product) => String(product?.category ?? "").trim().toLowerCase())
+      .map((product) =>
+        String(product?.category ?? "")
+          .trim()
+          .toLowerCase(),
+      )
       .filter(Boolean);
     const predefinedValues = categoryOptions.map((item) => item.value);
 
@@ -146,8 +248,9 @@ export default function VendorProducts() {
     }
 
     return (
-      vendorProducts.find((product) => String(product?.id) === String(editingId)) ??
-      null
+      vendorProducts.find(
+        (product) => String(product?.id) === String(editingId),
+      ) ?? null
     );
   }, [editingId, vendorProducts]);
 
@@ -164,7 +267,9 @@ export default function VendorProducts() {
       description: product.description ?? "",
       price: String(product.price ?? ""),
       stock: String(product.stock ?? 0),
-      colorsText: Array.isArray(product.colors) ? product.colors.join(", ") : "",
+      colorsText: Array.isArray(product.colors)
+        ? product.colors.join(", ")
+        : "",
       sizesText: Array.isArray(product.sizes) ? product.sizes.join(", ") : "",
       brand: String(product?.attributes?.brand ?? ""),
       material: String(product?.attributes?.material ?? ""),
@@ -691,29 +796,52 @@ export default function VendorProducts() {
                   </span>
                   <span>
                     <span className="vendor-action-control">
-                      <select
-                        defaultValue=""
-                        disabled={isSaving}
-                        onChange={(event) => {
-                          const action = event.target.value;
-                          event.target.value = "";
-                          handleAction(product, action);
-                        }}
-                      >
-                        <option value="">Select</option>
-                        {!isRejected && (
-                          <option value="edit">Edit</option>
-                        )}
-                        {isInactive ? (
-                          <option value="show">Show</option>
-                        ) : (
-                          <option value="hide">Hide</option>
-                        )}
-                        <option value="delete">Delete</option>
-                      </select>
                       {isRowUpdating && (
                         <span className="vendor-action-spinner" />
                       )}
+
+                      {!isRejected && (
+                        <button
+                          type="button"
+                          className="vendor-action-btn vendor-action-btn--icon vendor-action-btn--edit"
+                          disabled={isSaving}
+                          onClick={() => handleAction(product, "edit")}
+                          title="Edit"
+                          aria-label="Edit product"
+                        >
+                          <EditIcon />
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className={`vendor-action-btn vendor-action-btn--icon ${
+                          isInactive
+                            ? "vendor-action-btn--show"
+                            : "vendor-action-btn--hide"
+                        }`}
+                        disabled={isSaving}
+                        onClick={() =>
+                          handleAction(product, isInactive ? "show" : "hide")
+                        }
+                        title={isInactive ? "Show" : "Hide"}
+                        aria-label={
+                          isInactive ? "Show product" : "Hide product"
+                        }
+                      >
+                        {isInactive ? <EyeIcon /> : <EyeOffIcon />}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="vendor-action-btn vendor-action-btn--icon vendor-action-btn--delete"
+                        disabled={isSaving}
+                        onClick={() => handleAction(product, "delete")}
+                        title="Delete"
+                        aria-label="Delete product"
+                      >
+                        <XIcon />
+                      </button>
                     </span>
                   </span>
                 </div>
