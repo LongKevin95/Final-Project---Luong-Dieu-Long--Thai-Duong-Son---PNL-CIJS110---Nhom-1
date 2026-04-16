@@ -252,8 +252,9 @@ function normalizeOrder(order) {
   };
 }
 
-async function persistOrders(nextOrders) {
-  const { payload, dataId } = await fetchOrdersSnapshot();
+async function persistOrders(nextOrders, snapshot) {
+  const resolvedSnapshot = snapshot ?? (await fetchOrdersSnapshot());
+  const { payload, dataId } = resolvedSnapshot;
 
   await updateResourceData({
     resourceName: ORDERS_RESOURCE_NAME,
@@ -271,7 +272,8 @@ export const getOrders = async () => {
 };
 
 export const createOrder = async (payload) => {
-  const { orders } = await fetchOrdersSnapshot();
+  const snapshot = await fetchOrdersSnapshot();
+  const { orders } = snapshot;
   const createdAt = new Date().toISOString();
 
   const nextOrder = normalizeOrder({
@@ -283,7 +285,7 @@ export const createOrder = async (payload) => {
     updatedAt: createdAt,
   });
 
-  await persistOrders([nextOrder, ...orders]);
+  await persistOrders([nextOrder, ...orders], snapshot);
   return nextOrder;
 };
 
@@ -294,13 +296,14 @@ export const updateOrderById = async ({ id, updates, actor }) => {
     throw new Error("Missing order id.");
   }
 
-  const { orders } = await fetchOrdersSnapshot();
+  const snapshot = await fetchOrdersSnapshot();
+  const { orders } = snapshot;
   let updatedOrder = null;
   const normalizedActor = normalizeText(actor ?? "system").toLowerCase();
 
   const nextOrders = orders.map((order) => {
     if (String(order?.id ?? "") !== normalizedId) {
-      return normalizeOrder(order);
+      return order;
     }
 
     const currentOrder = normalizeOrder(order);
@@ -359,6 +362,6 @@ export const updateOrderById = async ({ id, updates, actor }) => {
     throw new Error("Order not found.");
   }
 
-  await persistOrders(nextOrders);
+  await persistOrders(nextOrders, snapshot);
   return updatedOrder;
 };

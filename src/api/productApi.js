@@ -210,7 +210,37 @@ function normalizeProduct(product) {
   };
 }
 
-async function writeProductsSnapshot(snapshot, nextProducts) {
+function hasShopAggregationImpact(currentProduct, nextProduct) {
+  const currentVendorEmail = String(currentProduct?.vendorEmail ?? "")
+    .trim()
+    .toLowerCase();
+  const nextVendorEmail = String(nextProduct?.vendorEmail ?? "")
+    .trim()
+    .toLowerCase();
+  const currentCategory = String(currentProduct?.category ?? "")
+    .trim()
+    .toLowerCase();
+  const nextCategory = String(nextProduct?.category ?? "")
+    .trim()
+    .toLowerCase();
+  const currentShopName = String(currentProduct?.shopName ?? "").trim();
+  const nextShopName = String(nextProduct?.shopName ?? "").trim();
+  const currentStock = Number(currentProduct?.stock ?? 0);
+  const nextStock = Number(nextProduct?.stock ?? 0);
+
+  return (
+    currentVendorEmail !== nextVendorEmail ||
+    currentCategory !== nextCategory ||
+    currentShopName !== nextShopName ||
+    currentStock !== nextStock
+  );
+}
+
+async function writeProductsSnapshot(
+  snapshot,
+  nextProducts,
+  { syncShops = true } = {},
+) {
   const { payload, dataId } = snapshot;
 
   await updateResourceData({
@@ -222,12 +252,14 @@ async function writeProductsSnapshot(snapshot, nextProducts) {
     },
   });
 
-  await syncShopsFromProducts(nextProducts);
+  if (syncShops) {
+    await syncShopsFromProducts(nextProducts);
+  }
 }
 
-async function persistProducts(nextProducts) {
-  const snapshot = await fetchProductsSnapshot();
-  await writeProductsSnapshot(snapshot, nextProducts);
+async function persistProducts(nextProducts, snapshot, options) {
+  const resolvedSnapshot = snapshot ?? (await fetchProductsSnapshot());
+  await writeProductsSnapshot(resolvedSnapshot, nextProducts, options);
 }
 
 export const getAllProducts = async () => {
@@ -245,7 +277,8 @@ export const getProducts = async () => {
 };
 
 export const createProduct = async (payload) => {
-  const { products } = await fetchProductsSnapshot();
+  const snapshot = await fetchProductsSnapshot();
+  const { products } = snapshot;
 
   const nextProduct = normalizeProduct({
     ...payload,
@@ -263,7 +296,7 @@ export const createProduct = async (payload) => {
     updatedAt: new Date().toISOString(),
   });
 
-  await persistProducts([...products, nextProduct]);
+  await persistProducts([...products, nextProduct], snapshot);
   return nextProduct;
 };
 
@@ -274,25 +307,35 @@ export const updateProductById = async ({ id, updates }) => {
     throw new Error("Missing product id.");
   }
 
-  const { products } = await fetchProductsSnapshot();
+  const snapshot = await fetchProductsSnapshot();
+  const { products } = snapshot;
   let updatedProduct = null;
+  let shouldSyncShops = false;
+  const updatedAt = new Date().toISOString();
 
   const nextProducts = products.map((product) => {
     if (String(product?.id) !== normalizedId) {
-      return normalizeProduct(product);
+      return product;
     }
 
     const nextItem = normalizeProduct({
       ...product,
       ...updates,
-      updatedAt: new Date().toISOString(),
+      updatedAt,
     });
 
     updatedProduct = nextItem;
+    shouldSyncShops = hasShopAggregationImpact(product, nextItem);
     return nextItem;
   });
 
-  await persistProducts(nextProducts);
+  if (!updatedProduct) {
+    throw new Error("Product not found.");
+  }
+
+  await persistProducts(nextProducts, snapshot, {
+    syncShops: shouldSyncShops,
+  });
 
   return updatedProduct;
 };
@@ -345,24 +388,32 @@ export const deductProductStocksForCheckout = async ({ items }) => {
   }
 
   const updatedAt = new Date().toISOString();
+  let shouldSyncShops = false;
   const nextProducts = products.map((product) => {
     const productId = String(product?.id ?? "").trim();
     const quantityToDeduct = deductions.get(productId);
 
     if (!quantityToDeduct) {
-      return normalizeProduct(product);
+      return product;
     }
 
     const currentStock = Number(product?.stock ?? 0);
+    const nextStock = currentStock - quantityToDeduct;
+
+    if (currentStock > 0 && nextStock <= 0) {
+      shouldSyncShops = true;
+    }
 
     return normalizeProduct({
       ...product,
-      stock: currentStock - quantityToDeduct,
+      stock: nextStock,
       updatedAt,
     });
   });
 
-  await writeProductsSnapshot(snapshot, nextProducts);
+  await writeProductsSnapshot(snapshot, nextProducts, {
+    syncShops: shouldSyncShops,
+  });
   return nextProducts;
 };
 
@@ -373,12 +424,13 @@ export const removeProductById = async (id) => {
     throw new Error("Missing product id.");
   }
 
-  const { products } = await fetchProductsSnapshot();
-  const nextProducts = products
-    .filter((product) => String(product?.id) !== normalizedId)
-    .map(normalizeProduct);
+  const snapshot = await fetchProductsSnapshot();
+  const { products } = snapshot;
+  const nextProducts = products.filter(
+    (product) => String(product?.id) !== normalizedId,
+  );
 
-  await persistProducts(nextProducts);
+  await persistProducts(nextProducts, snapshot);
 };
 
 export const addProductReview = async ({ productId, review }) => {
@@ -403,12 +455,13 @@ export const addProductReview = async ({ productId, review }) => {
     throw new Error("Review is missing required fields.");
   }
 
-  const { products } = await fetchProductsSnapshot();
+  const snapshot = await fetchProductsSnapshot();
+  const { products } = snapshot;
   let updatedProduct = null;
 
   const nextProducts = products.map((product) => {
     if (String(product?.id) !== normalizedProductId) {
-      return normalizeProduct(product);
+      return product;
     }
 
     const previousReviews = Array.isArray(product?.reviewsData)
@@ -436,7 +489,13 @@ export const addProductReview = async ({ productId, review }) => {
     return nextItem;
   });
 
-  await persistProducts(nextProducts);
+  if (!updatedProduct) {
+    throw new Error("Product not found.");
+  }
+
+  await persistProducts(nextProducts, snapshot, {
+    syncShops: false,
+  });
   return updatedProduct;
 };
 
@@ -467,12 +526,13 @@ export const upsertVendorReply = async ({
     throw new Error("Missing required fields for vendor reply.");
   }
 
-  const { products } = await fetchProductsSnapshot();
+  const snapshot = await fetchProductsSnapshot();
+  const { products } = snapshot;
   let updatedProduct = null;
 
   const nextProducts = products.map((product) => {
     if (String(product?.id) !== normalizedProductId) {
-      return normalizeProduct(product);
+      return product;
     }
 
     const productVendorEmail = String(product?.vendorEmail ?? "")
@@ -521,6 +581,8 @@ export const upsertVendorReply = async ({
     throw new Error("Product not found.");
   }
 
-  await persistProducts(nextProducts);
+  await persistProducts(nextProducts, snapshot, {
+    syncShops: false,
+  });
   return updatedProduct;
 };

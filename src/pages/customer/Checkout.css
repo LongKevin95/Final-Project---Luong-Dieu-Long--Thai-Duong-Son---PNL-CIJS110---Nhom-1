@@ -3,6 +3,7 @@
 }
 
 .checkout-layout {
+  margin-top: 24px;
   display: grid;
   grid-template-columns: 1.3fr 0.9fr;
   gap: 24px;
@@ -17,16 +18,16 @@
 }
 
 .checkout-form {
-  padding: 24px;
+  padding: 18px 24px;
 }
 
 .checkout-form h1 {
-  margin: 0 0 18px;
+  margin: 0 0 14px;
   font-size: 32px;
 }
 
 .checkout-form h2 {
-  margin: 22px 0 14px;
+  margin: 14px 0;
   font-size: 24px;
 }
 
@@ -34,7 +35,7 @@
   display: block;
   font-size: 14px;
   color: #555;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .checkout-form input {
@@ -226,6 +227,56 @@
   font-weight: 600;
 }
 
+.checkout-success-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.checkout-success-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.checkout-success-modal__card {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 460px);
+  border-radius: 20px;
+  background: #fff;
+  padding: 32px 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  text-align: center;
+}
+
+.checkout-success-modal__card h2 {
+  margin: 0 0 20px;
+  font-size: 28px;
+  line-height: 1.3;
+  color: #0f172a;
+}
+
+.checkout-success-modal__button {
+  border: 0;
+  border-radius: 999px;
+  min-width: 220px;
+  height: 46px;
+  padding: 0 20px;
+  background: #111;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.checkout-success-modal__button:hover {
+  opacity: 0.92;
+}
+
 @media (max-width: 1000px) {
   .checkout-layout {
     grid-template-columns: 1fr;
@@ -244,5 +295,18 @@
   .checkout-grid-two,
   .checkout-grid-three {
     grid-template-columns: 1fr;
+  }
+
+  .checkout-success-modal__card {
+    padding: 28px 20px;
+  }
+
+  .checkout-success-modal__card h2 {
+    font-size: 24px;
+  }
+
+  .checkout-success-modal__button {
+    width: 100%;
+    min-width: 0;
   }
 }

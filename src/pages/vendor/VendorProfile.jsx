@@ -144,8 +144,10 @@ export default function VendorProfile() {
         },
       });
 
-      await queryClient.invalidateQueries({ queryKey: ["products", "admin"] });
-      await queryClient.invalidateQueries({ queryKey: ["products", "public"] });
+      void Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ["products", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["products", "public"] }),
+      ]);
     } finally {
       setProcessingProductId("");
     }

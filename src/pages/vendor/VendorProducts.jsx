@@ -438,12 +438,12 @@ export default function VendorProducts() {
     try {
       setIsSaving(true);
 
-      const uploadedThumbnail = selectedThumbnailFile
-        ? await readFileAsDataUrl(selectedThumbnailFile)
-        : "";
-      const uploadedGalleryImages = await Promise.all(
-        selectedGalleryFiles.map((file) => readFileAsDataUrl(file)),
-      );
+      const [uploadedThumbnail, uploadedGalleryImages] = await Promise.all([
+        selectedThumbnailFile ? readFileAsDataUrl(selectedThumbnailFile) : "",
+        Promise.all(
+          selectedGalleryFiles.map((file) => readFileAsDataUrl(file)),
+        ),
+      ]);
 
       const previousThumbnail = getProductThumbnail(editingProduct);
       const previousGalleryImages = getProductGalleryImages(editingProduct);
@@ -455,7 +455,6 @@ export default function VendorProducts() {
 
       if (!thumbnail) {
         setErrorMessage("Bạn cần upload ảnh đại diện cho sản phẩm.");
-        setIsSaving(false);
         return;
       }
 
@@ -468,7 +467,6 @@ export default function VendorProducts() {
 
       if (selectedCategoryConfig.flags.useSizes && sizes.length === 0) {
         setErrorMessage("Danh muc fashion can nhap it nhat 1 size.");
-        setIsSaving(false);
         return;
       }
 
@@ -526,9 +524,11 @@ export default function VendorProducts() {
         });
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["products", "admin"] });
-      await queryClient.invalidateQueries({ queryKey: ["products", "public"] });
       resetForm();
+      void Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ["products", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["products", "public"] }),
+      ]);
     } catch (error) {
       setErrorMessage(
         error?.message ?? "Không thể lưu sản phẩm. Vui lòng thử lại.",
@@ -578,8 +578,10 @@ export default function VendorProducts() {
         await removeProductById(product.id);
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["products", "admin"] });
-      await queryClient.invalidateQueries({ queryKey: ["products", "public"] });
+      void Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ["products", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["products", "public"] }),
+      ]);
     } catch (error) {
       setErrorMessage(error?.message ?? "Không thể xử lý action sản phẩm.");
     } finally {
