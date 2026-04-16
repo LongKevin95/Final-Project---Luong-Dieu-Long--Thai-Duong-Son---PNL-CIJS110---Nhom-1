@@ -119,6 +119,18 @@ function getSelectedFileKey(file) {
   return [file?.name ?? "", file?.size ?? 0, file?.lastModified ?? 0].join("-");
 }
 
+function getStoredImageLabel(image, fallbackLabel) {
+  const value = String(image ?? "").trim();
+
+  if (!value || value.startsWith("data:")) {
+    return fallbackLabel;
+  }
+
+  const normalizedPath = value.split("?")[0]?.split("#")[0] ?? "";
+  const pathSegments = normalizedPath.split("/").filter(Boolean);
+  return pathSegments[pathSegments.length - 1] || fallbackLabel;
+}
+
 function EditIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -224,8 +236,11 @@ export default function VendorProducts() {
   const { data: products = [], isLoading, isError } = useAdminProductsQuery();
 
   const [form, setForm] = useState(defaultForm);
+  const [existingThumbnail, setExistingThumbnail] = useState("");
+  const [existingGalleryImages, setExistingGalleryImages] = useState([]);
   const [selectedThumbnailFile, setSelectedThumbnailFile] = useState(null);
   const [selectedGalleryFiles, setSelectedGalleryFiles] = useState([]);
+  const [imagePendingRemoval, setImagePendingRemoval] = useState(null);
   const [editingId, setEditingId] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [processingProductId, setProcessingProductId] = useState("");
@@ -276,18 +291,6 @@ export default function VendorProducts() {
     );
   }, [form.category]);
 
-  const editingProduct = useMemo(() => {
-    if (!editingId) {
-      return null;
-    }
-
-    return (
-      vendorProducts.find(
-        (product) => String(product?.id) === String(editingId),
-      ) ?? null
-    );
-  }, [editingId, vendorProducts]);
-
   const editProductIdFromQuery = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return String(params.get("edit") ?? "").trim();
@@ -312,8 +315,11 @@ export default function VendorProducts() {
       expiryDate: String(product?.attributes?.expiryDate ?? ""),
       weight: String(product?.attributes?.weight ?? ""),
     });
+    setExistingThumbnail(getProductThumbnail(product));
+    setExistingGalleryImages(getProductGalleryImages(product));
     setSelectedThumbnailFile(null);
     setSelectedGalleryFiles([]);
+    setImagePendingRemoval(null);
     setErrorMessage("");
   }
 
@@ -360,6 +366,31 @@ export default function VendorProducts() {
     }
   }
 
+  function handleRequestRemoveExistingThumbnail() {
+    if (!existingThumbnail) {
+      return;
+    }
+
+    setImagePendingRemoval({
+      type: "thumbnail",
+      image: existingThumbnail,
+      label: getStoredImageLabel(existingThumbnail, "Thumbnail hiện tại"),
+    });
+
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+  }
+
+  function handleRemoveExistingThumbnail() {
+    setExistingThumbnail("");
+    setImagePendingRemoval(null);
+
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+  }
+
   function handleSelectGalleryFiles(event) {
     const files = Array.from(event.target.files ?? []);
     setSelectedGalleryFiles((prev) => {
@@ -398,10 +429,53 @@ export default function VendorProducts() {
     }
   }
 
+  function handleRequestRemoveExistingGalleryImage(imageToRemove, index) {
+    setImagePendingRemoval({
+      type: "gallery",
+      image: imageToRemove,
+      label: getStoredImageLabel(imageToRemove, `Gallery image ${index + 1}`),
+    });
+
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+  }
+
+  function handleRemoveExistingGalleryImage(imageToRemove) {
+    setExistingGalleryImages((prev) =>
+      prev.filter((image) => image !== imageToRemove),
+    );
+    setImagePendingRemoval(null);
+
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+  }
+
+  function handleCancelImageRemoval() {
+    setImagePendingRemoval(null);
+  }
+
+  function handleConfirmImageRemoval() {
+    if (!imagePendingRemoval) {
+      return;
+    }
+
+    if (imagePendingRemoval.type === "thumbnail") {
+      handleRemoveExistingThumbnail();
+      return;
+    }
+
+    handleRemoveExistingGalleryImage(imagePendingRemoval.image);
+  }
+
   function resetForm() {
     setForm(defaultForm);
+    setExistingThumbnail("");
+    setExistingGalleryImages([]);
     setSelectedThumbnailFile(null);
     setSelectedGalleryFiles([]);
+    setImagePendingRemoval(null);
     setEditingId("");
     setErrorMessage("");
   }
@@ -445,13 +519,13 @@ export default function VendorProducts() {
         ),
       ]);
 
-      const previousThumbnail = getProductThumbnail(editingProduct);
-      const previousGalleryImages = getProductGalleryImages(editingProduct);
-      const thumbnail = uploadedThumbnail || previousThumbnail;
-      const images =
-        uploadedGalleryImages.length > 0
-          ? [...new Set(uploadedGalleryImages.filter(Boolean))]
-          : [...new Set(previousGalleryImages.filter(Boolean))];
+      const thumbnail = uploadedThumbnail || existingThumbnail;
+      const images = [
+        ...new Set([
+          ...existingGalleryImages.filter(Boolean),
+          ...uploadedGalleryImages.filter(Boolean),
+        ]),
+      ];
 
       if (!thumbnail) {
         setErrorMessage("Bạn cần upload ảnh đại diện cho sản phẩm.");
@@ -688,6 +762,22 @@ export default function VendorProducts() {
                   onChange={handleSelectThumbnailFile}
                 />
 
+                {existingThumbnail && (
+                  <div className="vendor-products-image-list">
+                    <button
+                      type="button"
+                      className="vendor-products-image-thumb"
+                      onClick={handleRequestRemoveExistingThumbnail}
+                      title={`Xóa ảnh ${getStoredImageLabel(
+                        existingThumbnail,
+                        "Thumbnail hiện tại",
+                      )}`}
+                    >
+                      <img src={existingThumbnail} alt="Current thumbnail" />
+                    </button>
+                  </div>
+                )}
+
                 {selectedThumbnailFile && (
                   <div className="vendor-products-file-list">
                     <button
@@ -712,6 +802,27 @@ export default function VendorProducts() {
                   accept="image/*"
                   onChange={handleSelectGalleryFiles}
                 />
+
+                {existingGalleryImages.length > 0 && (
+                  <div className="vendor-products-image-list">
+                    {existingGalleryImages.map((image, index) => (
+                      <button
+                        key={`${String(image)}-${index}`}
+                        type="button"
+                        className="vendor-products-image-thumb"
+                        onClick={() =>
+                          handleRequestRemoveExistingGalleryImage(image, index)
+                        }
+                        title={`Xóa ảnh ${getStoredImageLabel(
+                          image,
+                          `Gallery image ${index + 1}`,
+                        )}`}
+                      >
+                        <img src={image} alt={`Current gallery ${index + 1}`} />
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {selectedGalleryFiles.length > 0 && (
                   <div className="vendor-products-file-list">
@@ -1019,6 +1130,36 @@ export default function VendorProducts() {
           </div>
         )}
       </section>
+
+      {imagePendingRemoval && (
+        <div className="vendor-products-modal" role="dialog" aria-modal="true">
+          <div
+            className="vendor-products-modal__backdrop"
+            onClick={handleCancelImageRemoval}
+          />
+          <div className="vendor-products-modal__card">
+            <p className="vendor-products-modal__title">
+              Bạn muốn xóa ảnh này?
+            </p>
+            <div className="vendor-products-modal__actions">
+              <button
+                type="button"
+                className="vendor-products-modal__button vendor-products-modal__button--danger"
+                onClick={handleConfirmImageRemoval}
+              >
+                Xóa
+              </button>
+              <button
+                type="button"
+                className="vendor-products-modal__button vendor-products-modal__button--neutral"
+                onClick={handleCancelImageRemoval}
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
