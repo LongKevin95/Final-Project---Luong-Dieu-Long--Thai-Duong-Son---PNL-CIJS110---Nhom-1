@@ -103,6 +103,8 @@ function ProductDetail() {
   const [showStockModal, setShowStockModal] = useState(false);
   const [stockMessage, setStockMessage] = useState("");
   const [selectedColorByProduct, setSelectedColorByProduct] = useState({});
+  const [selectedGalleryImageByProduct, setSelectedGalleryImageByProduct] =
+    useState({});
   const [selectedSizeByProduct, setSelectedSizeByProduct] = useState({});
   const [replyTextByReview, setReplyTextByReview] = useState({});
   const [processingReplyKey, setProcessingReplyKey] = useState("");
@@ -187,6 +189,13 @@ function ProductDetail() {
 
     return uniqueImages.slice(0, 4);
   }, [product]);
+
+  const selectedGalleryImage =
+    galleryImages.find(
+      (image) => image === selectedGalleryImageByProduct[id],
+    ) ??
+    galleryImages[0] ??
+    fallbackImage;
 
   const productColors = Array.isArray(product?.colors) ? product.colors : [];
   const productSizes = Array.isArray(product?.sizes) ? product.sizes : [];
@@ -350,12 +359,21 @@ function ProductDetail() {
 
       <section className="product-detail-layout">
         <div className="product-gallery">
-          <div className="product-gallery__thumbs" aria-hidden="true">
+          <div className="product-gallery__thumbs">
             {galleryImages.map((image, index) => (
               <button
                 key={`thumb-${index}`}
                 type="button"
-                className="product-gallery__thumb"
+                className={`product-gallery__thumb ${
+                  selectedGalleryImage === image ? "is-active" : ""
+                }`}
+                onClick={() =>
+                  setSelectedGalleryImageByProduct((previous) => ({
+                    ...previous,
+                    [id]: image,
+                  }))
+                }
+                aria-pressed={selectedGalleryImage === image}
               >
                 <img src={image} alt="" />
               </button>
@@ -363,7 +381,7 @@ function ProductDetail() {
           </div>
 
           <div className="product-gallery__main">
-            <img src={galleryImages[0]} alt={product.title} />
+            <img src={selectedGalleryImage} alt={product.title} />
           </div>
         </div>
 

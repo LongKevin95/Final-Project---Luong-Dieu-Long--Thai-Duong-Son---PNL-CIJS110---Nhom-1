@@ -49,6 +49,14 @@
   overflow: hidden;
   display: grid;
   place-items: center;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.product-gallery__thumb.is-active {
+  border-color: #111827;
+  box-shadow: 0 0 0 2px rgba(17, 24, 39, 0.12);
 }
 
 .product-gallery__thumb img {
