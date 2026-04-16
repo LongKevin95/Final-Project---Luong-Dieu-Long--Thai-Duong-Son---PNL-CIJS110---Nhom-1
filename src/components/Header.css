@@ -110,7 +110,7 @@
 
 .header-wrapper {
   width: 100%;
-  padding: 16px 0;
+  padding: 22px 0;
 }
 
 .header-top {
@@ -313,7 +313,7 @@ button.header-action {
 }
 
 .header-nav {
-  padding-top: 12px;
+  padding-top: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
