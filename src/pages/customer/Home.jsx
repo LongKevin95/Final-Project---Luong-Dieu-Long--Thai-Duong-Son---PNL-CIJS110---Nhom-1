@@ -25,6 +25,17 @@ function normalizeSearchText(value) {
     .replace(/[^a-z0-9]+/g, "");
 }
 
+function buildProductSearchIndex(product) {
+  const title = String(product?.title ?? "");
+  const categoryValue = String(product?.category ?? "");
+  const categoryLabel = formatProductCategoryLabel(categoryValue);
+
+  return [title, categoryValue, categoryLabel]
+    .map(normalizeSearchText)
+    .filter(Boolean)
+    .join(" ");
+}
+
 function Home() {
   const [searchParams] = useSearchParams();
 
@@ -35,57 +46,75 @@ function Home() {
 
   const keyword = (searchParams.get("q") ?? "").trim().toLowerCase();
   const category = searchParams.get("category") ?? "";
+  const normalizedKeyword = useMemo(
+    () => normalizeSearchText(keyword),
+    [keyword],
+  );
+  const normalizedCategory = useMemo(
+    () =>
+      String(category ?? "")
+        .trim()
+        .toLowerCase(),
+    [category],
+  );
 
-  const filteredProducts = useMemo(() => {
-    const normalizedKeyword = normalizeSearchText(keyword);
-    const vendorMap = new Map(
-      users.map((item) => [
-        String(item?.email ?? "")
-          .trim()
-          .toLowerCase(),
-        item,
-      ]),
-    );
+  const vendorMap = useMemo(
+    () =>
+      new Map(
+        users.map((item) => [
+          String(item?.email ?? "")
+            .trim()
+            .toLowerCase(),
+          item,
+        ]),
+      ),
+    [users],
+  );
 
-    return products
-      .filter((product) => {
-        const title = String(product?.title ?? "");
-        const categoryValue = String(product?.category ?? "");
-        const categoryLabel = formatProductCategoryLabel(categoryValue);
-
-        const searchableFields = [title, categoryValue, categoryLabel]
-          .map(normalizeSearchText)
-          .filter(Boolean);
-
-        const keywordMatch = normalizedKeyword
-          ? searchableFields.some((field) => field.includes(normalizedKeyword))
-          : true;
-
-        const categoryMatch = category
-          ? String(product?.category ?? "").toLowerCase() ===
-            category.toLowerCase()
-          : true;
-
-        return keywordMatch && categoryMatch;
-      })
-      .map((product) => {
+  const preparedProducts = useMemo(
+    () =>
+      products.map((product) => {
         const vendorEmail = String(product?.vendorEmail ?? "")
           .trim()
           .toLowerCase();
         const vendorProfile = vendorMap.get(vendorEmail);
-
-        if (!vendorProfile) {
-          return product;
-        }
+        const resolvedShopName =
+          vendorProfile?.shopName || vendorProfile?.name || product?.shopName;
+        const resolvedVendorAvatarUrl =
+          vendorProfile?.avatarUrl || product?.vendorAvatarUrl;
+        const hasVendorOverrides =
+          resolvedShopName !== product?.shopName ||
+          resolvedVendorAvatarUrl !== product?.vendorAvatarUrl;
 
         return {
-          ...product,
-          shopName:
-            vendorProfile?.shopName || vendorProfile?.name || product?.shopName,
-          vendorAvatarUrl: vendorProfile?.avatarUrl || product?.vendorAvatarUrl,
+          product: hasVendorOverrides
+            ? {
+                ...product,
+                shopName: resolvedShopName,
+                vendorAvatarUrl: resolvedVendorAvatarUrl,
+              }
+            : product,
+          normalizedCategory: String(product?.category ?? "").toLowerCase(),
+          searchIndex: buildProductSearchIndex(product),
         };
-      });
-  }, [products, users, keyword, category]);
+      }),
+    [products, vendorMap],
+  );
+
+  const filteredProducts = useMemo(() => {
+    return preparedProducts
+      .filter(({ normalizedCategory: productCategory, searchIndex }) => {
+        const keywordMatch = normalizedKeyword
+          ? searchIndex.includes(normalizedKeyword)
+          : true;
+        const categoryMatch = normalizedCategory
+          ? productCategory === normalizedCategory
+          : true;
+
+        return keywordMatch && categoryMatch;
+      })
+      .map(({ product }) => product);
+  }, [preparedProducts, normalizedKeyword, normalizedCategory]);
   const ip17 = filteredProducts.find(
     (product) => product.title === "Iphone 17 Pro Max 256GB",
   );

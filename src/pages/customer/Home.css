@@ -144,6 +144,8 @@ body[data-theme="dark"] .hero-dots span.is-active {
 
 .home-section {
   margin-top: 54px;
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 900px;
 }
 
 .section-title-row {

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 
 import "./ProductCard.css";
@@ -80,4 +81,4 @@ function ProductCard({ product }) {
   );
 }
 
-export default ProductCard;
+export default memo(ProductCard);

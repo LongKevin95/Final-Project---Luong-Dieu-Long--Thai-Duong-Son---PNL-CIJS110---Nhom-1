@@ -22,8 +22,9 @@
 }
 
 .vendor-header h1 {
-  font-size: 22px;
+  font-size: 30px;
   font-weight: 700;
+  color: #50585ad2;
 }
 
 .vendor-progress {
@@ -41,13 +42,14 @@
   gap: 12px;
   align-items: center;
   margin-bottom: 12px;
-  font-size: 14px;
+  font-size: 20px;
 }
 
 .vendor-progress__meta strong {
   color: var(--vendor-text);
-  font-weight: 600;
+  font-weight: 700;
   text-align: right;
+  color: #596570df;
 }
 
 .vendor-progress__steps {
