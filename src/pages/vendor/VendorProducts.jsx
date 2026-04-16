@@ -86,6 +86,39 @@ function readFileAsDataUrl(file) {
   });
 }
 
+function getProductThumbnail(product) {
+  if (product?.image) {
+    return String(product.image);
+  }
+
+  if (Array.isArray(product?.images) && product.images.length > 0) {
+    return String(product.images[0]);
+  }
+
+  return "";
+}
+
+function getProductGalleryImages(product) {
+  const thumbnail = getProductThumbnail(product);
+  const productImages = Array.isArray(product?.images) ? product.images : [];
+
+  return productImages.filter((image, index) => {
+    if (!image) {
+      return false;
+    }
+
+    if (thumbnail && image === thumbnail && index === 0) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function getSelectedFileKey(file) {
+  return [file?.name ?? "", file?.size ?? 0, file?.lastModified ?? 0].join("-");
+}
+
 function EditIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -191,7 +224,8 @@ export default function VendorProducts() {
   const { data: products = [], isLoading, isError } = useAdminProductsQuery();
 
   const [form, setForm] = useState(defaultForm);
-  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [selectedThumbnailFile, setSelectedThumbnailFile] = useState(null);
+  const [selectedGalleryFiles, setSelectedGalleryFiles] = useState([]);
   const [editingId, setEditingId] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [processingProductId, setProcessingProductId] = useState("");
@@ -278,7 +312,8 @@ export default function VendorProducts() {
       expiryDate: String(product?.attributes?.expiryDate ?? ""),
       weight: String(product?.attributes?.weight ?? ""),
     });
-    setSelectedFiles([]);
+    setSelectedThumbnailFile(null);
+    setSelectedGalleryFiles([]);
     setErrorMessage("");
   }
 
@@ -306,9 +341,57 @@ export default function VendorProducts() {
     }
   }
 
-  function handleSelectFiles(event) {
+  function handleSelectThumbnailFile(event) {
+    const file = event.target.files?.[0] ?? null;
+    setSelectedThumbnailFile(file);
+
+    event.target.value = "";
+
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+  }
+
+  function handleRemoveSelectedThumbnailFile() {
+    setSelectedThumbnailFile(null);
+
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+  }
+
+  function handleSelectGalleryFiles(event) {
     const files = Array.from(event.target.files ?? []);
-    setSelectedFiles(files);
+    setSelectedGalleryFiles((prev) => {
+      const nextFiles = [...prev];
+      const existingKeys = new Set(
+        prev.map((file) => getSelectedFileKey(file)),
+      );
+
+      files.forEach((file) => {
+        const fileKey = getSelectedFileKey(file);
+
+        if (!existingKeys.has(fileKey)) {
+          nextFiles.push(file);
+          existingKeys.add(fileKey);
+        }
+      });
+
+      return nextFiles;
+    });
+
+    event.target.value = "";
+
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+  }
+
+  function handleRemoveSelectedGalleryFile(fileToRemove) {
+    const targetFileKey = getSelectedFileKey(fileToRemove);
+    setSelectedGalleryFiles((prev) =>
+      prev.filter((file) => getSelectedFileKey(file) !== targetFileKey),
+    );
 
     if (errorMessage) {
       setErrorMessage("");
@@ -317,7 +400,8 @@ export default function VendorProducts() {
 
   function resetForm() {
     setForm(defaultForm);
-    setSelectedFiles([]);
+    setSelectedThumbnailFile(null);
+    setSelectedGalleryFiles([]);
     setEditingId("");
     setErrorMessage("");
   }
@@ -354,27 +438,27 @@ export default function VendorProducts() {
     try {
       setIsSaving(true);
 
-      const uploadedImages = await Promise.all(
-        selectedFiles.map((file) => readFileAsDataUrl(file)),
+      const uploadedThumbnail = selectedThumbnailFile
+        ? await readFileAsDataUrl(selectedThumbnailFile)
+        : "";
+      const uploadedGalleryImages = await Promise.all(
+        selectedGalleryFiles.map((file) => readFileAsDataUrl(file)),
       );
 
-      const previousImages = Array.isArray(editingProduct?.images)
-        ? editingProduct.images
-        : editingProduct?.image
-          ? [editingProduct.image]
-          : [];
+      const previousThumbnail = getProductThumbnail(editingProduct);
+      const previousGalleryImages = getProductGalleryImages(editingProduct);
+      const thumbnail = uploadedThumbnail || previousThumbnail;
       const images =
-        uploadedImages.length > 0
-          ? [...new Set(uploadedImages)]
-          : [...new Set(previousImages)];
+        uploadedGalleryImages.length > 0
+          ? [...new Set(uploadedGalleryImages.filter(Boolean))]
+          : [...new Set(previousGalleryImages.filter(Boolean))];
 
-      if (images.length === 0) {
-        setErrorMessage("Bạn cần upload tối thiểu 1 ảnh sản phẩm.");
+      if (!thumbnail) {
+        setErrorMessage("Bạn cần upload ảnh đại diện cho sản phẩm.");
         setIsSaving(false);
         return;
       }
 
-      const thumbnail = images[0];
       const colors = selectedCategoryConfig.flags.useColors
         ? normalizeHexColors(form.colorsText)
         : [];
@@ -594,13 +678,55 @@ export default function VendorProducts() {
             </label>
 
             <label>
-              Upload images
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleSelectFiles}
-              />
+              Upload thumbnail
+              <div className="vendor-products-file-picker">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleSelectThumbnailFile}
+                />
+
+                {selectedThumbnailFile && (
+                  <div className="vendor-products-file-list">
+                    <button
+                      type="button"
+                      className="vendor-products-file-chip"
+                      onClick={handleRemoveSelectedThumbnailFile}
+                      title={`Xóa ảnh ${selectedThumbnailFile.name}`}
+                    >
+                      {selectedThumbnailFile.name}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </label>
+
+            <label>
+              Upload gallery images
+              <div className="vendor-products-file-picker">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleSelectGalleryFiles}
+                />
+
+                {selectedGalleryFiles.length > 0 && (
+                  <div className="vendor-products-file-list">
+                    {selectedGalleryFiles.map((file) => (
+                      <button
+                        key={getSelectedFileKey(file)}
+                        type="button"
+                        className="vendor-products-file-chip"
+                        onClick={() => handleRemoveSelectedGalleryFile(file)}
+                        title={`Xóa ảnh ${file.name}`}
+                      >
+                        {file.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </label>
 
             {selectedCategoryConfig.flags.useColors && (

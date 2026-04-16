@@ -57,6 +57,39 @@
   grid-column: 1 / -1;
 }
 
+.vendor-products-file-picker {
+  display: grid;
+  gap: 8px;
+}
+
+.vendor-products-file-summary {
+  display: block;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.vendor-products-file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vendor-products-file-chip {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.vendor-products-file-chip:hover {
+  background: #dbeafe;
+}
+
 .vendor-products-actions {
   display: flex;
   justify-content: flex-end;

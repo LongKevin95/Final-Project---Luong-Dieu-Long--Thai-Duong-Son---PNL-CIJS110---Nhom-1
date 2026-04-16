@@ -160,15 +160,17 @@ function ProductDetail() {
     if (!product) return [];
 
     const images = [
-      ...(Array.isArray(product.images) ? product.images : []),
       product.image,
+      ...(Array.isArray(product.images) ? product.images : []),
     ].filter(Boolean);
 
-    if (images.length === 0) {
+    const uniqueImages = [...new Set(images)];
+
+    if (uniqueImages.length === 0) {
       return [fallbackImage];
     }
 
-    return images.slice(0, 4);
+    return uniqueImages.slice(0, 4);
   }, [product]);
 
   const productColors = Array.isArray(product?.colors) ? product.colors : [];
@@ -196,6 +198,7 @@ function ProductDetail() {
       String(product?.vendorEmail ?? "")
         .trim()
         .toLowerCase();
+  const isPurchaseDisabled = isOutOfStock || isAdmin || isVendorOwnerOfProduct;
 
   const userPurchasedThisProduct = useMemo(() => {
     if (!isCustomerAccount) {
@@ -553,44 +556,40 @@ function ProductDetail() {
                 </button>
               </div>
 
-              {isVendorOwnerOfProduct ? (
+              <button
+                type="button"
+                className="action-btn action-btn--primary"
+                disabled={isPurchaseDisabled}
+                onClick={handleBuyNow}
+              >
+                Buy Now
+              </button>
+
+              <button
+                type="button"
+                className="action-btn action-btn--primary"
+                disabled={isPurchaseDisabled}
+                onClick={handleAddToCart}
+              >
+                Add To Cart
+              </button>
+
+              {isCustomerAccount ? (
+                <button
+                  type="button"
+                  className="action-btn action-btn--icon"
+                  onClick={handleWishlist}
+                >
+                  {isFavorite ? "Unfav" : "Fav"}
+                </button>
+              ) : isVendorOwnerOfProduct ? (
                 <Link
                   className="action-btn action-btn--primary action-btn--link"
                   to={`/vendor/products?edit=${product.id}`}
                 >
                   Edit my product
                 </Link>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="action-btn action-btn--primary"
-                    disabled={isOutOfStock}
-                    onClick={handleBuyNow}
-                  >
-                    Buy Now
-                  </button>
-
-                  <button
-                    type="button"
-                    className="action-btn action-btn--primary"
-                    disabled={isOutOfStock}
-                    onClick={handleAddToCart}
-                  >
-                    Add To Cart
-                  </button>
-
-                  {isCustomerAccount && (
-                    <button
-                      type="button"
-                      className="action-btn action-btn--icon"
-                      onClick={handleWishlist}
-                    >
-                      {isFavorite ? "Unfav" : "Fav"}
-                    </button>
-                  )}
-                </>
-              )}
+              ) : null}
             </div>
 
             {!user && (

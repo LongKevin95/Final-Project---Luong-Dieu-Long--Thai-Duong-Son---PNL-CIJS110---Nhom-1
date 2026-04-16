@@ -125,6 +125,8 @@ export default function OrdersManager() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  const [selectedOrderIntent, setSelectedOrderIntent] = useState("view");
+  const [openActionMenuOrderId, setOpenActionMenuOrderId] = useState("");
   const [cancelReasonByOrder, setCancelReasonByOrder] = useState({});
   const [processingOrderId, setProcessingOrderId] = useState("");
 
@@ -156,18 +158,12 @@ export default function OrdersManager() {
     return (
       filteredOrders.find(
         (order) => String(order?.id ?? "") === selectedOrderId,
-      ) ??
-      filteredOrders[0] ??
-      null
+      ) ?? null
     );
   }, [filteredOrders, selectedOrderId]);
 
   useEffect(() => {
-    if (filteredOrders.length === 0) {
-      if (selectedOrderId) {
-        setSelectedOrderId("");
-      }
-
+    if (!selectedOrderId) {
       return;
     }
 
@@ -176,9 +172,23 @@ export default function OrdersManager() {
     );
 
     if (!hasSelectedOrder) {
-      setSelectedOrderId(String(filteredOrders[0]?.id ?? ""));
+      setSelectedOrderId("");
     }
   }, [filteredOrders, selectedOrderId]);
+
+  useEffect(() => {
+    if (!openActionMenuOrderId) {
+      return;
+    }
+
+    const hasOpenActionMenuOrder = filteredOrders.some(
+      (order) => String(order?.id ?? "") === openActionMenuOrderId,
+    );
+
+    if (!hasOpenActionMenuOrder) {
+      setOpenActionMenuOrderId("");
+    }
+  }, [filteredOrders, openActionMenuOrderId]);
 
   const summary = useMemo(() => {
     return sortedOrders.reduce(
@@ -215,9 +225,99 @@ export default function OrdersManager() {
     processingOrderId &&
     String(processingOrderId) === String(selectedOrder?.id ?? "");
 
-  const handleSelectOrder = (orderId) => {
+  const handleSelectOrder = (orderId, intent = "view") => {
     setSelectedOrderId(String(orderId ?? ""));
+    setSelectedOrderIntent(intent);
   };
+
+  const handleCloseOrderModal = () => {
+    setSelectedOrderId("");
+    setSelectedOrderIntent("view");
+  };
+
+  const handleCloseActionMenu = () => {
+    setOpenActionMenuOrderId("");
+  };
+
+  const handleToggleActionMenu = (orderId) => {
+    const normalizedOrderId = String(orderId ?? "");
+
+    setOpenActionMenuOrderId((previous) =>
+      previous === normalizedOrderId ? "" : normalizedOrderId,
+    );
+  };
+
+  const handleOrderActionSelect = (order, nextAction) => {
+    const orderId = String(order?.id ?? "");
+    const normalizedStatus = normalizeStatus(order?.status);
+
+    if (nextAction === "view") {
+      handleCloseActionMenu();
+      handleSelectOrder(orderId, "view");
+      return;
+    }
+
+    if (nextAction === "cancel" && normalizedStatus === "processing") {
+      handleCloseActionMenu();
+      handleSelectOrder(orderId, "cancel");
+      return;
+    }
+
+    handleCloseActionMenu();
+  };
+
+  useEffect(() => {
+    if (!openActionMenuOrderId) {
+      return;
+    }
+
+    const handleDocumentMouseDown = (event) => {
+      if (!(event.target instanceof Element)) {
+        setOpenActionMenuOrderId("");
+        return;
+      }
+
+      if (event.target.closest(".admin-orders__action-cell")) {
+        return;
+      }
+
+      setOpenActionMenuOrderId("");
+    };
+
+    const handleDocumentKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpenActionMenuOrderId("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleDocumentMouseDown);
+    document.addEventListener("keydown", handleDocumentKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleDocumentMouseDown);
+      document.removeEventListener("keydown", handleDocumentKeyDown);
+    };
+  }, [openActionMenuOrderId]);
+
+  useEffect(() => {
+    if (!selectedOrder?.id || selectedOrderIntent !== "cancel") {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      const cancelReasonField = document.getElementById(
+        "admin-order-cancel-reason",
+      );
+
+      if (cancelReasonField) {
+        cancelReasonField.focus();
+      }
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [selectedOrder?.id, selectedOrderIntent]);
 
   const handleCancelOrder = async (order) => {
     const orderId = String(order?.id ?? "").trim();
@@ -330,7 +430,7 @@ export default function OrdersManager() {
           <p>Danh sách đơn sẽ xuất hiện ở đây sau khi khách đặt hàng.</p>
         </section>
       ) : (
-        <div className="admin-orders__layout">
+        <div className="admin-orders__layout admin-orders__layout--single">
           <section className="admin-orders__list">
             <div className="admin-orders__row admin-orders__row--head">
               <span>Order</span>
@@ -351,56 +451,125 @@ export default function OrdersManager() {
                 const status = normalizeStatus(order?.status);
                 const isActive = String(selectedOrderId ?? "") === orderId;
                 const isBusy = String(processingOrderId ?? "") === orderId;
+                const canCancelOrder = status === "processing";
+                const isActionMenuOpen = openActionMenuOrderId === orderId;
 
                 return (
                   <div
                     key={orderId}
-                    className={`admin-orders__row admin-orders__row--button ${
+                    className={`admin-orders__row admin-orders__row-button ${
                       isActive ? "is-active" : ""
                     }`}
                   >
-                    <button
-                      type="button"
-                      className="admin-orders__row-button"
-                      onClick={() => handleSelectOrder(orderId)}
-                    >
-                      <span>{orderId || "N/A"}</span>
-                      <span>{getCustomerLabel(order)}</span>
-                      <span>
-                        <span
-                          className={`admin-orders__pill ${getStatusTone(status)}`}
-                        >
-                          {getStatusLabel(status)}
-                        </span>
+                    <span>{orderId || "N/A"}</span>
+                    <span>{getCustomerLabel(order)}</span>
+                    <span>
+                      <span
+                        className={`admin-orders__pill ${getStatusTone(status)}`}
+                      >
+                        {getStatusLabel(status)}
                       </span>
-                      <span>{currency.format(Number(order?.total ?? 0))}</span>
-                      <span>{formatDate(order?.createdAt)}</span>
-                      <span>{isBusy ? "Updating..." : "View details"}</span>
-                    </button>
+                    </span>
+                    <span>{currency.format(Number(order?.total ?? 0))}</span>
+                    <span>{formatDate(order?.createdAt)}</span>
+                    <span className="admin-orders__action-cell">
+                      <button
+                        type="button"
+                        className={`admin-orders__action-trigger ${
+                          isActionMenuOpen ? "is-open" : ""
+                        }`}
+                        aria-haspopup="menu"
+                        aria-expanded={isActionMenuOpen}
+                        aria-label={`Select action for order ${orderId || "N/A"}`}
+                        disabled={isBusy}
+                        onClick={() => handleToggleActionMenu(orderId)}
+                      >
+                        {isBusy ? "Updating..." : "Select"}
+                      </button>
+
+                      {isActionMenuOpen ? (
+                        <div
+                          className="admin-orders__action-menu"
+                          role="menu"
+                          aria-label={`Actions for order ${orderId || "N/A"}`}
+                        >
+                          <button
+                            type="button"
+                            className="admin-orders__action-menu-item"
+                            role="menuitem"
+                            onClick={() =>
+                              handleOrderActionSelect(order, "view")
+                            }
+                          >
+                            View
+                          </button>
+                          <button
+                            type="button"
+                            className={`admin-orders__action-menu-item ${
+                              !canCancelOrder ? "is-disabled" : ""
+                            }`}
+                            role="menuitem"
+                            aria-disabled={!canCancelOrder}
+                            tabIndex={canCancelOrder ? 0 : -1}
+                            title={
+                              !canCancelOrder
+                                ? "Chỉ order ở trạng thái Processing mới có thể Cancel"
+                                : undefined
+                            }
+                            onClick={() => {
+                              if (!canCancelOrder) {
+                                return;
+                              }
+
+                              handleOrderActionSelect(order, "cancel");
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : null}
+                    </span>
                   </div>
                 );
               })
             )}
           </section>
 
-          <aside className="admin-orders__detail">
-            {selectedOrder ? (
-              <>
+          {selectedOrder ? (
+            <div
+              className="admin-orders__modal-backdrop"
+              onClick={handleCloseOrderModal}
+            >
+              <div
+                className="admin-orders__detail admin-orders__modal-card"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="admin-order-modal-title"
+                onClick={(event) => event.stopPropagation()}
+              >
                 <div className="admin-orders__detail-header">
                   <div>
-                    <p className="admin-orders__eyebrow">Selected order</p>
-                    <h2>{selectedOrder.id}</h2>
+                    <h2 id="admin-order-modal-title">{selectedOrder.id}</h2>
                     <span
                       className={`admin-orders__pill ${getStatusTone(selectedOrderStatus)}`}
                     >
                       {getStatusLabel(selectedOrderStatus)}
                     </span>
                   </div>
-                  <div className="admin-orders__detail-summary">
-                    <strong>
-                      {currency.format(Number(selectedOrder?.total ?? 0))}
-                    </strong>
-                    <span>{selectedOrderItems.length} items</span>
+                  <div className="admin-orders__detail-header-actions">
+                    <div className="admin-orders__detail-summary">
+                      <strong>
+                        {currency.format(Number(selectedOrder?.total ?? 0))}
+                      </strong>
+                      <span>{selectedOrderItems.length} items</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="admin-orders__button admin-orders__button--secondary"
+                      onClick={handleCloseOrderModal}
+                    >
+                      Close
+                    </button>
                   </div>
                 </div>
 
@@ -569,22 +738,9 @@ export default function OrdersManager() {
                     </p>
                   )}
                 </section>
-              </>
-            ) : (
-              <div className="admin-orders__empty">
-                <strong>
-                  {filteredOrders.length > 0
-                    ? "Chọn một đơn hàng để xem chi tiết."
-                    : "Không có đơn hàng phù hợp với bộ lọc."}
-                </strong>
-                <p>
-                  {filteredOrders.length > 0
-                    ? "Thông tin chi tiết, lịch sử và thao tác hủy sẽ hiển thị ở đây."
-                    : "Hãy thay đổi từ khóa hoặc bộ lọc trạng thái để xem đơn khác."}
-                </p>
               </div>
-            )}
-          </aside>
+            </div>
+          ) : null}
         </div>
       )}
     </div>
