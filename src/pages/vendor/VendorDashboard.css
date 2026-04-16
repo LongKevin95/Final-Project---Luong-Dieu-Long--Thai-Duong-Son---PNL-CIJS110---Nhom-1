@@ -110,10 +110,9 @@
 }
 
 .vendor-table__row--customers {
-  grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 1.4fr) minmax(
-      90px,
-      0.7fr
-    ) minmax(150px, 1fr) minmax(150px, 1fr) minmax(120px, 0.9fr) minmax(
+  grid-template-columns:
+    minmax(180px, 1.2fr) minmax(220px, 1.4fr) minmax(90px, 0.7fr)
+    minmax(150px, 1fr) minmax(150px, 1fr) minmax(120px, 0.9fr) minmax(
       90px,
       0.8fr
     );
@@ -169,7 +168,6 @@
 }
 
 .vendor-pill--pending,
-.vendor-pill--processing,
 .vendor-pill--draft {
   background: rgba(245, 158, 11, 0.15);
   color: #92400e;
@@ -190,9 +188,10 @@
   color: #334155;
 }
 
-.vendor-pill--delivery {
-  background: rgba(14, 116, 144, 0.18);
-  color: #0e7490;
+.vendor-pill--delivery,
+.vendor-pill--processing {
+  background: #3b82f635;
+  color: #3b82f6;
 }
 
 .vendor-panel-empty {
@@ -372,7 +371,8 @@
   display: grid;
   gap: 16px;
 }
-.vendor-modal__body input, .vendor-modal__body textarea{
+.vendor-modal__body input,
+.vendor-modal__body textarea {
   padding: 8px 12px;
 }
 

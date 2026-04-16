@@ -2,11 +2,13 @@ import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { addProductReview } from "../../api/productApi";
 import { updateOrderById } from "../../api/ordersApi";
 import Footer from "../../components/Footer";
 import Header from "../../components/Header";
 import { useAuth } from "../../hooks/useAuth";
 import { useOrdersQuery } from "../../hooks/useOrdersQuery";
+import { useProductsQuery } from "../../hooks/useProductsQuery";
 import { useUsersQuery } from "../../hooks/useUsersQuery";
 import "./MyOrders.css";
 
@@ -146,17 +148,78 @@ function buildOrderSearchText(order, orderItems, shops, statusLabel) {
     .toLowerCase();
 }
 
+function buildOrderItemVariantText(item) {
+  return [
+    item?.color ? `Màu ${item.color}` : null,
+    item?.size ? `Size ${item.size}` : null,
+    item?.sku ? `SKU ${item.sku}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function hasUserReviewedProduct(product, customerEmail) {
+  const normalizedCustomerEmail = String(customerEmail ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (!normalizedCustomerEmail || !Array.isArray(product?.reviewsData)) {
+    return false;
+  }
+
+  return product.reviewsData.some(
+    (reviewItem) =>
+      String(reviewItem?.customerEmail ?? "")
+        .trim()
+        .toLowerCase() === normalizedCustomerEmail,
+  );
+}
+
+function buildReviewableItems(orderItems, productsById, customerEmail) {
+  const uniqueReviewItems = new Map();
+
+  orderItems.forEach((orderItem, index) => {
+    const productId = String(orderItem?.productId ?? "").trim();
+    const reviewKey = productId || `order-item-${index}`;
+
+    if (uniqueReviewItems.has(reviewKey)) {
+      return;
+    }
+
+    const product = productId ? (productsById.get(productId) ?? null) : null;
+
+    uniqueReviewItems.set(reviewKey, {
+      reviewKey,
+      productId,
+      title: orderItem?.title || product?.title || "Sản phẩm",
+      image: orderItem?.image || product?.image || "/favicon.svg",
+      variantLabel: buildOrderItemVariantText(orderItem),
+      isAvailable: Boolean(productId && product),
+      isReviewed: hasUserReviewedProduct(product, customerEmail),
+    });
+  });
+
+  return Array.from(uniqueReviewItems.values());
+}
+
 export default function MyOrders() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: orders = [], isLoading: isOrdersLoading } = useOrdersQuery();
   const { data: users = [], isLoading: isUsersLoading } = useUsersQuery();
+  const { data: products = [], isLoading: isProductsLoading } =
+    useProductsQuery();
   const [cancelReasonByOrder, setCancelReasonByOrder] = useState({});
   const [cancelReasonErrorByOrder, setCancelReasonErrorByOrder] = useState({});
   const cancelReasonInputRefs = useRef({});
   const [processingOrderId, setProcessingOrderId] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeReviewOrderId, setActiveReviewOrderId] = useState("");
+  const [selectedReviewItemKey, setSelectedReviewItemKey] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewStars, setReviewStars] = useState(5);
+  const [processingReviewItemKey, setProcessingReviewItemKey] = useState("");
 
   const vendorMapByEmail = useMemo(
     () =>
@@ -175,6 +238,12 @@ export default function MyOrders() {
     .trim()
     .toLowerCase();
 
+  const productMapById = useMemo(
+    () =>
+      new Map(products.map((item) => [String(item?.id ?? "").trim(), item])),
+    [products],
+  );
+
   const myOrders = useMemo(() => {
     return orders.filter((order) => {
       const orderEmail = String(order?.customerEmail ?? "")
@@ -192,6 +261,11 @@ export default function MyOrders() {
       const statusGroup = getOrderTabKey(status);
       const orderItems = Array.isArray(order?.items) ? order.items : [];
       const shops = buildShopList(orderItems, vendorMapByEmail);
+      const reviewableItems = buildReviewableItems(
+        orderItems,
+        productMapById,
+        userEmail,
+      );
       const firstShop = shops[0] ?? null;
       const visibleItems = orderItems.slice(0, 3);
       const hiddenItemsCount = Math.max(
@@ -206,6 +280,7 @@ export default function MyOrders() {
         statusLabel,
         statusGroup,
         orderItems,
+        reviewableItems,
         shops,
         firstShopName: firstShop?.shopName || "Shop",
         firstShopAvatar: firstShop?.avatarUrl || "",
@@ -226,7 +301,7 @@ export default function MyOrders() {
         displayDate: formatDate(order?.createdAt),
       };
     });
-  }, [myOrders, vendorMapByEmail]);
+  }, [myOrders, productMapById, userEmail, vendorMapByEmail]);
 
   const tabCounts = useMemo(() => {
     const counts = {
@@ -273,7 +348,33 @@ export default function MyOrders() {
       });
   }, [activeTab, ordersWithMeta, searchTerm]);
 
-  const isPageLoading = isOrdersLoading || isUsersLoading;
+  const activeReviewOrder = useMemo(
+    () =>
+      ordersWithMeta.find((order) => order.orderId === activeReviewOrderId) ??
+      null,
+    [activeReviewOrderId, ordersWithMeta],
+  );
+
+  const selectedReviewItem =
+    activeReviewOrder?.reviewableItems.find(
+      (item) => item.reviewKey === selectedReviewItemKey,
+    ) ??
+    activeReviewOrder?.reviewableItems[0] ??
+    null;
+
+  const canSubmitSelectedReview = Boolean(
+    user &&
+    selectedReviewItem?.productId &&
+    selectedReviewItem?.isAvailable &&
+    !selectedReviewItem?.isReviewed,
+  );
+
+  const isSubmittingReview = Boolean(
+    processingReviewItemKey &&
+    processingReviewItemKey === selectedReviewItemKey,
+  );
+
+  const isPageLoading = isOrdersLoading || isUsersLoading || isProductsLoading;
 
   const handleCustomerCancelOrder = async (order) => {
     const orderId = String(order?.id ?? "").trim();
@@ -327,6 +428,102 @@ export default function MyOrders() {
       window.alert(error?.message ?? "Khong the huy don hang.");
     } finally {
       setProcessingOrderId("");
+    }
+  };
+
+  const handleOpenReviewModal = (order) => {
+    const firstReviewItem =
+      order?.reviewableItems?.find(
+        (item) => item.isAvailable && !item.isReviewed,
+      ) ??
+      order?.reviewableItems?.[0] ??
+      null;
+
+    setActiveReviewOrderId(order?.orderId ?? "");
+    setSelectedReviewItemKey(firstReviewItem?.reviewKey ?? "");
+    setReviewComment("");
+    setReviewStars(5);
+  };
+
+  const handleCloseReviewModal = () => {
+    setActiveReviewOrderId("");
+    setSelectedReviewItemKey("");
+    setReviewComment("");
+    setReviewStars(5);
+    setProcessingReviewItemKey("");
+  };
+
+  const handleSelectReviewItem = (reviewKey) => {
+    setSelectedReviewItemKey(reviewKey);
+    setReviewComment("");
+    setReviewStars(5);
+  };
+
+  const handleSubmitReview = async (event) => {
+    event.preventDefault();
+
+    if (!user) {
+      window.alert("Vui lòng đăng nhập để đánh giá sản phẩm.");
+      return;
+    }
+
+    if (!selectedReviewItem?.productId) {
+      window.alert("Không tìm thấy sản phẩm để đánh giá.");
+      return;
+    }
+
+    if (!selectedReviewItem.isAvailable) {
+      window.alert("Sản phẩm này hiện không còn khả dụng để gửi đánh giá.");
+      return;
+    }
+
+    if (selectedReviewItem.isReviewed) {
+      window.alert("Bạn đã đánh giá sản phẩm này rồi.");
+      return;
+    }
+
+    const trimmedComment = reviewComment.trim();
+
+    if (!trimmedComment) {
+      window.alert("Vui lòng nhập bình luận trước khi gửi.");
+      return;
+    }
+
+    const nextReviewItem =
+      activeReviewOrder?.reviewableItems.find(
+        (item) =>
+          item.reviewKey !== selectedReviewItem.reviewKey &&
+          item.isAvailable &&
+          !item.isReviewed,
+      ) ?? null;
+
+    try {
+      setProcessingReviewItemKey(selectedReviewItem.reviewKey);
+
+      await addProductReview({
+        productId: selectedReviewItem.productId,
+        review: {
+          customerEmail: user.email,
+          customerName: user.name ?? user.email,
+          comment: trimmedComment,
+          stars: reviewStars,
+        },
+      });
+
+      setReviewComment("");
+      setReviewStars(5);
+
+      if (nextReviewItem) {
+        setSelectedReviewItemKey(nextReviewItem.reviewKey);
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["products", "public"] });
+      await queryClient.invalidateQueries({ queryKey: ["products", "admin"] });
+      window.alert("Đã gửi đánh giá thành công.");
+    } catch (error) {
+      window.alert(error?.message ?? "Không thể gửi đánh giá.");
+    } finally {
+      setProcessingReviewItemKey("");
     }
   };
 
@@ -401,7 +598,7 @@ export default function MyOrders() {
 
           {isPageLoading ? (
             <section className="my-orders-loading" aria-live="polite">
-              <p>Đang tải đơn hàng</p>
+              <p>Đang tải đơn hàng...</p>
             </section>
           ) : myOrders.length === 0 ? (
             <div className="my-orders-empty-state">
@@ -510,13 +707,7 @@ export default function MyOrders() {
                           Number.isFinite(itemQuantity) && itemQuantity > 0
                             ? itemQuantity
                             : 1;
-                        const itemVariant = [
-                          item?.color ? `Màu ${item.color}` : null,
-                          item?.size ? `Size ${item.size}` : null,
-                          item?.sku ? `SKU ${item.sku}` : null,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ");
+                        const itemVariant = buildOrderItemVariantText(item);
 
                         return (
                           <div
@@ -656,6 +847,17 @@ export default function MyOrders() {
                         </div>
 
                         <div className="my-orders-card__actions">
+                          {isCompleted ? (
+                            <button
+                              type="button"
+                              className="my-orders-button my-orders-button--primary"
+                              disabled={order.reviewableItems.length === 0}
+                              onClick={() => handleOpenReviewModal(order)}
+                            >
+                              Đánh giá
+                            </button>
+                          ) : null}
+
                           <Link
                             to={shopHref}
                             className="my-orders-button my-orders-button--secondary"
@@ -683,6 +885,186 @@ export default function MyOrders() {
           )}
         </section>
       </main>
+
+      {activeReviewOrder ? (
+        <div
+          className="my-orders-review-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="my-orders-review-modal-title"
+          onClick={handleCloseReviewModal}
+        >
+          <div
+            className="my-orders-review-modal__panel"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="my-orders-review-modal__header">
+              <div>
+                <p>Đơn hàng {activeReviewOrder.orderId || "N/A"}</p>
+                <h2 id="my-orders-review-modal-title">
+                  Đánh giá sản phẩm đã mua
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="my-orders-review-modal__close"
+                onClick={handleCloseReviewModal}
+                aria-label="Đóng popup đánh giá"
+              >
+                ×
+              </button>
+            </div>
+
+            {activeReviewOrder.reviewableItems.length === 0 ? (
+              <p className="my-orders-review-modal__empty">
+                Không tìm thấy sản phẩm phù hợp để đánh giá trong đơn này.
+              </p>
+            ) : (
+              <div className="my-orders-review-modal__content">
+                <div className="my-orders-review-items">
+                  {activeReviewOrder.reviewableItems.map((item) => {
+                    const isSelected =
+                      selectedReviewItem?.reviewKey === item.reviewKey;
+
+                    return (
+                      <button
+                        key={item.reviewKey}
+                        type="button"
+                        className={`my-orders-review-item${
+                          isSelected ? " is-active" : ""
+                        }${item.isReviewed ? " is-reviewed" : ""}`}
+                        onClick={() => handleSelectReviewItem(item.reviewKey)}
+                      >
+                        <div
+                          className="my-orders-review-item__thumb"
+                          aria-hidden="true"
+                        >
+                          <img src={item.image} alt="" loading="lazy" />
+                        </div>
+
+                        <div className="my-orders-review-item__content">
+                          <strong>{item.title}</strong>
+                          <span>
+                            {item.variantLabel || "Phân loại mặc định"}
+                          </span>
+                        </div>
+
+                        <span className="my-orders-review-item__badge">
+                          {item.isReviewed
+                            ? "Đã đánh giá"
+                            : item.isAvailable
+                              ? "Chưa đánh giá"
+                              : "Không khả dụng"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <form
+                  className="product-review-form my-orders-review-form"
+                  onSubmit={handleSubmitReview}
+                >
+                  <h4>Viết đánh giá</h4>
+
+                  {selectedReviewItem ? (
+                    <div className="my-orders-review-form__product">
+                      <div
+                        className="my-orders-review-form__product-thumb"
+                        aria-hidden="true"
+                      >
+                        <img
+                          src={selectedReviewItem.image}
+                          alt=""
+                          loading="lazy"
+                        />
+                      </div>
+
+                      <div className="my-orders-review-form__product-copy">
+                        <strong>{selectedReviewItem.title}</strong>
+                        <span>
+                          {selectedReviewItem.variantLabel ||
+                            "Phân loại mặc định"}
+                        </span>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {!user ? (
+                    <p className="product-review-note">
+                      Đăng nhập để đánh giá sản phẩm.
+                    </p>
+                  ) : selectedReviewItem?.isReviewed ? (
+                    <p className="product-review-note">
+                      Bạn đã đánh giá sản phẩm này rồi, mỗi tài khoản chỉ review
+                      1 lần cho mỗi sản phẩm.
+                    </p>
+                  ) : !selectedReviewItem?.isAvailable ? (
+                    <p className="product-review-note">
+                      Sản phẩm này hiện không còn khả dụng để gửi đánh giá.
+                    </p>
+                  ) : (
+                    <p className="product-review-note">
+                      Đánh giá của bạn sẽ hiển thị tại trang chi tiết sản phẩm.
+                    </p>
+                  )}
+
+                  <label>
+                    Stars
+                    <select
+                      value={reviewStars}
+                      onChange={(event) =>
+                        setReviewStars(Number(event.target.value))
+                      }
+                      disabled={!canSubmitSelectedReview || isSubmittingReview}
+                    >
+                      <option value={5}>5</option>
+                      <option value={4}>4</option>
+                      <option value={3}>3</option>
+                      <option value={2}>2</option>
+                      <option value={1}>1</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    Comment
+                    <textarea
+                      rows="5"
+                      value={reviewComment}
+                      onChange={(event) => setReviewComment(event.target.value)}
+                      placeholder={
+                        canSubmitSelectedReview
+                          ? "Chia sẻ trải nghiệm của bạn..."
+                          : selectedReviewItem?.isReviewed
+                            ? "Bạn đã gửi review cho sản phẩm này"
+                            : "Sản phẩm này hiện chưa thể đánh giá"
+                      }
+                      disabled={!canSubmitSelectedReview || isSubmittingReview}
+                    />
+                  </label>
+
+                  <div className="my-orders-review-form__actions">
+                    <button
+                      type="button"
+                      className="my-orders-button my-orders-button--secondary"
+                      onClick={handleCloseReviewModal}
+                    >
+                      Đóng
+                    </button>
+                    <button
+                      type="submit"
+                      className="product-review-form__submit"
+                      disabled={!canSubmitSelectedReview || isSubmittingReview}
+                    >
+                      {isSubmittingReview ? "Đang gửi..." : "Gửi đánh giá"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       <Footer />
     </>

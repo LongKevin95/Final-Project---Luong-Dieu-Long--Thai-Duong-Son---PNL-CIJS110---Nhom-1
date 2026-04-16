@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import jblSpeaker from "../../assets/Images/jbl-speaker.png";
 
 import ProductCard from "../../components/ProductCard";
 import { formatProductCategoryLabel } from "../../api/productApi";
@@ -85,6 +86,11 @@ function Home() {
         };
       });
   }, [products, users, keyword, category]);
+  const ip17 = filteredProducts.find(
+    (product) => product.title === "Iphone 17 Pro Max 256GB",
+  );
+  const ip17Id = ip17?.id;
+  const heroBannerProductLink = ip17 ? `/product/${ip17Id}` : "/";
 
   const flashSalesProducts = filteredProducts.slice(0, 8);
   const bestSellingProducts = filteredProducts.slice(0, 4);
@@ -142,24 +148,21 @@ function Home() {
         <div className="hero-banner__content">
           <div className="hero-banner__label">iPhone 17 Series</div>
           <h1>Up to 10% off Voucher</h1>
-          <Link
-            className="hero-banner__cta"
-            to={
-              filteredProducts[0] ? `/product/${filteredProducts[0].id}` : "/"
-            }
-          >
+          <Link className="hero-banner__cta" to={heroBannerProductLink}>
             Shop Now
           </Link>
         </div>
 
-        <div className="hero-banner__visual" aria-hidden="true">
+        <Link
+          className="hero-banner__visual"
+          to={heroBannerProductLink}
+          aria-label="View Iphone 17 Pro Max 256GB details"
+        >
           <img
             src="https://www.apple.com/v/iphone-17-pro/e/images/meta/iphone-17-pro_overview__eumhhclcpuaa_og.png"
-            alt=""
-            sizes=""
-            srcset=""
+            alt="Iphone 17 Pro Max 256GB"
           />
-        </div>
+        </Link>
         <div className="hero-dots" aria-hidden="true">
           <span></span>
           <span className="is-active"></span>
@@ -236,7 +239,9 @@ function Home() {
           </button>
         </div>
 
-        <div className="music-banner__visual" aria-hidden="true"></div>
+        <div className="music-banner__visual" aria-hidden="true">
+          <img src={jblSpeaker} alt="JBL Speaker" />
+        </div>
       </section>
 
       <section className="home-section">
@@ -266,27 +271,59 @@ function Home() {
 
         <div className="arrival-layout">
           <article className="arrival-card arrival-card--large">
-            <h3>PlayStation 5</h3>
-            <p>Black and White version of the PS5 coming out on sale.</p>
-            <a href="#">Shop Now</a>
+            <div className="arrival-card__content">
+              <h3>PlayStation 5</h3>
+              <p>Black and White version of the PS5 coming out on sale.</p>
+              <a href="#">Shop Now</a>
+            </div>
+            <img
+              className="arrival-card__image arrival-card__image--large"
+              src="https://i.ibb.co/BH917f3C/playstation-5.jpg"
+              alt="PlayStation 5"
+              loading="lazy"
+            />
           </article>
 
           <article className="arrival-card arrival-card--medium">
-            <h3>Women's Collections</h3>
-            <p>Featured woman collections that give you another vibe.</p>
-            <a href="#">Shop Now</a>
+            <div className="arrival-card__content">
+              <h3>Women's Collections</h3>
+              <p>Featured woman collections that give you another vibe.</p>
+              <a href="#">Shop Now</a>
+            </div>
+            <img
+              className="arrival-card__image arrival-card__image--medium"
+              src="https://i.ibb.co/HDnjtfYM/woman-hat.jpg"
+              alt="Women's Collections"
+              loading="lazy"
+            />
           </article>
 
           <article className="arrival-card">
-            <h3>Speakers</h3>
-            <p>Amazon wireless speakers.</p>
-            <a href="#">Shop Now</a>
+            <div className="arrival-card__content">
+              <h3>Speakers</h3>
+              <p>Amazon wireless speakers.</p>
+              <a href="#">Shop Now</a>
+            </div>
+            <img
+              className="arrival-card__image"
+              src="https://i.ibb.co/d4y3bHvP/speakers-jpg.jpg"
+              alt="Speakers"
+              loading="lazy"
+            />
           </article>
 
           <article className="arrival-card">
-            <h3>Perfume</h3>
-            <p>Gucci intense oud perfume.</p>
-            <a href="#">Shop Now</a>
+            <div className="arrival-card__content">
+              <h3>Perfume</h3>
+              <p>Gucci intense oud perfume.</p>
+              <a href="#">Shop Now</a>
+            </div>
+            <img
+              className="arrival-card__image"
+              src="https://i.ibb.co/M5tdHQDb/perfume.jpg"
+              alt="Perfume"
+              loading="lazy"
+            />
           </article>
         </div>
       </section>

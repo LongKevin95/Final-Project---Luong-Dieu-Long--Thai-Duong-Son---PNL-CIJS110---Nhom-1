@@ -4,14 +4,12 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import ProductCard from "../../components/ProductCard";
 import {
-  addProductReview,
   formatProductCategoryLabel,
   upsertVendorReply,
 } from "../../api/productApi";
 import { useAdminProductsQuery } from "../../hooks/useAdminProductsQuery";
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
-import { useOrdersQuery } from "../../hooks/useOrdersQuery";
 import { useProductsQuery } from "../../hooks/useProductsQuery";
 import { useUsersQuery } from "../../hooks/useUsersQuery";
 import { useWishlist } from "../../hooks/useWishlist";
@@ -43,9 +41,8 @@ function ProductDetail() {
     enabled: canInspectHiddenProducts,
   });
   const { data: users = [] } = useUsersQuery();
-  const { data: orders = [] } = useOrdersQuery();
 
-  const vendorMapByEmail = useMemo(
+  const userMapByEmail = useMemo(
     () =>
       new Map(
         users.map((item) => [
@@ -63,7 +60,7 @@ function ProductDetail() {
       const vendorEmail = String(productItem?.vendorEmail ?? "")
         .trim()
         .toLowerCase();
-      const vendorProfile = vendorMapByEmail.get(vendorEmail);
+      const vendorProfile = userMapByEmail.get(vendorEmail);
 
       if (!vendorProfile) {
         return productItem;
@@ -79,7 +76,27 @@ function ProductDetail() {
           vendorProfile?.avatarUrl || productItem?.vendorAvatarUrl,
       };
     },
-    [vendorMapByEmail],
+    [userMapByEmail],
+  );
+
+  const getReviewCustomerName = useCallback(
+    (reviewItem) => {
+      const reviewCustomerEmail = String(reviewItem?.customerEmail ?? "")
+        .trim()
+        .toLowerCase();
+      const latestUserName = String(
+        userMapByEmail.get(reviewCustomerEmail)?.name ?? "",
+      ).trim();
+      const storedCustomerName = String(reviewItem?.customerName ?? "").trim();
+
+      return (
+        latestUserName ||
+        storedCustomerName ||
+        reviewCustomerEmail ||
+        "Customer"
+      );
+    },
+    [userMapByEmail],
   );
 
   const [quantity, setQuantity] = useState(1);
@@ -87,8 +104,6 @@ function ProductDetail() {
   const [stockMessage, setStockMessage] = useState("");
   const [selectedColorByProduct, setSelectedColorByProduct] = useState({});
   const [selectedSizeByProduct, setSelectedSizeByProduct] = useState({});
-  const [reviewComment, setReviewComment] = useState("");
-  const [reviewStars, setReviewStars] = useState(5);
   const [replyTextByReview, setReplyTextByReview] = useState({});
   const [processingReplyKey, setProcessingReplyKey] = useState("");
 
@@ -199,60 +214,6 @@ function ProductDetail() {
         .trim()
         .toLowerCase();
   const isPurchaseDisabled = isOutOfStock || isAdmin || isVendorOwnerOfProduct;
-
-  const userPurchasedThisProduct = useMemo(() => {
-    if (!isCustomerAccount) {
-      return false;
-    }
-
-    const userEmail = String(user?.email ?? "")
-      .trim()
-      .toLowerCase();
-
-    if (!userEmail) {
-      return false;
-    }
-
-    return orders.some((order) => {
-      const orderCustomerEmail = String(order?.customerEmail ?? "")
-        .trim()
-        .toLowerCase();
-      const orderStatus = String(order?.status ?? "")
-        .trim()
-        .toLowerCase();
-
-      if (
-        orderCustomerEmail !== userEmail ||
-        !["completed", "delivered"].includes(orderStatus)
-      ) {
-        return false;
-      }
-
-      const items = Array.isArray(order?.items) ? order.items : [];
-      return items.some(
-        (item) => String(item?.productId ?? "") === String(product?.id ?? ""),
-      );
-    });
-  }, [isCustomerAccount, orders, product?.id, user?.email]);
-
-  const userReviewedThisProduct = (() => {
-    const userEmail = String(user?.email ?? "")
-      .trim()
-      .toLowerCase();
-
-    if (!userEmail || !Array.isArray(product?.reviewsData)) {
-      return false;
-    }
-
-    return product.reviewsData.some(
-      (item) =>
-        String(item?.customerEmail ?? "")
-          .trim()
-          .toLowerCase() === userEmail,
-    );
-  })();
-
-  const canReview = userPurchasedThisProduct && !userReviewedThisProduct;
   const isFavorite = hasInWishlist(product?.id);
 
   const requireCustomerAccess = () => {
@@ -308,51 +269,6 @@ function ProductDetail() {
 
     const added = toggleWishlistItem(product);
     window.alert(added ? "Đã thêm vào wishlist." : "Đã xóa khỏi wishlist.");
-  };
-
-  const handleSubmitReview = async (event) => {
-    event.preventDefault();
-
-    if (!user) {
-      window.alert("Vui long dang nhap de danh gia san pham.");
-      return;
-    }
-
-    if (!userPurchasedThisProduct) {
-      window.alert("Ban can mua san pham truoc khi de lai danh gia.");
-      return;
-    }
-
-    if (userReviewedThisProduct) {
-      window.alert("Moi tai khoan chi duoc review san pham nay 1 lan.");
-      return;
-    }
-
-    const trimmedComment = reviewComment.trim();
-
-    if (!trimmedComment) {
-      window.alert("Vui long nhap binh luan truoc khi gui.");
-      return;
-    }
-
-    try {
-      await addProductReview({
-        productId: product.id,
-        review: {
-          customerEmail: user.email,
-          customerName: user.name ?? user.email,
-          comment: trimmedComment,
-          stars: reviewStars,
-        },
-      });
-
-      setReviewComment("");
-      setReviewStars(5);
-      await queryClient.invalidateQueries({ queryKey: ["products", "public"] });
-      await queryClient.invalidateQueries({ queryKey: ["products", "admin"] });
-    } catch (error) {
-      window.alert(error?.message ?? "Khong the gui danh gia.");
-    }
   };
 
   const handleVendorReply = async (reviewItem) => {
@@ -635,7 +551,7 @@ function ProductDetail() {
                     className="product-review-item"
                   >
                     <header>
-                      <strong>{reviewItem.customerName}</strong>
+                      <strong>{getReviewCustomerName(reviewItem)}</strong>
                       <span>{"★".repeat(Number(reviewItem.stars ?? 0))}</span>
                     </header>
                     <p>{reviewItem.comment}</p>
@@ -688,63 +604,6 @@ function ProductDetail() {
               </p>
             )}
           </div>
-
-          <form className="product-review-form" onSubmit={handleSubmitReview}>
-            <h4>Write a review</h4>
-            {isVendor && (
-              <p className="product-review-note">
-                Vendor khong duoc mua hang va khong duoc review nhu customer.
-              </p>
-            )}
-            {!user && (
-              <p className="product-review-note">
-                Dang nhap de danh gia san pham.
-              </p>
-            )}
-            {user && !userPurchasedThisProduct && (
-              <p className="product-review-note">
-                Chi nguoi da mua hang moi co the danh gia.
-              </p>
-            )}
-            {user && userReviewedThisProduct && (
-              <p className="product-review-note">
-                Ban da danh gia san pham nay, moi tai khoan chi review 1 lan.
-              </p>
-            )}
-            <label>
-              Stars
-              <select
-                value={reviewStars}
-                onChange={(event) => setReviewStars(Number(event.target.value))}
-                disabled={!canReview}
-              >
-                <option value={5}>5</option>
-                <option value={4}>4</option>
-                <option value={3}>3</option>
-                <option value={2}>2</option>
-                <option value={1}>1</option>
-              </select>
-            </label>
-            <label>
-              Comment
-              <textarea
-                rows="5"
-                value={reviewComment}
-                onChange={(event) => setReviewComment(event.target.value)}
-                placeholder={
-                  canReview
-                    ? "Share your experience..."
-                    : userReviewedThisProduct
-                      ? "Ban da gui review cho san pham nay"
-                      : "Chi nguoi da mua hang moi co the danh gia"
-                }
-                disabled={!canReview}
-              />
-            </label>
-            <button type="submit" disabled={!canReview}>
-              Submit review
-            </button>
-          </form>
         </div>
       </section>
 

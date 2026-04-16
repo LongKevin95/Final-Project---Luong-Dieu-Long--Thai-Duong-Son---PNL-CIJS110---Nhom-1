@@ -97,14 +97,16 @@ body[data-theme="dark"] .hero-dots span.is-active {
 .hero-banner__visual {
   width: 100%;
   height: 100%;
+  display: block;
   position: relative;
+  text-decoration: none;
 }
 .hero-banner__visual > img {
   width: 100%;
   position: absolute;
   object-fit: contain;
   top: -10px;
-  right: -200px;
+  right: -210px;
 }
 .hero-banner__visual > img:hover {
   transform: scale(1.05);
@@ -355,51 +357,129 @@ body[data-theme="dark"] .hero-dots span.is-active {
     #000 100%
   );
 }
+.music-banner__visual > img {
+  position: relative;
+  right: 40px;
+}
+
+.music-banner__visual > img:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+  cursor: pointer;
+  filter: brightness(1.12) saturate(1.12)
+    drop-shadow(0 16px 28px rgba(255, 255, 255, 0.12));
+}
 
 .arrival-layout {
   margin-top: 18px;
   display: grid;
-  grid-template-columns: 1.12fr 1fr 1fr;
+  grid-template-columns: 1fr 0.5fr 0.5fr;
   grid-template-rows: 1fr 1fr;
   gap: 20px;
 }
 
 .arrival-card {
+  position: relative;
+  overflow: hidden;
   border-radius: 8px;
-  background: #060606;
-  color: #fff;
-  min-height: 180px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: end;
+  background: #000;
+  min-height: 250px;
+  isolation: isolate;
+}
+
+.arrival-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.32) 100%
+  );
+  z-index: 1;
 }
 
 .arrival-card--large {
   grid-row: span 2;
-  min-height: 390px;
+  min-height: 600px;
 }
 
 .arrival-card--medium {
   grid-column: span 2;
-  min-height: 184px;
+  min-height: 285px;
+}
+
+.arrival-card--large .arrival-card__content {
+  max-width: 320px;
+}
+
+.arrival-card--medium .arrival-card__content {
+  max-width: 280px;
+}
+
+.arrival-card__content {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 24px;
+  z-index: 2;
 }
 
 .arrival-card h3 {
-  font-size: 28px;
+  color: #fff;
+  font-size: 24px;
+  line-height: 1.2;
 }
 
 .arrival-card p {
   margin-top: 8px;
   color: rgba(255, 255, 255, 0.8);
   max-width: 360px;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .arrival-card a {
+  display: inline-block;
   margin-top: 12px;
   color: #fff;
   text-decoration: underline;
   text-underline-offset: 4px;
+  font-weight: 600;
+}
+
+.arrival-card__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.92;
+  transition:
+    transform 0.35s ease,
+    opacity 0.35s ease;
+}
+
+.arrival-card__image--large {
+}
+
+.arrival-card__image--medium {
+  object-position: center 20%;
+}
+
+.arrival-card:not(.arrival-card--large):not(.arrival-card--medium) h3 {
+  font-size: 32px;
+}
+
+.arrival-card:not(.arrival-card--large):not(.arrival-card--medium) p {
+  max-width: 220px;
+}
+
+.arrival-card:hover .arrival-card__image {
+  transform: scale(1.04);
+  opacity: 1;
 }
 
 .service-list {
