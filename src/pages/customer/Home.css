@@ -101,16 +101,35 @@ body[data-theme="dark"] .hero-dots span.is-active {
   position: relative;
   text-decoration: none;
 }
+
+.hero-banner__visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 40%,
+    rgba(0, 0, 0, 0.15) 78%,
+    rgba(0, 0, 0, 0.35) 100%
+  );
+  pointer-events: none;
+}
+
 .hero-banner__visual > img {
   width: 100%;
   position: absolute;
   object-fit: contain;
   top: -10px;
   right: -210px;
+  filter: brightness(0.95);
+  transition:
+    transform 0.3s ease,
+    filter 0.3s ease;
 }
+
 .hero-banner__visual > img:hover {
-  transform: scale(1.05);
-  transition: transform 0.3s ease;
+  transform: scale(1.04);
+  filter: brightness(1.02);
   cursor: pointer;
 }
 
