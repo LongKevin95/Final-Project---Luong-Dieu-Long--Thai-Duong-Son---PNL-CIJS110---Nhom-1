@@ -129,7 +129,7 @@ body[data-theme="dark"] .hero-dots span.is-active {
 
 .hero-banner__visual > img:hover {
   transform: scale(1.04);
-  filter: brightness(1.02);
+  filter: brightness(1.05);
   cursor: pointer;
 }
 
