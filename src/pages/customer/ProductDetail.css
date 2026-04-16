@@ -346,7 +346,6 @@
   padding: 18px;
   display: grid;
   gap: 14px;
-  min-height: 360px;
 }
 
 .product-reviews h3 {
@@ -359,7 +358,7 @@
 }
 
 .product-reviews__list-wrap {
-  min-height: 210px;
+  min-height: 250px;
 }
 
 .product-reviews__list {
