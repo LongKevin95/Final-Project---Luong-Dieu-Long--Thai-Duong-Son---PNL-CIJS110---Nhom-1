@@ -28,6 +28,10 @@
   align-items: start;
 }
 
+.product-detail-layout--loading {
+  align-items: stretch;
+}
+
 .product-gallery {
   display: grid;
   grid-template-columns: 78px 1fr;
@@ -67,6 +71,10 @@
   padding: 4px;
 }
 
+.product-gallery__thumb--skeleton {
+  cursor: default;
+}
+
 .product-gallery__main {
   border-radius: 6px;
   background: linear-gradient(165deg, #ffffff 0%, #f8fafc 100%);
@@ -88,6 +96,10 @@
   object-position: center;
 }
 
+.product-gallery__main--skeleton {
+  min-height: 380px;
+}
+
 .product-info-card {
   position: static;
   border-radius: 16px;
@@ -101,6 +113,15 @@
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 24px 44px rgba(15, 23, 42, 0.08);
   padding: 32px;
+}
+
+.product-info-card--loading {
+  min-height: 100%;
+}
+
+.product-info__loading {
+  display: grid;
+  gap: 16px;
 }
 
 .product-info h1 {
@@ -377,6 +398,7 @@
   display: flex;
   flex-direction: column;
 }
+
 .product-review-item header span {
   color: #f59e0b;
 }
@@ -425,18 +447,96 @@
 }
 
 .product-detail-loader {
-  height: 80vh;
+  margin-top: 34px;
+  min-height: 220px;
   border: 1px dashed #cfcfcf;
   border-radius: 8px;
   display: grid;
   place-items: center;
   color: #555;
   text-align: center;
+  padding: 24px;
 }
 
 .product-detail-loader--error {
   color: #a51515;
   border-color: #f2c0c0;
+}
+
+.product-detail-card-skeleton {
+  height: 280px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f3f3f3 25%, #ececec 37%, #f3f3f3 63%);
+  background-size: 400% 100%;
+  animation: product-detail-skeleton 1.2s ease infinite;
+}
+
+.product-detail-skeleton {
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f3f3f3 25%, #ececec 37%, #f3f3f3 63%);
+  background-size: 400% 100%;
+  animation: product-detail-skeleton 1.2s ease infinite;
+}
+
+.product-detail-skeleton--title {
+  height: 42px;
+  width: 72%;
+}
+
+.product-detail-skeleton--meta {
+  height: 20px;
+  width: 44%;
+}
+
+.product-detail-skeleton--price {
+  height: 40px;
+  width: 28%;
+}
+
+.product-detail-skeleton--line {
+  height: 16px;
+  width: 100%;
+}
+
+.product-detail-skeleton--line-short {
+  width: 68%;
+}
+
+.product-detail-skeleton--actions {
+  height: 48px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.product-detail-skeleton--delivery {
+  height: 126px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.product-detail-skeleton--review-title {
+  height: 20px;
+  width: 36%;
+}
+
+.product-detail-skeleton--review-line {
+  height: 14px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.product-detail-skeleton--review-line-short {
+  width: 74%;
+}
+
+@keyframes product-detail-skeleton {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: 0 0;
+  }
 }
 
 .sr-only {

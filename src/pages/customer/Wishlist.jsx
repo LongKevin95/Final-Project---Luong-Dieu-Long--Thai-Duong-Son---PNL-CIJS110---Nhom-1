@@ -47,7 +47,10 @@ export default function Wishlist() {
         (vendorEmail ? vendorEmail.split("@")[0] : "L&S Store");
       const shopAvatar = String(vendorProfile?.avatarUrl ?? "").trim();
       const shopInitial =
-        String(shopName ?? "S").trim().charAt(0).toUpperCase() || "S";
+        String(shopName ?? "S")
+          .trim()
+          .charAt(0)
+          .toUpperCase() || "S";
 
       return {
         ...item,
@@ -105,7 +108,11 @@ export default function Wishlist() {
       <div className="wishlist-header">
         <h1>Your Wishlist</h1>
         {enrichedItems.length > 0 && (
-          <button type="button" className="wishlist-clear-btn" onClick={clearWishlist}>
+          <button
+            type="button"
+            className="wishlist-clear-btn"
+            onClick={clearWishlist}
+          >
             Clear all
           </button>
         )}
@@ -120,15 +127,26 @@ export default function Wishlist() {
         <section className="wishlist-grid">
           {enrichedItems.map((item) => (
             <article key={item.productId} className="wishlist-card">
-              <Link to={`/product/${item.productId}`} className="wishlist-card__media">
+              <Link
+                to={`/product/${item.productId}`}
+                className="wishlist-card__media"
+                state={{ product: { ...item, id: item.productId } }}
+              >
                 <img src={item.image} alt={item.title} />
               </Link>
               <div className="wishlist-card__content">
-                <Link to={`/product/${item.productId}`} className="wishlist-card__title">
+                <Link
+                  to={`/product/${item.productId}`}
+                  className="wishlist-card__title"
+                  state={{ product: { ...item, id: item.productId } }}
+                >
                   {item.title}
                 </Link>
                 <p className="wishlist-card__shop">
-                  <span className="wishlist-card__shop-avatar" aria-hidden="true">
+                  <span
+                    className="wishlist-card__shop-avatar"
+                    aria-hidden="true"
+                  >
                     {item.shopAvatar ? (
                       <img src={item.shopAvatar} alt="" loading="lazy" />
                     ) : (

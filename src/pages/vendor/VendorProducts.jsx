@@ -1017,7 +1017,9 @@ export default function VendorProducts() {
               return (
                 <div className="vendor-products-table__row" key={product.id}>
                   <span>
-                    <Link to={`/product/${product.id}`}>{product.title}</Link>
+                    <Link to={`/product/${product.id}`} state={{ product }}>
+                      {product.title}
+                    </Link>
                   </span>
                   <span>${Number(product.price ?? 0)}</span>
                   <span>{product.stock ?? 0}</span>

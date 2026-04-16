@@ -196,7 +196,9 @@ export default function ProductManager() {
               return (
                 <div className="admin-products-table__row" key={product.id}>
                   <span>
-                    <Link to={`/product/${product.id}`}>{product.title}</Link>
+                    <Link to={`/product/${product.id}`} state={{ product }}>
+                      {product.title}
+                    </Link>
                   </span>
                   <span>
                     {product.shopName ||

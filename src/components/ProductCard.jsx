@@ -30,7 +30,11 @@ function ProductCard({ product }) {
 
   return (
     <article className="product-card">
-      <Link className="product-card__media" to={`/product/${product.id}`}>
+      <Link
+        className="product-card__media"
+        to={`/product/${product.id}`}
+        state={{ product }}
+      >
         {isOnSale && (
           <span className="product-card__badge">
             -{product.discountPercentage}%
@@ -40,7 +44,11 @@ function ProductCard({ product }) {
       </Link>
 
       <div className="product-card__content">
-        <Link className="product-card__title" to={`/product/${product.id}`}>
+        <Link
+          className="product-card__title"
+          to={`/product/${product.id}`}
+          state={{ product }}
+        >
           {product.title}
         </Link>
 

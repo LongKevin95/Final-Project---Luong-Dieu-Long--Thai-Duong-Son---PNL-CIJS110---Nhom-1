@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import jblSpeaker from "../../assets/Images/jbl-speaker.png";
 
@@ -14,6 +14,40 @@ const timerItems = [
   { label: "Minutes", value: "59" },
   { label: "Seconds", value: "59" },
 ];
+const HOME_PRODUCTS_SNAPSHOT_KEY = "ls-home-products-snapshot";
+const HOME_USERS_SNAPSHOT_KEY = "ls-home-users-snapshot";
+
+function readStoredArray(storageKey) {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const rawData = window.localStorage.getItem(storageKey);
+
+    if (!rawData) {
+      return [];
+    }
+
+    const parsedData = JSON.parse(rawData);
+    return Array.isArray(parsedData) ? parsedData : [];
+  } catch {
+    window.localStorage.removeItem(storageKey);
+    return [];
+  }
+}
+
+function writeStoredArray(storageKey, items) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(items));
+  } catch {
+    return;
+  }
+}
 
 function normalizeSearchText(value) {
   return String(value ?? "")
@@ -38,9 +72,34 @@ function buildProductSearchIndex(product) {
 
 function Home() {
   const [searchParams] = useSearchParams();
+  const [storedProducts] = useState(() =>
+    readStoredArray(HOME_PRODUCTS_SNAPSHOT_KEY),
+  );
+  const [storedUsers] = useState(() =>
+    readStoredArray(HOME_USERS_SNAPSHOT_KEY),
+  );
 
-  const { data: products = [], isLoading, isError, error } = useProductsQuery();
-  const { data: users = [] } = useUsersQuery();
+  const { data: productsData, isLoading, isError, error } = useProductsQuery();
+  const { data: usersData } = useUsersQuery();
+
+  useEffect(() => {
+    if (!Array.isArray(productsData)) {
+      return;
+    }
+
+    writeStoredArray(HOME_PRODUCTS_SNAPSHOT_KEY, productsData);
+  }, [productsData]);
+
+  useEffect(() => {
+    if (!Array.isArray(usersData)) {
+      return;
+    }
+
+    writeStoredArray(HOME_USERS_SNAPSHOT_KEY, usersData);
+  }, [usersData]);
+
+  const products = Array.isArray(productsData) ? productsData : storedProducts;
+  const users = Array.isArray(usersData) ? usersData : storedUsers;
 
   const errorMessage = error?.message ?? "Unable to load products.";
 
@@ -136,22 +195,12 @@ function Home() {
     return labels.join(" | ");
   }, [keyword, category]);
 
-  const renderProductGrid = (items) => {
-    if (isLoading) {
-      return (
-        <div className="home-grid home-grid--loading">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={`skeleton-${index}`} className="home-card-skeleton"></div>
-          ))}
-        </div>
-      );
-    }
-
-    if (isError) {
+  const renderProductGrid = (items, expectedCount) => {
+    if (isError && items.length === 0) {
       return <p className="home-message home-message--error">{errorMessage}</p>;
     }
 
-    if (items.length === 0) {
+    if (items.length === 0 && !isLoading) {
       return (
         <div className="home-message">
           <p>No product yet.</p>
@@ -162,10 +211,26 @@ function Home() {
       );
     }
 
+    const skeletonCount =
+      isLoading && items.length < expectedCount
+        ? expectedCount - items.length
+        : 0;
+
     return (
-      <div className="home-grid">
+      <div
+        className={`home-grid ${
+          items.length === 0 && skeletonCount > 0 ? "home-grid--loading" : ""
+        }`}
+      >
         {items.map((product) => (
           <ProductCard key={product.id} product={product} />
+        ))}
+        {Array.from({ length: skeletonCount }).map((_, index) => (
+          <div
+            key={`skeleton-${expectedCount}-${index}`}
+            className="home-card-skeleton"
+            aria-hidden="true"
+          ></div>
         ))}
       </div>
     );
@@ -228,7 +293,7 @@ function Home() {
           </div>
         </div>
 
-        {renderProductGrid(flashSalesProducts)}
+        {renderProductGrid(flashSalesProducts, 8)}
 
         <div className="section-actions">
           <button type="button" className="btn-view-all">
@@ -249,7 +314,7 @@ function Home() {
           </button>
         </div>
 
-        {renderProductGrid(bestSellingProducts)}
+        {renderProductGrid(bestSellingProducts, 4)}
       </section>
 
       <section className="music-banner">
@@ -281,7 +346,7 @@ function Home() {
           </div>
         </div>
 
-        {renderProductGrid(exploreProducts)}
+        {renderProductGrid(exploreProducts, 8)}
 
         <div className="section-actions">
           <button type="button" className="btn-view-all">
