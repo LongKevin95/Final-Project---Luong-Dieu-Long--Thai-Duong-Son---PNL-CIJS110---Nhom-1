@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import qrCode from "../../assets/images/qr-code.jpg";
+import qrCode from "../../assets/Images/qr-code.jpg";
 
 import { useAuth } from "../../hooks/useAuth";
 import "./VendorOnboarding.css";
