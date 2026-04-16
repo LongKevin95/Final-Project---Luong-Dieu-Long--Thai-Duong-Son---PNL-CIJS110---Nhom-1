@@ -396,13 +396,20 @@ function Checkout() {
         <div className="checkout-success-modal" role="dialog" aria-modal="true">
           <div className="checkout-success-modal__backdrop" />
           <div className="checkout-success-modal__card">
-            <h2>Your order has been placed successfully!</h2>
+            <span>
+              <img
+                src="https://i.ibb.co/PsmBjJXY/successfully-icon.png"
+                alt="success"
+              />{" "}
+              <h2>Your order has been placed successfully!</h2>
+            </span>
+
             <button
               type="button"
               className="checkout-success-modal__button"
               onClick={handleBackToHomepage}
             >
-              Back to Homepage
+              ← Back to Homepage
             </button>
           </div>
         </div>
