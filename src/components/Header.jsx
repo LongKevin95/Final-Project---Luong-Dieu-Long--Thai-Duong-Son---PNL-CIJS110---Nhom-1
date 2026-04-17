@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/Images/logo.png";
+import logoWhite from "../assets/Images/logo-white.png";
 
 import iconSearch from "../assets/Icons/icons8-search.svg";
 import {
@@ -32,6 +33,7 @@ function Header() {
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const headerLogo = isDark ? logoWhite : logo;
 
   const searchParams = useMemo(
     () => new URLSearchParams(location.search),
@@ -328,7 +330,7 @@ function Header() {
 
             <div className="header-logo">
               <Link className="header-logo__link" to="/" aria-label="Home">
-                <img className="header-logo-image" src={logo} alt="L&S" />
+                <img className="header-logo-image" src={headerLogo} alt="L&S" />
               </Link>
             </div>
           </div>

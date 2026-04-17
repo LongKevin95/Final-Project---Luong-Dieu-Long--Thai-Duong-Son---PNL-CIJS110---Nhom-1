@@ -13,11 +13,12 @@
 }
 
 body[data-theme="dark"] {
-  --app-bg: #000000;
+  --app-bg: #000000cf;
   --app-text: #e2e8f0;
   --app-surface: #0b1220;
   --app-muted: #94a3b8;
   --app-border: #334155;
+  --app-header: #000000a1;
 }
 
 html,
@@ -30,20 +31,23 @@ body {
   font-family: "Poppins", "Segoe UI", sans-serif;
   background: var(--app-bg);
   color: var(--app-text);
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 }
 
 a {
   color: inherit;
 }
 
-body[data-theme="dark"] .site-header,
 body[data-theme="dark"] .user-menu,
-body[data-theme="dark"] .product-card,
-body[data-theme="dark"] .admin-main__content,
-body[data-theme="dark"] .vendor-main__content {
+body[data-theme="dark"] .product-card {
   background: var(--app-surface);
   color: var(--app-text);
+}
+
+body[data-theme="dark"] .site-header {
+  background: var(--app-header);
 }
 
 body[data-theme="dark"] .app-shell,
@@ -53,10 +57,7 @@ body[data-theme="dark"] .app-content {
 
 body[data-theme="dark"] .site-header,
 body[data-theme="dark"] .user-menu,
-body[data-theme="dark"] .delivery-box,
-body[data-theme="dark"] .admin-card,
-body[data-theme="dark"] .vendor-products-card,
-body[data-theme="dark"] .vendor-section-card {
+body[data-theme="dark"] .delivery-box {
   border-color: var(--app-border);
 }
 
@@ -69,22 +70,14 @@ body[data-theme="dark"] .quantity-box,
 body[data-theme="dark"] .cart-item,
 body[data-theme="dark"] .cart-summary,
 body[data-theme="dark"] .checkout-form,
-body[data-theme="dark"] .checkout-summary,
-body[data-theme="dark"] .admin-products-table__row,
-body[data-theme="dark"] .vendor-table__row,
-body[data-theme="dark"] .vendor-products-table__row {
+body[data-theme="dark"] .checkout-summary {
   background: #1e293b;
   color: var(--app-text);
 }
 
-body[data-theme="dark"] .topbar,
-body[data-theme="dark"] .admin-sidebar,
-body[data-theme="dark"] .vendor-sidebar {
-  background: #020617;
-}
-
 body[data-theme="dark"] .product-card {
-  border-color: #1e293b;
+  border-color: #7d838f22;
+  background: #2d2929c7;
 }
 
 body[data-theme="dark"] .product-card__title {
@@ -93,7 +86,6 @@ body[data-theme="dark"] .product-card__title {
 
 body[data-theme="dark"] .product-card__old-price,
 body[data-theme="dark"] .product-card__reviews,
-body[data-theme="dark"] .product-card__shop,
 body[data-theme="dark"] .home-search-summary,
 body[data-theme="dark"] .rating-count,
 body[data-theme="dark"] .product-detail-helper,

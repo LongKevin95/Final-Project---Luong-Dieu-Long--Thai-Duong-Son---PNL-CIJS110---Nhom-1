@@ -668,7 +668,7 @@ function ProductDetail() {
                   </div>
                 ) : (
                   <p className="product-detail-helper">
-                    Chua co danh gia nao cho san pham nay.
+                    There is no rating for this products.
                   </p>
                 )}
               </div>
