@@ -273,6 +273,10 @@
   background: #3b82f6;
 }
 
+.vendor-action-btn--edit.vendor-action-btn--disabled-rejected {
+  opacity: 0.35;
+}
+
 .vendor-action-btn--hide {
   background: #e2e8f0;
   color: #334155;

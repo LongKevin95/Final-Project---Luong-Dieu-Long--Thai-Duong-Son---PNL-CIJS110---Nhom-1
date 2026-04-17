@@ -19,7 +19,7 @@
   background: #fafafa;
   font-size: 14px;
 }
-.admin-products-table__row span {
+.admin-products-table__row span:first-child {
   text-align: center;
 }
 
