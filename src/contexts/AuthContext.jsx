@@ -3,14 +3,22 @@ import { useCallback, useMemo, useState } from "react";
 import {
   loginWithCredentials,
   registerUser,
+  updateUserProfile,
   updateUserRole,
 } from "../api/authApi";
 import AuthContext from "./auth-context";
 
 const AUTH_STORAGE_KEY = "ls-ecommerce-auth-user";
+const AUTH_LOGOUT_KEY = "ls-ecommerce-logout";
 
 function readStoredUser() {
   try {
+    if (window.sessionStorage.getItem(AUTH_LOGOUT_KEY)) {
+      window.sessionStorage.removeItem(AUTH_LOGOUT_KEY);
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+      return null;
+    }
+
     const storedUser = window.localStorage.getItem(AUTH_STORAGE_KEY);
 
     if (!storedUser) {
@@ -60,6 +68,21 @@ export function AuthProvider({ children }) {
     [user],
   );
 
+  const updateProfile = useCallback(
+    async (updates) => {
+      if (!user?.email) {
+        throw new Error("Bạn cần đăng nhập trước khi cập nhật profile.");
+      }
+
+      const nextUser = await updateUserProfile(user.email, updates);
+      setUser(nextUser);
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextUser));
+
+      return nextUser;
+    },
+    [user],
+  );
+
   const logout = useCallback(() => {
     setUser(null);
     window.localStorage.removeItem(AUTH_STORAGE_KEY);
@@ -69,15 +92,16 @@ export function AuthProvider({ children }) {
     () => ({
       user,
       isAuthenticated: Boolean(user),
-      isCustomer: user?.role === "customer",
-      isVendor: user?.role === "vendor",
-      isAdmin: user?.role === "admin",
+      isCustomer: user?.roles?.includes("customer"),
+      isVendor: user?.roles?.includes("vendor"),
+      isAdmin: user?.roles?.includes("admin"),
       login,
       register,
       updateRole,
+      updateProfile,
       logout,
     }),
-    [login, logout, register, updateRole, user],
+    [login, logout, register, updateProfile, updateRole, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

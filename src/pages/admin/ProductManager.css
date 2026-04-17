@@ -1,0 +1,103 @@
+@import "./VendorManager.css";
+
+.admin-products-page {
+  display: grid;
+}
+
+.admin-products-table {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-products-table__row {
+  display: grid;
+  grid-template-columns: 30px 1.4fr 1.1fr 1.1fr 0.9fr 0.7fr 1fr 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fafafa;
+  font-size: 14px;
+}
+.admin-products-table__row span:first-child {
+  text-align: center;
+}
+
+.admin-products-table__head {
+  background: #f0f2f7;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.admin-reason-input {
+  width: 100%;
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.admin-reason-input:disabled {
+  opacity: 0.7;
+}
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.admin-pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  color: var(--admin-text);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.admin-pagination-btn:hover:not(:disabled) {
+  background: var(--admin-primary);
+  color: #fff;
+  border-color: var(--admin-primary);
+}
+
+.admin-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-pagination-info {
+  font-size: 14px;
+  color: var(--admin-text);
+  font-weight: 500;
+}
+
+.status-pill--inactive {
+  background: rgba(100, 116, 139, 0.15);
+  color: #334155;
+}
+
+.status-pill--out-of-stock {
+  background: rgba(249, 115, 22, 0.15);
+  color: #c2410c;
+}
+
+.status-pill--draft {
+  background: rgba(148, 163, 184, 0.18);
+  color: #475569;
+}
+
+@media (max-width: 1160px) {
+  .admin-products-table__row {
+    grid-template-columns: 1fr;
+  }
+}

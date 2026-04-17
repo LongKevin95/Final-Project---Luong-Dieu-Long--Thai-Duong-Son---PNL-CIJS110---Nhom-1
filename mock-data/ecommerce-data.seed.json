@@ -1,0 +1,981 @@
+{
+  "products": [
+    {
+      "id": "prod-001-havic-hv-g92",
+      "title": "Havic HV G-92 Gamepad",
+      "category": "dien-tu",
+      "description": "High precision wireless gamepad with low-latency Bluetooth and ergonomic grip for long gaming sessions.",
+      "price": 120,
+      "oldPrice": 160,
+      "discountPercentage": 25,
+      "rating": 5,
+      "reviews": 2,
+      "stock": 23,
+      "image": "https://picsum.photos/seed/ls-havic-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-havic-2/800/800",
+        "https://picsum.photos/seed/ls-havic-3/800/800",
+        "https://picsum.photos/seed/ls-havic-4/800/800"
+      ],
+      "colors": [],
+      "sizes": [],
+      "vendorEmail": "techhub.vendor@gmail.com",
+      "shopName": "Tech Hub",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=12",
+      "attributes": {
+        "brand": "Havic",
+        "model": "HV G-92",
+        "warrantyMonths": 24
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "linh.nguyen@gmail.com",
+          "customerName": "Linh Nguyen",
+          "comment": "Cam tay chac chan, ket noi on dinh.",
+          "stars": 5,
+          "createdAt": "2026-02-01T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "minh.tran@gmail.com",
+          "customerName": "Minh Tran",
+          "comment": "Do tre thap, choi game kha muot.",
+          "stars": 5,
+          "createdAt": "2026-02-03T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-05T09:00:00.000Z",
+      "updatedAt": "2026-04-10T09:30:00.000Z"
+    },
+    {
+      "id": "prod-002-iphone-14-pro-max-256gb",
+      "title": "iPhone 14 Pro Max 256GB",
+      "category": "dien-tu",
+      "description": "Flagship smartphone with powerful performance, pro camera system, and premium OLED display.",
+      "price": 1299,
+      "oldPrice": 1499,
+      "discountPercentage": 13,
+      "rating": 5,
+      "reviews": 2,
+      "stock": 12,
+      "image": "https://picsum.photos/seed/ls-iphone-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-iphone-2/800/800",
+        "https://picsum.photos/seed/ls-iphone-3/800/800",
+        "https://picsum.photos/seed/ls-iphone-4/800/800"
+      ],
+      "colors": [],
+      "sizes": [],
+      "vendorEmail": "techhub.vendor@gmail.com",
+      "shopName": "Tech Hub",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=12",
+      "attributes": {
+        "brand": "Apple",
+        "model": "iPhone 14 Pro Max 256GB",
+        "warrantyMonths": 12
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "khanh.le@gmail.com",
+          "customerName": "Khanh Le",
+          "comment": "May muot, camera dep va pin tot.",
+          "stars": 5,
+          "createdAt": "2026-02-04T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "thao.pham@gmail.com",
+          "customerName": "Thao Pham",
+          "comment": "Man hinh dep, trai nghiem rat cao cap.",
+          "stars": 5,
+          "createdAt": "2026-02-06T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-06T09:00:00.000Z",
+      "updatedAt": "2026-04-10T09:35:00.000Z"
+    },
+    {
+      "id": "prod-003-canon-eos-m50-mark-ii",
+      "title": "Canon EOS M50 Mark II",
+      "category": "dien-tu",
+      "description": "Compact mirrorless camera ideal for creators, with crisp autofocus and 4K-ready video capabilities.",
+      "price": 850,
+      "oldPrice": 980,
+      "discountPercentage": 13,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 14,
+      "image": "https://picsum.photos/seed/ls-canon-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-canon-2/800/800",
+        "https://picsum.photos/seed/ls-canon-3/800/800",
+        "https://picsum.photos/seed/ls-canon-4/800/800"
+      ],
+      "colors": [],
+      "sizes": [],
+      "vendorEmail": "techhub.vendor@gmail.com",
+      "shopName": "Tech Hub",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=12",
+      "attributes": {
+        "brand": "Canon",
+        "model": "EOS M50 Mark II",
+        "warrantyMonths": 24
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "an.vo@gmail.com",
+          "customerName": "An Vo",
+          "comment": "Lay net nhanh, de quay vlog.",
+          "stars": 5,
+          "createdAt": "2026-02-07T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "bao.ngo@gmail.com",
+          "customerName": "Bao Ngo",
+          "comment": "Anh len mau dep, thao tac de lam quen.",
+          "stars": 4,
+          "createdAt": "2026-02-08T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-07T09:00:00.000Z",
+      "updatedAt": "2026-04-10T09:40:00.000Z"
+    },
+    {
+      "id": "prod-004-jbl-pulse-5",
+      "title": "JBL Pulse 5 Bluetooth Speaker",
+      "category": "dien-tu",
+      "description": "Portable speaker with immersive bass, dynamic light effects, and all-day battery life.",
+      "price": 240,
+      "oldPrice": 300,
+      "discountPercentage": 20,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 31,
+      "image": "https://picsum.photos/seed/ls-jbl-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-jbl-2/800/800",
+        "https://picsum.photos/seed/ls-jbl-3/800/800",
+        "https://picsum.photos/seed/ls-jbl-4/800/800"
+      ],
+      "colors": [],
+      "sizes": [],
+      "vendorEmail": "techhub.vendor@gmail.com",
+      "shopName": "Tech Hub",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=12",
+      "attributes": {
+        "brand": "JBL",
+        "model": "Pulse 5",
+        "warrantyMonths": 12
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "huong.do@gmail.com",
+          "customerName": "Huong Do",
+          "comment": "Am bass tot, den led dep mat.",
+          "stars": 5,
+          "createdAt": "2026-02-10T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "trung.bui@gmail.com",
+          "customerName": "Trung Bui",
+          "comment": "Dung ngoai troi on, pin du cho ca buoi.",
+          "stars": 4,
+          "createdAt": "2026-02-11T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-08T09:00:00.000Z",
+      "updatedAt": "2026-04-10T09:45:00.000Z"
+    },
+    {
+      "id": "prod-005-samsung-odyssey-g5",
+      "title": "Samsung Odyssey G5 Gaming Monitor",
+      "category": "dien-tu",
+      "description": "High-refresh curved monitor delivering smooth visuals and deep contrast for immersive gameplay.",
+      "price": 329,
+      "oldPrice": 399,
+      "discountPercentage": 18,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 19,
+      "image": "https://picsum.photos/seed/ls-monitor-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-monitor-2/800/800",
+        "https://picsum.photos/seed/ls-monitor-3/800/800",
+        "https://picsum.photos/seed/ls-monitor-4/800/800"
+      ],
+      "colors": [],
+      "sizes": [],
+      "vendorEmail": "techhub.vendor@gmail.com",
+      "shopName": "Tech Hub",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=12",
+      "attributes": {
+        "brand": "Samsung",
+        "model": "Odyssey G5",
+        "warrantyMonths": 24
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "viet.ha@gmail.com",
+          "customerName": "Viet Ha",
+          "comment": "Tan so quet cao, choi game da mat.",
+          "stars": 5,
+          "createdAt": "2026-02-12T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "phuc.nguyen@gmail.com",
+          "customerName": "Phuc Nguyen",
+          "comment": "Man hinh cong dep, mau sac on trong tam gia.",
+          "stars": 4,
+          "createdAt": "2026-02-13T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-09T09:00:00.000Z",
+      "updatedAt": "2026-04-10T09:50:00.000Z"
+    },
+    {
+      "id": "prod-006-rk84-mechanical-keyboard",
+      "title": "RK84 RGB Mechanical Keyboard",
+      "category": "dien-tu",
+      "description": "Compact wireless mechanical keyboard with tri-mode connection and customizable RGB lighting.",
+      "price": 95,
+      "oldPrice": 129,
+      "discountPercentage": 26,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 45,
+      "image": "https://picsum.photos/seed/ls-keyboard-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-keyboard-2/800/800",
+        "https://picsum.photos/seed/ls-keyboard-3/800/800",
+        "https://picsum.photos/seed/ls-keyboard-4/800/800"
+      ],
+      "colors": [],
+      "sizes": [],
+      "vendorEmail": "techhub.vendor@gmail.com",
+      "shopName": "Tech Hub",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=12",
+      "attributes": {
+        "brand": "Royal Kludge",
+        "model": "RK84",
+        "warrantyMonths": 12
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "duy.lam@gmail.com",
+          "customerName": "Duy Lam",
+          "comment": "Go phim suong tay, ket noi khong day tien loi.",
+          "stars": 5,
+          "createdAt": "2026-02-14T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "thinh.ly@gmail.com",
+          "customerName": "Thinh Ly",
+          "comment": "RGB dep, kich thuoc gon gang cho ban lam viec.",
+          "stars": 4,
+          "createdAt": "2026-02-15T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-10T09:00:00.000Z",
+      "updatedAt": "2026-04-10T09:55:00.000Z"
+    },
+    {
+      "id": "prod-007-womens-satin-blazer",
+      "title": "Women's Satin Blazer",
+      "category": "fashion-nu",
+      "description": "Elegant satin blazer tailored for a sharp silhouette, perfect for office and evening looks.",
+      "price": 79,
+      "oldPrice": 109,
+      "discountPercentage": 28,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 28,
+      "image": "https://picsum.photos/seed/ls-wblazer-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-wblazer-2/800/800",
+        "https://picsum.photos/seed/ls-wblazer-3/800/800",
+        "https://picsum.photos/seed/ls-wblazer-4/800/800"
+      ],
+      "colors": ["#111111", "#E6B8AF", "#D7D7D7"],
+      "sizes": ["XS", "S", "M", "L", "XL"],
+      "vendorEmail": "bellamoda.vendor@gmail.com",
+      "shopName": "Bella Moda",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=32",
+      "attributes": {
+        "brand": "Bella Moda",
+        "material": "Satin Blend"
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "mai.pham@gmail.com",
+          "customerName": "Mai Pham",
+          "comment": "Form ao dep, len dang sang trong.",
+          "stars": 5,
+          "createdAt": "2026-02-16T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "yen.truong@gmail.com",
+          "customerName": "Yen Truong",
+          "comment": "Chat vai mem, phu hop di lam va di tiec.",
+          "stars": 4,
+          "createdAt": "2026-02-17T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-11T09:00:00.000Z",
+      "updatedAt": "2026-04-10T10:00:00.000Z"
+    },
+    {
+      "id": "prod-008-pleated-midi-skirt",
+      "title": "Pleated Midi Skirt",
+      "category": "fashion-nu",
+      "description": "Lightweight pleated midi skirt with flowing movement and a comfortable elastic waistband.",
+      "price": 49,
+      "oldPrice": 69,
+      "discountPercentage": 29,
+      "rating": 4,
+      "reviews": 2,
+      "stock": 34,
+      "image": "https://picsum.photos/seed/ls-wskirt-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-wskirt-2/800/800",
+        "https://picsum.photos/seed/ls-wskirt-3/800/800",
+        "https://picsum.photos/seed/ls-wskirt-4/800/800"
+      ],
+      "colors": ["#D4AF37", "#111111", "#B0BEC5"],
+      "sizes": ["XS", "S", "M", "L", "XL"],
+      "vendorEmail": "bellamoda.vendor@gmail.com",
+      "shopName": "Bella Moda",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=32",
+      "attributes": {
+        "brand": "Bella Moda",
+        "material": "Polyester Pleated Fabric"
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "nhi.ho@gmail.com",
+          "customerName": "Nhi Ho",
+          "comment": "Chan vay nhe, di chuyen thoai mai.",
+          "stars": 4,
+          "createdAt": "2026-02-18T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "quynh.dang@gmail.com",
+          "customerName": "Quynh Dang",
+          "comment": "Mau dep va de phoi do hang ngay.",
+          "stars": 4,
+          "createdAt": "2026-02-19T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-12T09:00:00.000Z",
+      "updatedAt": "2026-04-10T10:05:00.000Z"
+    },
+    {
+      "id": "prod-009-oversized-denim-jacket",
+      "title": "Oversized Denim Jacket",
+      "category": "fashion-nu",
+      "description": "Classic oversized denim jacket with vintage wash and versatile year-round layering style.",
+      "price": 89,
+      "oldPrice": 119,
+      "discountPercentage": 25,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 17,
+      "image": "https://picsum.photos/seed/ls-wdenim-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-wdenim-2/800/800",
+        "https://picsum.photos/seed/ls-wdenim-3/800/800",
+        "https://picsum.photos/seed/ls-wdenim-4/800/800"
+      ],
+      "colors": ["#355C7D", "#111111", "#D7D7D7"],
+      "sizes": ["XS", "S", "M", "L", "XL"],
+      "vendorEmail": "bellamoda.vendor@gmail.com",
+      "shopName": "Bella Moda",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=32",
+      "attributes": {
+        "brand": "Bella Moda",
+        "material": "Denim Cotton Blend"
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "hien.doan@gmail.com",
+          "customerName": "Hien Doan",
+          "comment": "Ao jean mac len form rat on.",
+          "stars": 5,
+          "createdAt": "2026-02-20T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "lan.phan@gmail.com",
+          "customerName": "Lan Phan",
+          "comment": "Phong cach de mac, chat vai cung cap vua du.",
+          "stars": 4,
+          "createdAt": "2026-02-21T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-13T09:00:00.000Z",
+      "updatedAt": "2026-04-10T10:10:00.000Z"
+    },
+    {
+      "id": "prod-010-crossbody-leather-bag",
+      "title": "Crossbody Leather Bag",
+      "category": "fashion-nu",
+      "description": "Premium textured crossbody bag with adjustable strap and multiple smart compartments.",
+      "price": 65,
+      "oldPrice": 92,
+      "discountPercentage": 29,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 25,
+      "image": "https://picsum.photos/seed/ls-wbag-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-wbag-2/800/800",
+        "https://picsum.photos/seed/ls-wbag-3/800/800",
+        "https://picsum.photos/seed/ls-wbag-4/800/800"
+      ],
+      "colors": ["#5D4037", "#111111", "#BCAAA4"],
+      "sizes": ["Mini", "Standard", "Large"],
+      "vendorEmail": "bellamoda.vendor@gmail.com",
+      "shopName": "Bella Moda",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=32",
+      "attributes": {
+        "brand": "Bella Moda",
+        "material": "Genuine Leather"
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "thu.ha@gmail.com",
+          "customerName": "Thu Ha",
+          "comment": "Tui nho gon, nhieu ngan dung do.",
+          "stars": 5,
+          "createdAt": "2026-02-22T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "ngoc.nguyen@gmail.com",
+          "customerName": "Ngoc Nguyen",
+          "comment": "Day deo chac chan, chat lieu nhin sang.",
+          "stars": 4,
+          "createdAt": "2026-02-23T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-14T09:00:00.000Z",
+      "updatedAt": "2026-04-10T10:15:00.000Z"
+    },
+    {
+      "id": "prod-011-mens-bomber-jacket",
+      "title": "Men's Bomber Jacket",
+      "category": "fashion-nam",
+      "description": "Street-ready bomber jacket with ribbed trim and lightweight thermal comfort.",
+      "price": 92,
+      "oldPrice": 129,
+      "discountPercentage": 29,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 21,
+      "image": "https://picsum.photos/seed/ls-mbomber-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-mbomber-2/800/800",
+        "https://picsum.photos/seed/ls-mbomber-3/800/800",
+        "https://picsum.photos/seed/ls-mbomber-4/800/800"
+      ],
+      "colors": ["#1B1B1B", "#2E7D32", "#455A64"],
+      "sizes": ["S", "M", "L", "XL", "XXL"],
+      "vendorEmail": "urbanforge.vendor@gmail.com",
+      "shopName": "Urban Forge",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=52",
+      "attributes": {
+        "brand": "Urban Forge",
+        "material": "Nylon Blend"
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "nam.trinh@gmail.com",
+          "customerName": "Nam Trinh",
+          "comment": "Ao mac len khoe khoan, phu hop di pho.",
+          "stars": 5,
+          "createdAt": "2026-02-24T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "quoc.anh@gmail.com",
+          "customerName": "Quoc Anh",
+          "comment": "Duong may dep, form vua van.",
+          "stars": 4,
+          "createdAt": "2026-02-25T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-15T09:00:00.000Z",
+      "updatedAt": "2026-04-10T10:20:00.000Z"
+    },
+    {
+      "id": "prod-012-runner-flex-sneakers",
+      "title": "Runner Flex Sneakers",
+      "category": "fashion-nam",
+      "description": "Breathable training sneakers with shock-absorbing sole for daily running and casual wear.",
+      "price": 110,
+      "oldPrice": 150,
+      "discountPercentage": 27,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 30,
+      "image": "https://picsum.photos/seed/ls-msneaker-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-msneaker-2/800/800",
+        "https://picsum.photos/seed/ls-msneaker-3/800/800",
+        "https://picsum.photos/seed/ls-msneaker-4/800/800"
+      ],
+      "colors": ["#111111", "#DB4444", "#607D8B"],
+      "sizes": ["39", "40", "41", "42", "43"],
+      "vendorEmail": "urbanforge.vendor@gmail.com",
+      "shopName": "Urban Forge",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=52",
+      "attributes": {
+        "brand": "Urban Forge",
+        "material": "Mesh & Rubber"
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "duc.nguyen@gmail.com",
+          "customerName": "Duc Nguyen",
+          "comment": "De mem, di bo va chay nhe chan.",
+          "stars": 5,
+          "createdAt": "2026-02-26T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "tai.hoang@gmail.com",
+          "customerName": "Tai Hoang",
+          "comment": "Form giay gon, phoi do de.",
+          "stars": 4,
+          "createdAt": "2026-02-27T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-16T09:00:00.000Z",
+      "updatedAt": "2026-04-10T10:25:00.000Z"
+    },
+    {
+      "id": "prod-013-classic-oxford-shirt",
+      "title": "Classic Oxford Shirt",
+      "category": "fashion-nam",
+      "description": "Timeless oxford button-down shirt crafted from soft cotton with modern fit.",
+      "price": 54,
+      "oldPrice": 75,
+      "discountPercentage": 28,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 40,
+      "image": "https://picsum.photos/seed/ls-mshirt-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-mshirt-2/800/800",
+        "https://picsum.photos/seed/ls-mshirt-3/800/800",
+        "https://picsum.photos/seed/ls-mshirt-4/800/800"
+      ],
+      "colors": ["#FFFFFF", "#90A4AE", "#1B1B1B"],
+      "sizes": ["S", "M", "L", "XL", "XXL"],
+      "vendorEmail": "urbanforge.vendor@gmail.com",
+      "shopName": "Urban Forge",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=52",
+      "attributes": {
+        "brand": "Urban Forge",
+        "material": "Oxford Cotton"
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "son.vu@gmail.com",
+          "customerName": "Son Vu",
+          "comment": "Ao som dang, mac di lam rat hop.",
+          "stars": 5,
+          "createdAt": "2026-02-28T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "tuan.nguyen@gmail.com",
+          "customerName": "Tuan Nguyen",
+          "comment": "Vai cotton mem, de ui va de phoi quan.",
+          "stars": 4,
+          "createdAt": "2026-03-01T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-17T09:00:00.000Z",
+      "updatedAt": "2026-04-10T10:30:00.000Z"
+    },
+    {
+      "id": "prod-014-cargo-utility-pants",
+      "title": "Cargo Utility Pants",
+      "category": "fashion-nam",
+      "description": "Functional cargo pants featuring multiple pockets and durable stretch fabric.",
+      "price": 68,
+      "oldPrice": 96,
+      "discountPercentage": 29,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 33,
+      "image": "https://picsum.photos/seed/ls-mcargo-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-mcargo-2/800/800",
+        "https://picsum.photos/seed/ls-mcargo-3/800/800",
+        "https://picsum.photos/seed/ls-mcargo-4/800/800"
+      ],
+      "colors": ["#4E5D52", "#111111", "#B0BEC5"],
+      "sizes": ["S", "M", "L", "XL", "XXL"],
+      "vendorEmail": "urbanforge.vendor@gmail.com",
+      "shopName": "Urban Forge",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=52",
+      "attributes": {
+        "brand": "Urban Forge",
+        "material": "Stretch Twill"
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "huy.do@gmail.com",
+          "customerName": "Huy Do",
+          "comment": "Quan nhieu tui, mac di choi rat tien.",
+          "stars": 5,
+          "createdAt": "2026-03-02T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "kiet.tran@gmail.com",
+          "customerName": "Kiet Tran",
+          "comment": "Vai day dan, co do co gian nhe.",
+          "stars": 4,
+          "createdAt": "2026-03-03T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-18T09:00:00.000Z",
+      "updatedAt": "2026-04-10T10:35:00.000Z"
+    },
+    {
+      "id": "prod-015-nordic-floor-lamp",
+      "title": "Nordic Floor Lamp",
+      "category": "do-gia-dung",
+      "description": "Minimalist floor lamp with warm ambient glow, ideal for living rooms and reading corners.",
+      "price": 135,
+      "oldPrice": 179,
+      "discountPercentage": 25,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 22,
+      "image": "https://picsum.photos/seed/ls-lamp-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-lamp-2/800/800",
+        "https://picsum.photos/seed/ls-lamp-3/800/800",
+        "https://picsum.photos/seed/ls-lamp-4/800/800"
+      ],
+      "colors": [],
+      "sizes": [],
+      "vendorEmail": "homenest.vendor@gmail.com",
+      "shopName": "HomeNest",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=22",
+      "attributes": {
+        "material": "Powder-coated Steel"
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "tram.nguyen@gmail.com",
+          "customerName": "Tram Nguyen",
+          "comment": "Den dep, anh sang am va de lap dat.",
+          "stars": 5,
+          "createdAt": "2026-03-04T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "long.vo@gmail.com",
+          "customerName": "Long Vo",
+          "comment": "Phu hop goc doc sach, thiet ke toi gian.",
+          "stars": 4,
+          "createdAt": "2026-03-05T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-19T09:00:00.000Z",
+      "updatedAt": "2026-04-10T10:40:00.000Z"
+    },
+    {
+      "id": "prod-016-minimalist-lounge-chair",
+      "title": "Minimalist Lounge Chair",
+      "category": "do-gia-dung",
+      "description": "Comfort-focused lounge chair with premium fabric and modern Scandinavian styling.",
+      "price": 220,
+      "oldPrice": 289,
+      "discountPercentage": 24,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 11,
+      "image": "https://picsum.photos/seed/ls-chair-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-chair-2/800/800",
+        "https://picsum.photos/seed/ls-chair-3/800/800",
+        "https://picsum.photos/seed/ls-chair-4/800/800"
+      ],
+      "colors": [],
+      "sizes": [],
+      "vendorEmail": "homenest.vendor@gmail.com",
+      "shopName": "HomeNest",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=22",
+      "attributes": {
+        "material": "Fabric & Solid Wood"
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "phuong.le@gmail.com",
+          "customerName": "Phuong Le",
+          "comment": "Ngoi em va rat hop phong khach.",
+          "stars": 5,
+          "createdAt": "2026-03-06T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "khoi.ngo@gmail.com",
+          "customerName": "Khoi Ngo",
+          "comment": "Dang ghe dep, chat lieu nhin cao cap.",
+          "stars": 4,
+          "createdAt": "2026-03-07T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-20T09:00:00.000Z",
+      "updatedAt": "2026-04-10T10:45:00.000Z"
+    },
+    {
+      "id": "prod-017-ceramic-dining-set-16",
+      "title": "Ceramic Dining Set 16 Pieces",
+      "category": "do-gia-dung",
+      "description": "Elegant ceramic dining set suitable for everyday use and formal table settings.",
+      "price": 98,
+      "oldPrice": 129,
+      "discountPercentage": 24,
+      "rating": 4,
+      "reviews": 2,
+      "stock": 18,
+      "image": "https://picsum.photos/seed/ls-dining-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-dining-2/800/800",
+        "https://picsum.photos/seed/ls-dining-3/800/800",
+        "https://picsum.photos/seed/ls-dining-4/800/800"
+      ],
+      "colors": [],
+      "sizes": [],
+      "vendorEmail": "homenest.vendor@gmail.com",
+      "shopName": "HomeNest",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=22",
+      "attributes": {
+        "material": "Ceramic"
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "nga.tran@gmail.com",
+          "customerName": "Nga Tran",
+          "comment": "Bo chen dia dep, mau nha nhan.",
+          "stars": 4,
+          "createdAt": "2026-03-08T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "loan.pham@gmail.com",
+          "customerName": "Loan Pham",
+          "comment": "Dong goi ky, nhan hang nguyen ven.",
+          "stars": 4,
+          "createdAt": "2026-03-09T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-21T09:00:00.000Z",
+      "updatedAt": "2026-04-10T10:50:00.000Z"
+    },
+    {
+      "id": "prod-018-smart-air-purifier",
+      "title": "Smart Air Purifier",
+      "category": "do-gia-dung",
+      "description": "HEPA-enabled smart air purifier with app control and real-time air quality monitoring.",
+      "price": 189,
+      "oldPrice": 249,
+      "discountPercentage": 24,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 27,
+      "image": "https://picsum.photos/seed/ls-airpurifier-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-airpurifier-2/800/800",
+        "https://picsum.photos/seed/ls-airpurifier-3/800/800",
+        "https://picsum.photos/seed/ls-airpurifier-4/800/800"
+      ],
+      "colors": [],
+      "sizes": [],
+      "vendorEmail": "homenest.vendor@gmail.com",
+      "shopName": "HomeNest",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=22",
+      "attributes": {
+        "material": "ABS Plastic"
+      },
+      "reviewsData": [
+        {
+          "customerEmail": "my.nguyen@gmail.com",
+          "customerName": "My Nguyen",
+          "comment": "May chay em, de trong phong ngu rat hop.",
+          "stars": 5,
+          "createdAt": "2026-03-10T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "viet.anh@gmail.com",
+          "customerName": "Viet Anh",
+          "comment": "Cam nhan khong khi de chiu hon sau vai ngay dung.",
+          "stars": 4,
+          "createdAt": "2026-03-11T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-22T09:00:00.000Z",
+      "updatedAt": "2026-04-10T10:55:00.000Z"
+    },
+    {
+      "id": "prod-019-vitamin-c-glow-serum",
+      "title": "Vitamin C Glow Serum",
+      "category": "others",
+      "description": "Brightening serum infused with vitamin C to improve skin tone and boost radiance.",
+      "price": 32,
+      "oldPrice": 45,
+      "discountPercentage": 29,
+      "rating": 5,
+      "reviews": 2,
+      "stock": 60,
+      "image": "https://picsum.photos/seed/ls-serum-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-serum-2/800/800",
+        "https://picsum.photos/seed/ls-serum-3/800/800",
+        "https://picsum.photos/seed/ls-serum-4/800/800"
+      ],
+      "colors": [],
+      "sizes": [],
+      "vendorEmail": "glowstudio.vendor@gmail.com",
+      "shopName": "Glow Studio",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=44",
+      "attributes": {},
+      "reviewsData": [
+        {
+          "customerEmail": "van.anh@gmail.com",
+          "customerName": "Van Anh",
+          "comment": "Serum tham nhanh, da trong hon sau mot thoi gian.",
+          "stars": 5,
+          "createdAt": "2026-03-12T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "thuong.nguyen@gmail.com",
+          "customerName": "Thuong Nguyen",
+          "comment": "Ket cau nhe, dung buoi sang rat hop.",
+          "stars": 5,
+          "createdAt": "2026-03-13T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-23T09:00:00.000Z",
+      "updatedAt": "2026-04-10T11:00:00.000Z"
+    },
+    {
+      "id": "prod-020-matte-velvet-lipstick-set",
+      "title": "Matte Velvet Lipstick Set",
+      "category": "others",
+      "description": "Long-lasting matte lipstick collection with highly pigmented and comfortable wear.",
+      "price": 39,
+      "oldPrice": 55,
+      "discountPercentage": 29,
+      "rating": 4.5,
+      "reviews": 2,
+      "stock": 73,
+      "image": "https://picsum.photos/seed/ls-lipstick-1/800/800",
+      "images": [
+        "https://picsum.photos/seed/ls-lipstick-2/800/800",
+        "https://picsum.photos/seed/ls-lipstick-3/800/800",
+        "https://picsum.photos/seed/ls-lipstick-4/800/800"
+      ],
+      "colors": [],
+      "sizes": [],
+      "vendorEmail": "glowstudio.vendor@gmail.com",
+      "shopName": "Glow Studio",
+      "vendorAvatarUrl": "https://i.pravatar.cc/150?img=44",
+      "attributes": {},
+      "reviewsData": [
+        {
+          "customerEmail": "ha.my@gmail.com",
+          "customerName": "Ha My",
+          "comment": "Mau son len chuan, hop dung thuong ngay.",
+          "stars": 5,
+          "createdAt": "2026-03-14T08:00:00.000Z",
+          "vendorReply": null
+        },
+        {
+          "customerEmail": "trang.le@gmail.com",
+          "customerName": "Trang Le",
+          "comment": "Chat son mem, khong gay kho moi qua nhieu.",
+          "stars": 4,
+          "createdAt": "2026-03-15T08:00:00.000Z",
+          "vendorReply": null
+        }
+      ],
+      "status": "active",
+      "reason": null,
+      "createdAt": "2026-01-24T09:00:00.000Z",
+      "updatedAt": "2026-04-10T11:05:00.000Z"
+    }
+  ],
+  "orders": []
+}

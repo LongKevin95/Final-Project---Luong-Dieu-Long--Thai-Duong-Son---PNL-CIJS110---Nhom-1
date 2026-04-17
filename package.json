@@ -3,11 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://LongKevin95.github.io/Final-Project---Luong-Dieu-Long--Thai-Duong-Son---PNL-CIJS110---Nhom-1",
   "scripts": {
     "dev": "node ./node_modules/vite/bin/vite.js",
     "build": "node ./node_modules/vite/bin/vite.js build",
+    "build:github-pages": "node ./node_modules/vite/bin/vite.js build --mode github-pages",
     "lint": "node ./node_modules/eslint/bin/eslint.js .",
-    "preview": "node ./node_modules/vite/bin/vite.js preview"
+    "preview": "node ./node_modules/vite/bin/vite.js preview",
+    "restore:mockup": "node ./scripts/restoreMockupResources.mjs",
+    "predeploy": "npm run build:github-pages",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.96.1",
@@ -27,6 +32,7 @@
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
+    "gh-pages": "^6.3.0",
     "globals": "^17.4.0",
     "vite": "^8.0.1"
   }

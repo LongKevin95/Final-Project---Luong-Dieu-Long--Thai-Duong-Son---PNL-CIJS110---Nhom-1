@@ -1,0 +1,505 @@
+:root {
+  --admin-bg: #f6f7fb;
+  --admin-card: #ffffff;
+  --admin-border: #e5e7eb;
+  --admin-text: #1f2937;
+  --admin-muted: #6b7280;
+  --admin-primary: #2563eb;
+  --admin-danger: #dc2626;
+}
+
+.admin-page {
+  display: grid;
+}
+
+.admin-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.admin-page__header h2 {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+.admin-page__header p {
+  color: var(--admin-muted);
+}
+
+.admin-page__filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.admin-page__filters input,
+.admin-page__filters select {
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  min-width: 220px;
+}
+
+.btn-vendor-delete-all {
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  color: var(--admin-text);
+}
+
+.admin-card {
+  background: var(--admin-card);
+  /* border: 1px solid var(--admin-border); */
+  box-shadow: 0 12px 30px rgba(31, 41, 55, 0.08);
+}
+
+.manage-vendor-table {
+  display: grid;
+  gap: 2px;
+}
+
+.manage-vendor-table__row {
+  display: grid;
+  grid-template-columns: 40px 1.2fr 1.5fr 1fr 1fr 1.3fr;
+
+  align-items: center;
+  padding: 12px;
+  background: #fafafa;
+  font-size: 14px;
+}
+
+.manage-vendor-table__row > span {
+  margin-right: 8px;
+}
+
+.manage-vendor-table--accounts .manage-vendor-table__row {
+  grid-template-columns: 30px 0.8fr 1.2fr 1.2fr 0.6fr 0.8fr 0.6fr 1.1fr 0.6fr;
+}
+
+.manage-vendor-table__head {
+  background: #f0f2f7;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.admin-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-action-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-action-menu {
+  position: relative;
+}
+
+.admin-action-trigger {
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.admin-action-trigger__arrow {
+  font-size: 11px;
+  line-height: 1;
+  color: var(--admin-muted);
+}
+
+.admin-action-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.admin-action-menu__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  min-width: 120px;
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(31, 41, 55, 0.12);
+}
+
+.admin-action-menu__item {
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.admin-action-menu__item:hover {
+  background: #f3f4f6;
+}
+
+.admin-action-menu__item--disabled,
+.admin-action-menu__item--disabled:hover,
+.admin-action-menu__item--disabled:disabled {
+  color: var(--admin-muted);
+  background: #f9fafb;
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='none' stroke='%23dc2626' stroke-width='2'/%3E%3Cpath d='M6 14L14 6' stroke='%23dc2626' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
+      10 10,
+    not-allowed;
+  opacity: 0.8;
+}
+
+.admin-action-select {
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 6px;
+  font-size: 13px;
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.admin-action-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.admin-action-select--approve-disabled {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='none' stroke='%23dc2626' stroke-width='2'/%3E%3Cpath d='M6 14L14 6' stroke='%23dc2626' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
+      10 10,
+    not-allowed;
+}
+
+.admin-reason-input {
+  width: 100%;
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.admin-reason-input:disabled {
+  opacity: 0.7;
+}
+
+.admin-action-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #111;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: admin-action-spin 0.8s linear infinite;
+}
+
+@keyframes admin-action-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ghost-btn {
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--admin-text);
+}
+
+.ghost-btn--danger {
+  border-color: rgba(220, 38, 38, 0.4);
+  color: var(--admin-danger);
+}
+
+.status-pill {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-pill--pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #b45309;
+}
+
+.status-pill--approved {
+  background: rgba(34, 197, 94, 0.15);
+  color: #15803d;
+}
+
+.status-pill--active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #15803d;
+}
+
+.status-pill--rejected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+}
+
+.status-pill--banned {
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+}
+
+.admin-status {
+  padding: 16px;
+  color: var(--admin-muted);
+}
+
+.admin-status--error {
+  color: var(--admin-danger);
+}
+
+.admin-delete-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1200;
+}
+
+.admin-delete-modal {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid var(--admin-border);
+  box-shadow: 0 16px 36px rgba(17, 24, 39, 0.18);
+}
+
+.admin-delete-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-delete-modal__header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2b2b2b;
+}
+
+.admin-delete-modal__close {
+  border: 0;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-delete-modal p {
+  margin: 0;
+  padding: 22px 16px;
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--admin-text);
+  text-align: center;
+}
+
+.admin-delete-modal__actions {
+  padding: 0 16px 16px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.admin-delete-modal__btn {
+  min-width: 170px;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: 500;
+  border: 1px solid var(--admin-border);
+  cursor: pointer;
+}
+
+.admin-delete-modal__btn:disabled,
+.admin-delete-modal__close:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.admin-delete-modal__btn--cancel {
+  background: #fff;
+  color: #111;
+  border-color: var(--admin-border);
+}
+
+.admin-delete-modal__btn--delete {
+  background: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
+}
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.admin-pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  color: var(--admin-text);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.admin-pagination-btn:hover:not(:disabled) {
+  background: var(--admin-primary);
+  color: #fff;
+  border-color: var(--admin-primary);
+}
+
+.admin-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-pagination-info {
+  font-size: 14px;
+  color: var(--admin-text);
+  font-weight: 500;
+}
+
+@media (max-width: 960px) {
+  .admin-page__header {
+    flex-direction: column;
+  }
+
+  .admin-page__filters {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .admin-page__filters input,
+  .admin-page__filters select {
+    min-width: unset;
+  }
+
+  .manage-vendor-table__row {
+    grid-template-columns: 40px 1fr 1fr;
+    grid-template-areas:
+      "index shop status"
+      "email created created"
+      "actions actions actions";
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row {
+    grid-template-columns: 40px 1fr 1fr;
+    grid-template-areas:
+      "index id role"
+      "shop email email"
+      "created status status"
+      "reason reason reason"
+      "actions actions actions";
+  }
+
+  .manage-vendor-table__row span:nth-child(1) {
+    grid-area: index;
+  }
+
+  .manage-vendor-table__row span:nth-child(2) {
+    grid-area: shop;
+  }
+
+  .manage-vendor-table__row span:nth-child(4) {
+    grid-area: created;
+  }
+
+  .manage-vendor-table__row span:nth-child(3) {
+    grid-area: email;
+  }
+
+  .manage-vendor-table__row span:nth-child(5) {
+    grid-area: status;
+  }
+
+  .manage-vendor-table__row span:nth-child(6) {
+    grid-area: actions;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(4) {
+    grid-area: shop;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(2) {
+    grid-area: id;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(3) {
+    grid-area: shop;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(4) {
+    grid-area: email;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(5) {
+    grid-area: role;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(6) {
+    grid-area: created;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(7) {
+    grid-area: status;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(8) {
+    grid-area: reason;
+  }
+
+  .manage-vendor-table--accounts .manage-vendor-table__row span:nth-child(9) {
+    grid-area: actions;
+  }
+}
