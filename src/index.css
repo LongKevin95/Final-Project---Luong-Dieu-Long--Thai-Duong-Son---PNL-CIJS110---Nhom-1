@@ -52,7 +52,7 @@ body[data-theme="dark"] .site-header {
 
 body[data-theme="dark"] .app-shell,
 body[data-theme="dark"] .app-content {
-  background: var(--app-bg);
+  background: #000000cf;
 }
 
 body[data-theme="dark"] .site-header,
@@ -73,6 +73,10 @@ body[data-theme="dark"] .checkout-form,
 body[data-theme="dark"] .checkout-summary {
   background: #1e293b;
   color: var(--app-text);
+}
+body[data-theme="dark"] .checkout-form,
+body[data-theme="dark"] .checkout-summary {
+  border-color: #e5e5e538;
 }
 
 body[data-theme="dark"] .product-card {

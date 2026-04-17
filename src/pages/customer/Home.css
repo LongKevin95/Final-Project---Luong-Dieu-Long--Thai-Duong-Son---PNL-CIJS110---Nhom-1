@@ -641,7 +641,7 @@ body[data-theme="dark"] .arrival-card p {
 
 .service-list {
   margin-top: 70px;
-  margin-bottom: 26px;
+  padding-bottom: 26px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
@@ -655,6 +655,7 @@ body[data-theme="dark"] .service-list article {
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: linear-gradient(180deg, #151922 0%, #10131a 100%);
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
+  padding: 26px;
 }
 
 .service-list h4 {
