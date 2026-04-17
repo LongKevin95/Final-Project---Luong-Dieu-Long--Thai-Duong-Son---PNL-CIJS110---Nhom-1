@@ -5,7 +5,7 @@ import { getProducts } from "../api/productApi";
 const PRODUCTS_STALE_TIME = 1000 * 60 * 10;
 const PRODUCTS_GC_TIME = 1000 * 60 * 30;
 
-export function useProductsQuery() {
+export function useProductsQuery(options = {}) {
   return useQuery({
     queryKey: ["products", "public"],
     queryFn: getProducts,
@@ -13,5 +13,6 @@ export function useProductsQuery() {
     gcTime: PRODUCTS_GC_TIME,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    ...options,
   });
 }

@@ -993,6 +993,7 @@ export default function VendorProducts() {
         {!isLoading && !isError && (
           <div className="vendor-products-table">
             <div className="vendor-products-table__row vendor-products-table__head">
+              <span>#</span>
               <span>Item</span>
               <span>Price</span>
               <span>Stock</span>
@@ -1001,7 +1002,7 @@ export default function VendorProducts() {
               <span>Action</span>
             </div>
 
-            {paginatedVendorProducts.map((product) => {
+            {paginatedVendorProducts.map((product, index) => {
               const isRowUpdating =
                 processingProductId &&
                 String(processingProductId) === String(product.id);
@@ -1016,6 +1017,7 @@ export default function VendorProducts() {
 
               return (
                 <div className="vendor-products-table__row" key={product.id}>
+                  <span>{(currentPage - 1) * itemsPerPage + index + 1}</span>
                   <span>
                     <Link to={`/product/${product.id}`} state={{ product }}>
                       {product.title}

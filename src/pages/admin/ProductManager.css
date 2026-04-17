@@ -11,13 +11,16 @@
 
 .admin-products-table__row {
   display: grid;
-  grid-template-columns: 1.4fr 1.1fr 1.1fr 0.9fr 0.7fr 1fr 1fr 1fr;
+  grid-template-columns: 30px 1.4fr 1.1fr 1.1fr 0.9fr 0.7fr 1fr 1fr 1fr;
   gap: 12px;
   align-items: center;
   padding: 8px 12px;
   border-radius: 10px;
   background: #fafafa;
   font-size: 14px;
+}
+.admin-products-table__row span {
+  text-align: center;
 }
 
 .admin-products-table__head {
@@ -33,7 +36,6 @@
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 13px;
-  
 }
 
 .admin-reason-input:disabled {

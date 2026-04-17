@@ -31,6 +31,22 @@ function formatStatus(status) {
   }
 }
 
+function getProductCreatedTimestamp(product) {
+  const parsedCreatedAt = Date.parse(String(product?.createdAt ?? "").trim());
+
+  if (Number.isFinite(parsedCreatedAt)) {
+    return parsedCreatedAt;
+  }
+
+  const parsedUpdatedAt = Date.parse(String(product?.updatedAt ?? "").trim());
+
+  if (Number.isFinite(parsedUpdatedAt)) {
+    return parsedUpdatedAt;
+  }
+
+  return 0;
+}
+
 export default function ProductManager() {
   const queryClient = useQueryClient();
   const { data: products = [], isLoading, isError } = useAdminProductsQuery();
@@ -55,23 +71,31 @@ export default function ProductManager() {
   const filteredProducts = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase();
 
-    return products.filter((product) => {
-      const productStatus = String(product?.status ?? "")
-        .trim()
-        .toLowerCase();
+    return products
+      .filter((product) => {
+        const productStatus = String(product?.status ?? "")
+          .trim()
+          .toLowerCase();
 
-      if (statusFilter !== "all" && productStatus !== statusFilter) {
-        return false;
-      }
+        if (statusFilter !== "all" && productStatus !== statusFilter) {
+          return false;
+        }
 
-      if (!normalizedKeyword) {
-        return true;
-      }
+        if (!normalizedKeyword) {
+          return true;
+        }
 
-      return [product?.id, product?.title, product?.category]
-        .filter(Boolean)
-        .some((item) => String(item).toLowerCase().includes(normalizedKeyword));
-    });
+        return [product?.id, product?.title, product?.category]
+          .filter(Boolean)
+          .some((item) =>
+            String(item).toLowerCase().includes(normalizedKeyword),
+          );
+      })
+      .sort(
+        (firstProduct, secondProduct) =>
+          getProductCreatedTimestamp(secondProduct) -
+          getProductCreatedTimestamp(firstProduct),
+      );
   }, [keyword, products, statusFilter]);
 
   // Reset page when filters change
@@ -175,6 +199,7 @@ export default function ProductManager() {
         {!isLoading && !isError && (
           <div className="admin-products-table">
             <div className="admin-products-table__row admin-products-table__head">
+              <span>#</span>
               <span>Item</span>
               <span>Shop</span>
               <span>ID</span>
@@ -185,7 +210,7 @@ export default function ProductManager() {
               <span>Action</span>
             </div>
 
-            {paginatedProducts.map((product) => {
+            {paginatedProducts.map((product, index) => {
               const productId = String(product.id ?? "");
               const isProcessing = processingId === productId;
               const statusValue = String(product.status ?? "")
@@ -195,6 +220,7 @@ export default function ProductManager() {
 
               return (
                 <div className="admin-products-table__row" key={product.id}>
+                  <span>{(currentPage - 1) * itemsPerPage + index + 1}</span>
                   <span>
                     <Link to={`/product/${product.id}`} state={{ product }}>
                       {product.title}
