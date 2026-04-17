@@ -27,11 +27,11 @@ body {
     "Apple Color Emoji",
     "Segoe UI Emoji";
   color: var(--text);
-  background: var(--bg);
+  background: #fff;
 }
 
 .auth-page {
-  min-height: 50vh;
+  min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -43,6 +43,7 @@ body {
   border-radius: var(--radius-xl);
   padding: 36px 36px;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+  margin-bottom: 80px;
 }
 
 .auth-title {

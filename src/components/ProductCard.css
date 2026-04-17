@@ -1,21 +1,39 @@
 .product-card {
   min-width: 0;
+  background: #fff;
+  border: 1px solid #eef1f4;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 10px 20px rgba(2, 6, 23, 0.05);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 28px rgba(2, 6, 23, 0.12);
 }
 
 .product-card__media {
   position: relative;
   display: grid;
   place-items: center;
-  height: 220px;
-  background: #f4f4f4;
-  border-radius: 4px;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
   overflow: hidden;
 }
 
 .product-card__media img {
-  width: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: auto;
   height: 100%;
-  object-fit: cover;
+  /* min-width: 100%; */
+  max-width: none;
+  display: block;
+  transform: translate(-50%, -50%);
 }
 
 .product-card__badge {
@@ -35,7 +53,7 @@
 }
 
 .product-card__content {
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .product-card__title {
@@ -52,10 +70,11 @@
 }
 
 .product-card__price-row {
-  margin-top: 8px;
+  margin: 8px 0 0 8px;
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .product-card__price {
@@ -77,9 +96,49 @@
   gap: 8px;
 }
 
+.product-card__meta--rating {
+  margin-top: 0;
+  margin-right: 8px;
+  margin-left: auto;
+  flex-wrap: nowrap;
+}
+
+.product-card__shop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #334155;
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 4px 8px;
+}
+
+.product-card__shop-avatar {
+  inline-size: 18px;
+  block-size: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #cbd5e1;
+  color: #0f172a;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.product-card__shop-avatar img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .product-card__rating {
   color: #ffad33;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   font-size: 14px;
 }
 

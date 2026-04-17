@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import qrCode from "../../assets/Images/qr-code.jpg";
 
 import { useAuth } from "../../hooks/useAuth";
 import "./VendorOnboarding.css";
@@ -40,6 +41,16 @@ export default function VendorOnboarding() {
 
     return `${pickupAddress.fullName} | ${pickupAddress.phone} | ${pickupAddress.region} | ${pickupAddress.detail}`;
   }, [pickupAddress]);
+
+  const progressPercent = useMemo(() => {
+    if (steps.length <= 1) {
+      return 100;
+    }
+
+    return Math.round((currentStep / (steps.length - 1)) * 100);
+  }, [currentStep]);
+
+  const currentStepLabel = steps[currentStep] ?? steps[0];
 
   const handleShopInfoChange = (event) => {
     const { name, value } = event.target;
@@ -111,17 +122,44 @@ export default function VendorOnboarding() {
           <h1>Đăng ký trở thành Người bán</h1>
         </header>
 
-        <div className="vendor-steps">
-          {steps.map((label, index) => (
-            <div
-              key={label}
-              className={`vendor-step ${index <= currentStep ? "is-active" : ""}`}
-            >
-              <span className="vendor-step__dot" />
-              <span className="vendor-step__label">{label}</span>
+        <section
+          className="vendor-progress"
+          aria-label="Tiến trình đăng ký vendor"
+        >
+          <div className="vendor-progress__meta">
+            <strong>{currentStepLabel}</strong>
+          </div>
+
+          <div
+            className="vendor-progress__steps"
+            style={{ "--step-count": steps.length }}
+          >
+            <div className="vendor-progress__track" aria-hidden="true">
+              <div
+                className="vendor-progress__bar"
+                style={{ width: `${progressPercent}%` }}
+              />
             </div>
-          ))}
-        </div>
+
+            {steps.map((label, index) => {
+              const stepState =
+                index < currentStep
+                  ? "is-completed"
+                  : index === currentStep
+                    ? "is-current"
+                    : "is-upcoming";
+
+              return (
+                <div key={label} className={`vendor-step ${stepState}`}>
+                  <span className="vendor-step__dot" aria-hidden="true">
+                    {index < currentStep ? "✓" : index + 1}
+                  </span>
+                  <span className="vendor-step__label">{label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         {currentStep === 0 && (
           <section className="vendor-card">
@@ -201,11 +239,11 @@ export default function VendorOnboarding() {
                 <div className="shipping-toggles">
                   <label>
                     <input type="checkbox" defaultChecked />
-                    Kích hoạt đơn vị vận chuyển này
+                    <span> Kích hoạt đơn vị vận chuyển này</span>
                   </label>
                   <label>
                     <input type="checkbox" defaultChecked />
-                    Kích hoạt COD
+                    <span> Kích hoạt COD</span>
                   </label>
                 </div>
               </div>
@@ -236,7 +274,9 @@ export default function VendorOnboarding() {
               Đây chỉ là giao diện tượng trưng, chưa làm chức năng xử lý!!!
             </div>
             <div className="vendor-identity">
-              <div className="qr-box">QR</div>
+              <div className="qr-box">
+                <img className="qr-code" src={qrCode} alt="QR Code" />
+              </div>
               <ul>
                 <li>Vui lòng quét mã QR để hoàn tất cập nhật thông tin.</li>
                 <li>Đảm bảo bạn đã đăng nhập ứng dụng Shopee.</li>
@@ -269,6 +309,7 @@ export default function VendorOnboarding() {
             <div className="vendor-tax">
               <label>
                 Loại hình kinh doanh
+                <span> </span>
                 <select>
                   <option>Cá nhân</option>
                   <option>Hộ kinh doanh</option>
@@ -276,15 +317,15 @@ export default function VendorOnboarding() {
                 </select>
               </label>
               <label>
-                Địa chỉ đăng ký kinh doanh
+                Địa chỉ đăng ký kinh doanh<span> </span>
                 <input type="text" placeholder="Nhập địa chỉ" />
               </label>
               <label>
-                Email nhận hóa đơn điện tử
+                Email nhận hóa đơn điện tử<span> </span>
                 <input type="email" placeholder="Nhập email" />
               </label>
               <label>
-                Mã số thuế
+                Mã số thuế<span> </span>
                 <input type="text" placeholder="Nhập mã số thuế" />
               </label>
             </div>
@@ -360,9 +401,8 @@ export default function VendorOnboarding() {
               </label>
               <label>
                 Tỉnh/Thành phố/Quận/Huyện/Phường/Xã
-                <input
+                <textarea
                   name="region"
-                  type="text"
                   placeholder="Chọn"
                   value={addressDraft.region}
                   onChange={handleAddressChange}

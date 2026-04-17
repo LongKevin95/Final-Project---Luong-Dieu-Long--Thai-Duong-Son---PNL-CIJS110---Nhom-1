@@ -1,17 +1,12 @@
-import "./App.css";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
 import AppRoutes from "./routes/AppRoutes";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   return (
-    <div className="app-shell">
-      <Header />
-      <main className="app-content">
-        <AppRoutes />
-      </main>
-      <Footer />
-    </div>
+    <>
+      <ScrollToTop />
+      <AppRoutes />
+    </>
   );
 }
 

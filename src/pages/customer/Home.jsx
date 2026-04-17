@@ -1,7 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import jblSpeaker from "../../assets/Images/jbl-speaker.png";
 
 import ProductCard from "../../components/ProductCard";
+import { formatProductCategoryLabel } from "../../api/productApi";
 import { useProductsQuery } from "../../hooks/useProductsQuery";
 import "./Home.css";
 
@@ -11,30 +13,127 @@ const timerItems = [
   { label: "Minutes", value: "59" },
   { label: "Seconds", value: "59" },
 ];
+const HOME_PRODUCTS_SNAPSHOT_KEY = "ls-home-products-snapshot";
+
+function readStoredArray(storageKey) {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const rawData = window.localStorage.getItem(storageKey);
+
+    if (!rawData) {
+      return [];
+    }
+
+    const parsedData = JSON.parse(rawData);
+    return Array.isArray(parsedData) ? parsedData : [];
+  } catch {
+    window.localStorage.removeItem(storageKey);
+    return [];
+  }
+}
+
+function writeStoredArray(storageKey, items) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(items));
+  } catch {
+    return;
+  }
+}
+
+function normalizeSearchText(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll("đ", "d")
+    .replaceAll("Đ", "d")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function buildProductSearchIndex(product) {
+  const title = String(product?.title ?? "");
+  const categoryValue = String(product?.category ?? "");
+  const categoryLabel = formatProductCategoryLabel(categoryValue);
+
+  return [title, categoryValue, categoryLabel]
+    .map(normalizeSearchText)
+    .filter(Boolean)
+    .join(" ");
+}
 
 function Home() {
   const [searchParams] = useSearchParams();
+  const [storedProducts] = useState(() =>
+    readStoredArray(HOME_PRODUCTS_SNAPSHOT_KEY),
+  );
 
-  const { data: products = [], isLoading, isError, error } = useProductsQuery();
+  const { data: productsData, isLoading, isError, error } = useProductsQuery();
+
+  useEffect(() => {
+    if (!Array.isArray(productsData)) {
+      return;
+    }
+
+    writeStoredArray(HOME_PRODUCTS_SNAPSHOT_KEY, productsData);
+  }, [productsData]);
+
+  const products = Array.isArray(productsData) ? productsData : storedProducts;
 
   const errorMessage = error?.message ?? "Unable to load products.";
 
   const keyword = (searchParams.get("q") ?? "").trim().toLowerCase();
   const category = searchParams.get("category") ?? "";
+  const normalizedKeyword = useMemo(
+    () => normalizeSearchText(keyword),
+    [keyword],
+  );
+  const normalizedCategory = useMemo(
+    () =>
+      String(category ?? "")
+        .trim()
+        .toLowerCase(),
+    [category],
+  );
+
+  const preparedProducts = useMemo(
+    () =>
+      products.map((product) => {
+        return {
+          product,
+          normalizedCategory: String(product?.category ?? "").toLowerCase(),
+          searchIndex: buildProductSearchIndex(product),
+        };
+      }),
+    [products],
+  );
 
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const titleMatch = keyword
-        ? product.title.toLowerCase().includes(keyword)
-        : true;
+    return preparedProducts
+      .filter(({ normalizedCategory: productCategory, searchIndex }) => {
+        const keywordMatch = normalizedKeyword
+          ? searchIndex.includes(normalizedKeyword)
+          : true;
+        const categoryMatch = normalizedCategory
+          ? productCategory === normalizedCategory
+          : true;
 
-      const categoryMatch = category
-        ? product.category.toLowerCase() === category.toLowerCase()
-        : true;
-
-      return titleMatch && categoryMatch;
-    });
-  }, [products, keyword, category]);
+        return keywordMatch && categoryMatch;
+      })
+      .map(({ product }) => product);
+  }, [preparedProducts, normalizedKeyword, normalizedCategory]);
+  const ip17 = filteredProducts.find(
+    (product) => product.title === "Iphone 17 Pro Max 256GB",
+  );
+  const ip17Id = ip17?.id;
+  const heroBannerProductLink = ip17 ? `/product/${ip17Id}` : "/";
+  const heroBannerProductState = ip17 ? { product: ip17 } : undefined;
 
   const flashSalesProducts = filteredProducts.slice(0, 8);
   const bestSellingProducts = filteredProducts.slice(0, 4);
@@ -45,27 +144,18 @@ function Home() {
 
     const labels = [];
     if (keyword) labels.push(`keyword "${keyword}"`);
-    if (category) labels.push(`category "${category}"`);
+    if (category)
+      labels.push(`category "${formatProductCategoryLabel(category)}"`);
 
     return labels.join(" | ");
   }, [keyword, category]);
 
-  const renderProductGrid = (items) => {
-    if (isLoading) {
-      return (
-        <div className="home-grid home-grid--loading">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={`skeleton-${index}`} className="home-card-skeleton"></div>
-          ))}
-        </div>
-      );
-    }
-
-    if (isError) {
+  const renderProductGrid = (items, expectedCount) => {
+    if (isError && items.length === 0) {
       return <p className="home-message home-message--error">{errorMessage}</p>;
     }
 
-    if (items.length === 0) {
+    if (items.length === 0 && !isLoading) {
       return (
         <div className="home-message">
           <p>No product yet.</p>
@@ -76,10 +166,26 @@ function Home() {
       );
     }
 
+    const skeletonCount =
+      isLoading && items.length < expectedCount
+        ? expectedCount - items.length
+        : 0;
+
     return (
-      <div className="home-grid">
+      <div
+        className={`home-grid ${
+          items.length === 0 && skeletonCount > 0 ? "home-grid--loading" : ""
+        }`}
+      >
         {items.map((product) => (
           <ProductCard key={product.id} product={product} />
+        ))}
+        {Array.from({ length: skeletonCount }).map((_, index) => (
+          <div
+            key={`skeleton-${expectedCount}-${index}`}
+            className="home-card-skeleton"
+            aria-hidden="true"
+          ></div>
         ))}
       </div>
     );
@@ -89,26 +195,34 @@ function Home() {
     <main className="home-page o-container">
       <section className="hero-banner">
         <div className="hero-banner__content">
-          <div className="hero-banner__label">iPhone 14 Series</div>
+          <div className="hero-banner__label">iPhone 17 Series</div>
           <h1>Up to 10% off Voucher</h1>
           <Link
             className="hero-banner__cta"
-            to={
-              filteredProducts[0] ? `/product/${filteredProducts[0].id}` : "/"
-            }
+            to={heroBannerProductLink}
+            state={heroBannerProductState}
           >
             Shop Now
           </Link>
         </div>
 
-        <div className="hero-banner__visual" aria-hidden="true"></div>
+        <Link
+          className="hero-banner__visual"
+          to={heroBannerProductLink}
+          state={heroBannerProductState}
+          aria-label="View Iphone 17 Pro Max 256GB details"
+        >
+          <img
+            src="https://www.apple.com/v/iphone-17-pro/e/images/meta/iphone-17-pro_overview__eumhhclcpuaa_og.png"
+            alt="Iphone 17 Pro Max 256GB"
+          />
+        </Link>
+        <div className="hero-dots" aria-hidden="true">
+          <span></span>
+          <span className="is-active"></span>
+          <span></span>
+        </div>
       </section>
-
-      <div className="hero-dots" aria-hidden="true">
-        <span></span>
-        <span className="is-active"></span>
-        <span></span>
-      </div>
 
       {searchSummary && (
         <p className="home-search-summary">Filtering by: {searchSummary}</p>
@@ -122,16 +236,24 @@ function Home() {
           </div>
 
           <div className="sale-timer" aria-label="Countdown">
-            {timerItems.map((item) => (
-              <div className="sale-timer__item" key={item.label}>
-                <strong>{item.value}</strong>
-                <span>{item.label}</span>
+            {timerItems.map((item, index) => (
+              <div className="sale-timer__group" key={item.label}>
+                <div className="sale-timer__item">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+
+                {index < timerItems.length - 1 && (
+                  <span className="sale-timer__separator" aria-hidden="true">
+                    :
+                  </span>
+                )}
               </div>
             ))}
           </div>
         </div>
 
-        {renderProductGrid(flashSalesProducts)}
+        {renderProductGrid(flashSalesProducts, 8)}
 
         <div className="section-actions">
           <button type="button" className="btn-view-all">
@@ -152,7 +274,7 @@ function Home() {
           </button>
         </div>
 
-        {renderProductGrid(bestSellingProducts)}
+        {renderProductGrid(bestSellingProducts, 4)}
       </section>
 
       <section className="music-banner">
@@ -162,7 +284,7 @@ function Home() {
 
           <div className="music-banner__countdown" aria-hidden="true">
             <span>23h</span>
-            <span>05m</span>N
+            <span>05m</span>
             <span>59s</span>
           </div>
 
@@ -171,7 +293,9 @@ function Home() {
           </button>
         </div>
 
-        <div className="music-banner__visual" aria-hidden="true"></div>
+        <div className="music-banner__visual" aria-hidden="true">
+          <img src={jblSpeaker} alt="JBL Speaker" />
+        </div>
       </section>
 
       <section className="home-section">
@@ -182,7 +306,7 @@ function Home() {
           </div>
         </div>
 
-        {renderProductGrid(exploreProducts)}
+        {renderProductGrid(exploreProducts, 8)}
 
         <div className="section-actions">
           <button type="button" className="btn-view-all">
@@ -201,27 +325,59 @@ function Home() {
 
         <div className="arrival-layout">
           <article className="arrival-card arrival-card--large">
-            <h3>PlayStation 5</h3>
-            <p>Black and White version of the PS5 coming out on sale.</p>
-            <a href="#">Shop Now</a>
+            <div className="arrival-card__content">
+              <h3>PlayStation 5</h3>
+              <p>Black and White version of the PS5 coming out on sale.</p>
+              <a href="#">Shop Now</a>
+            </div>
+            <img
+              className="arrival-card__image arrival-card__image--large"
+              src="https://i.ibb.co/BH917f3C/playstation-5.jpg"
+              alt="PlayStation 5"
+              loading="lazy"
+            />
           </article>
 
           <article className="arrival-card arrival-card--medium">
-            <h3>Women's Collections</h3>
-            <p>Featured woman collections that give you another vibe.</p>
-            <a href="#">Shop Now</a>
+            <div className="arrival-card__content">
+              <h3>Women's Collections</h3>
+              <p>Featured woman collections that give you another vibe.</p>
+              <a href="#">Shop Now</a>
+            </div>
+            <img
+              className="arrival-card__image arrival-card__image--medium"
+              src="https://i.ibb.co/HDnjtfYM/woman-hat.jpg"
+              alt="Women's Collections"
+              loading="lazy"
+            />
           </article>
 
           <article className="arrival-card">
-            <h3>Speakers</h3>
-            <p>Amazon wireless speakers.</p>
-            <a href="#">Shop Now</a>
+            <div className="arrival-card__content">
+              <h3>Speakers</h3>
+              <p>Amazon wireless speakers.</p>
+              <a href="#">Shop Now</a>
+            </div>
+            <img
+              className="arrival-card__image"
+              src="https://i.ibb.co/d4y3bHvP/speakers-jpg.jpg"
+              alt="Speakers"
+              loading="lazy"
+            />
           </article>
 
           <article className="arrival-card">
-            <h3>Perfume</h3>
-            <p>Gucci intense oud perfume.</p>
-            <a href="#">Shop Now</a>
+            <div className="arrival-card__content">
+              <h3>Perfume</h3>
+              <p>Gucci intense oud perfume.</p>
+              <a href="#">Shop Now</a>
+            </div>
+            <img
+              className="arrival-card__image"
+              src="https://i.ibb.co/M5tdHQDb/perfume.jpg"
+              alt="Perfume"
+              loading="lazy"
+            />
           </article>
         </div>
       </section>

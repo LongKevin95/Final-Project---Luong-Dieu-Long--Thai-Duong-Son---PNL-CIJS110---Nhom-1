@@ -1,0 +1,150 @@
+:root {
+  --vendor-sidebar-bg: #0f172a;
+  --vendor-sidebar-bg-dark: #1e293b;
+  --vendor-sidebar-text: #e2e8f0;
+  --vendor-surface: #ffffff;
+  --vendor-bg: #f4f6fb;
+  --vendor-shadow: rgba(15, 23, 42, 0.12);
+}
+
+.vendor-layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  background: var(--vendor-bg);
+}
+
+.vendor-sidebar {
+  background: linear-gradient(
+    180deg,
+    var(--vendor-sidebar-bg),
+    var(--vendor-sidebar-bg-dark)
+  );
+  color: var(--vendor-sidebar-text);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 22px;
+  gap: 22px;
+}
+
+.vendor-sidebar__brand {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.vendor-sidebar__nav {
+  display: grid;
+  gap: 10px;
+}
+
+.vendor-sidebar__link {
+  color: var(--vendor-sidebar-text);
+  text-decoration: none;
+  font-size: 15px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: transparent;
+}
+
+.vendor-sidebar__link.is-active {
+  background: rgba(255, 255, 255, 0.18);
+  font-weight: 600;
+}
+
+.vendor-sidebar__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.vendor-sidebar__action {
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--vendor-sidebar-text);
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
+.vendor-main {
+  background: var(--vendor-bg);
+  padding: 26px 32px;
+}
+
+.vendor-main__content {
+  min-height: calc(100vh - 52px);
+  background: var(--vendor-surface);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 12px 30px var(--vendor-shadow);
+}
+
+.vendor-main__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.vendor-main__header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.vendor-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vendor-profile__meta {
+  display: grid;
+  text-align: right;
+}
+
+.vendor-profile__meta span {
+  font-weight: 600;
+}
+
+.vendor-profile__meta small {
+  color: #64748b;
+}
+
+.vendor-profile__avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #0f172a;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.vendor-panel {
+  color: #64748b;
+}
+
+@media (max-width: 960px) {
+  .vendor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .vendor-sidebar {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .vendor-sidebar__nav {
+    display: flex;
+    gap: 8px;
+  }
+
+  .vendor-sidebar__footer {
+    display: none;
+  }
+}

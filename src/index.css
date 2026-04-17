@@ -4,6 +4,23 @@
   box-sizing: border-box;
 }
 
+:root {
+  --app-bg: #f5f5f5;
+  --app-text: #111111;
+  --app-surface: #ffffff;
+  --app-muted: #666666;
+  --app-border: #e5e7eb;
+}
+
+body[data-theme="dark"] {
+  --app-bg: #000000cf;
+  --app-text: #e2e8f0;
+  --app-surface: #0b1220;
+  --app-muted: #94a3b8;
+  --app-border: #334155;
+  --app-header: #000000a1;
+}
+
 html,
 body,
 #root {
@@ -12,10 +29,99 @@ body,
 
 body {
   font-family: "Poppins", "Segoe UI", sans-serif;
-  background: #f5f5f5;
-  color: #111;
+  background: var(--app-bg);
+  color: var(--app-text);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 }
 
 a {
   color: inherit;
+}
+
+body[data-theme="dark"] .user-menu,
+body[data-theme="dark"] .product-card {
+  background: var(--app-surface);
+  color: var(--app-text);
+}
+
+body[data-theme="dark"] .site-header {
+  background: var(--app-header);
+}
+
+body[data-theme="dark"] .app-shell,
+body[data-theme="dark"] .app-content {
+  background: #000000cf;
+}
+
+body[data-theme="dark"] .site-header,
+body[data-theme="dark"] .user-menu,
+body[data-theme="dark"] .delivery-box {
+  border-color: var(--app-border);
+}
+
+body[data-theme="dark"] .header-search,
+body[data-theme="dark"] .header-action,
+body[data-theme="dark"] .user-menu__item,
+body[data-theme="dark"] .product-gallery__main,
+body[data-theme="dark"] .product-gallery__thumb,
+body[data-theme="dark"] .quantity-box,
+body[data-theme="dark"] .cart-item,
+body[data-theme="dark"] .cart-summary,
+body[data-theme="dark"] .checkout-form,
+body[data-theme="dark"] .checkout-summary {
+  background: #1e293b;
+  color: var(--app-text);
+}
+body[data-theme="dark"] .checkout-form,
+body[data-theme="dark"] .checkout-summary {
+  border-color: #e5e5e538;
+}
+
+body[data-theme="dark"] .product-card {
+  border-color: #7d838f22;
+  background: #2d2929c7;
+}
+
+body[data-theme="dark"] .product-card__title {
+  color: #f8fafc;
+}
+
+body[data-theme="dark"] .product-card__old-price,
+body[data-theme="dark"] .product-card__reviews,
+body[data-theme="dark"] .home-search-summary,
+body[data-theme="dark"] .rating-count,
+body[data-theme="dark"] .product-detail-helper,
+body[data-theme="dark"] .product-review-note {
+  color: #cbd5e1;
+}
+
+body[data-theme="dark"] .section-title,
+body[data-theme="dark"] .product-info h1,
+body[data-theme="dark"] .product-info__price,
+body[data-theme="dark"] .breadcrumb strong {
+  color: #f8fafc;
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.5) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.45);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.65);
 }
