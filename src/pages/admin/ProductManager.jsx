@@ -104,6 +104,28 @@ function CheckIcon() {
   );
 }
 
+function BanIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle
+        cx="12"
+        cy="12"
+        r="8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+      />
+      <path
+        d="M8.5 15.5 15.5 8.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function XIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -315,6 +337,7 @@ export default function ProductManager() {
                 .trim()
                 .toLowerCase();
               const isInactive = statusValue === PRODUCT_STATUS.INACTIVE;
+              const isApproveDisabled = isProcessing || isInactive;
 
               return (
                 <div className="admin-products-table__row" key={product.id}>
@@ -360,14 +383,20 @@ export default function ProductManager() {
                       <button
                         type="button"
                         className="admin-action-btn admin-action-btn--primary admin-action-btn--icon"
-                        disabled={
-                          isProcessing || statusValue === PRODUCT_STATUS.ACTIVE
+                        disabled={isApproveDisabled}
+                        aria-label={
+                          isInactive
+                            ? "Approve disabled for inactive product"
+                            : "Approve product"
                         }
-                        aria-label="Approve product"
-                        title="Approve"
+                        title={
+                          isInactive
+                            ? "Không thể duyệt sản phẩm đang inactive"
+                            : "Approve"
+                        }
                         onClick={() => handleAdminAction(product, "approve")}
                       >
-                        <CheckIcon />
+                        {isInactive ? <BanIcon /> : <CheckIcon />}
                       </button>
                       <button
                         type="button"
