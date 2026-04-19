@@ -22,6 +22,32 @@ const currency = new Intl.NumberFormat("en-US", {
 });
 const fallbackImage = "/favicon.svg";
 
+function normalizeImageSource(value) {
+  return String(value ?? "").trim();
+}
+
+function isValidImageSource(value) {
+  const normalizedValue = normalizeImageSource(value);
+
+  if (!normalizedValue) {
+    return false;
+  }
+
+  if (!normalizedValue.startsWith("data:")) {
+    return true;
+  }
+
+  const separatorIndex = normalizedValue.indexOf(",");
+
+  if (separatorIndex < 0) {
+    return false;
+  }
+
+  return (
+    normalizeImageSource(normalizedValue.slice(separatorIndex + 1)).length > 0
+  );
+}
+
 function ProductDetail() {
   const { id } = useParams();
   const { user, isAdmin, isCustomer, isVendor } = useAuth();
@@ -195,7 +221,9 @@ function ProductDetail() {
     const images = [
       product.image,
       ...(Array.isArray(product.images) ? product.images : []),
-    ].filter(Boolean);
+    ]
+      .map(normalizeImageSource)
+      .filter(isValidImageSource);
 
     const uniqueImages = [...new Set(images)];
 
