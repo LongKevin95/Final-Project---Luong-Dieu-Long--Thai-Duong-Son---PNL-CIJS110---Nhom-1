@@ -1,127 +1,265 @@
 import { fetchResourceDocument, updateResourceData } from "./resourceApi";
 
 const SHOPS_RESOURCE_NAME = "shops";
+const ECOMMERCE_RESOURCE_NAME = "ecommerce-data";
 
-function resolveShopsSnapshot(dataItem) {
+function normalizeText(value) {
+  return String(value ?? "").trim();
+}
+
+function normalizeEmail(value) {
+  return normalizeText(value).toLowerCase();
+}
+
+function normalizeCategory(value) {
+  return normalizeText(value).toLowerCase();
+}
+
+function resolveShopsSnapshot(
+  dataItem,
+  resourceName = ECOMMERCE_RESOURCE_NAME,
+) {
   if (Array.isArray(dataItem?.shops)) {
     return {
+      payload: dataItem,
       dataId: dataItem?._id ?? null,
       shops: dataItem.shops,
+      resourceName,
+      storage: "direct",
+      nestedIndex: -1,
     };
   }
 
   const nestedList = Array.isArray(dataItem?.data) ? dataItem.data : [];
-  const nestedItem = nestedList.find((item) => Array.isArray(item?.shops));
+  const nestedIndex = nestedList.findIndex((item) =>
+    Array.isArray(item?.shops),
+  );
 
-  if (!nestedItem) {
+  if (nestedIndex < 0) {
     return null;
   }
 
   return {
+    payload: dataItem,
     dataId: dataItem?._id ?? null,
-    shops: nestedItem.shops,
+    shops: nestedList[nestedIndex].shops,
+    resourceName,
+    storage: "nested",
+    nestedIndex,
   };
 }
 
-async function fetchShopsSnapshot() {
-  const document = await fetchResourceDocument(SHOPS_RESOURCE_NAME);
+function findShopsSnapshotInDocument(
+  document,
+  resourceName = ECOMMERCE_RESOURCE_NAME,
+) {
   const dataList = Array.isArray(document?.data) ? document.data : [];
 
   for (let index = dataList.length - 1; index >= 0; index -= 1) {
-    const snapshot = resolveShopsSnapshot(dataList[index]);
+    const snapshot = resolveShopsSnapshot(dataList[index], resourceName);
 
     if (snapshot) {
       return snapshot;
     }
   }
 
+  return null;
+}
+
+function resolveProductsSnapshot(dataItem) {
+  if (Array.isArray(dataItem?.products)) {
+    return {
+      products: dataItem.products,
+    };
+  }
+
+  const nestedList = Array.isArray(dataItem?.data) ? dataItem.data : [];
+  const nestedItem = nestedList.find((item) => Array.isArray(item?.products));
+
+  if (!nestedItem) {
+    return null;
+  }
+
   return {
-    dataId: null,
-    shops: [],
+    products: nestedItem.products,
   };
 }
 
-async function persistShops({ dataId, shops }) {
-  await updateResourceData({
-    resourceName: SHOPS_RESOURCE_NAME,
-    dataId,
-    payload: {
-      shops,
-    },
-  });
-}
+async function fetchFallbackShopsFromProducts() {
+  const document = await fetchResourceDocument(ECOMMERCE_RESOURCE_NAME).catch(
+    () => null,
+  );
+  const dataList = Array.isArray(document?.data) ? document.data : [];
 
-export async function getShops() {
-  const { shops } = await fetchShopsSnapshot();
-  return shops;
-}
+  for (let index = dataList.length - 1; index >= 0; index -= 1) {
+    const snapshot = resolveProductsSnapshot(dataList[index]);
 
-export async function syncShopsFromProducts(products) {
-  const { dataId, shops } = await fetchShopsSnapshot();
-  const currentShops = Array.isArray(shops) ? shops : [];
-  const map = new Map();
-
-  currentShops.forEach((shop) => {
-    const email = String(shop?.vendorEmail ?? "")
-      .trim()
-      .toLowerCase();
-
-    if (!email) {
-      return;
+    if (snapshot) {
+      return buildShopAggregates(snapshot.products, []);
     }
+  }
 
-    map.set(email, {
-      id: shop?.id ?? `shop-${Date.now()}`,
-      shopName:
-        shop?.shopName || (email ? email.split("@")[0] : "My Shop"),
-      vendorEmail: email,
-      categories: Array.isArray(shop?.categories) ? shop.categories : [],
-      totalProducts: Number(shop?.totalProducts ?? 0),
-      inStockProducts: Number(shop?.inStockProducts ?? 0),
-      createdAt: shop?.createdAt ?? new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-  });
+  return [];
+}
 
-  products.forEach((product, index) => {
-    const vendorEmail = String(product?.vendorEmail ?? "")
-      .trim()
-      .toLowerCase();
+async function fetchShopsSnapshot() {
+  const document = await fetchResourceDocument(ECOMMERCE_RESOURCE_NAME).catch(
+    () => null,
+  );
+  const snapshot = findShopsSnapshotInDocument(
+    document,
+    ECOMMERCE_RESOURCE_NAME,
+  );
+
+  if (snapshot) {
+    return snapshot;
+  }
+
+  return {
+    payload: null,
+    dataId: null,
+    shops: [],
+    resourceName: ECOMMERCE_RESOURCE_NAME,
+    storage: "nested",
+    nestedIndex: -1,
+  };
+}
+
+function buildShopAggregates(products, existingShops = []) {
+  const shopIdByVendorEmail = new Map();
+  const createdAtByVendorEmail = new Map();
+  const shopRowsByVendorEmail = new Map();
+
+  existingShops.forEach((shop) => {
+    const vendorEmail = normalizeEmail(shop?.vendorEmail);
 
     if (!vendorEmail) {
       return;
     }
 
-    const previous = map.get(vendorEmail) ?? {
-      id: `shop-${Date.now()}-${index}`,
+    if (shop?.id) {
+      shopIdByVendorEmail.set(vendorEmail, shop.id);
+    }
+
+    if (shop?.createdAt) {
+      createdAtByVendorEmail.set(vendorEmail, shop.createdAt);
+    }
+  });
+
+  products.forEach((product, index) => {
+    const vendorEmail = normalizeEmail(product?.vendorEmail);
+
+    if (!vendorEmail) {
+      return;
+    }
+
+    const currentRow = shopRowsByVendorEmail.get(vendorEmail) ?? {
+      id:
+        shopIdByVendorEmail.get(vendorEmail) ?? `shop-${vendorEmail}-${index}`,
       shopName:
-        product?.shopName || (vendorEmail ? vendorEmail.split("@")[0] : "My Shop"),
+        normalizeText(product?.shopName) ||
+        vendorEmail.split("@")[0] ||
+        "My Shop",
       vendorEmail,
-      categories: [],
+      categories: new Set(),
       totalProducts: 0,
       inStockProducts: 0,
-      createdAt: new Date().toISOString(),
+      createdAt:
+        createdAtByVendorEmail.get(vendorEmail) ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+    const category = normalizeCategory(product?.category);
 
-    const nextCategories = [...new Set([...previous.categories, product?.category].filter(Boolean))];
+    currentRow.totalProducts += 1;
+    currentRow.inStockProducts += Number(product?.stock ?? 0) > 0 ? 1 : 0;
 
-    map.set(vendorEmail, {
-      ...previous,
-      shopName:
-        product?.shopName ||
-        previous.shopName ||
-        (vendorEmail ? vendorEmail.split("@")[0] : "My Shop"),
-      categories: nextCategories,
-      totalProducts: previous.totalProducts + 1,
-      inStockProducts:
-        previous.inStockProducts + (Number(product?.stock ?? 0) > 0 ? 1 : 0),
-      updatedAt: new Date().toISOString(),
-    });
+    if (category) {
+      currentRow.categories.add(category);
+    }
+
+    if (
+      !normalizeText(currentRow.shopName) &&
+      normalizeText(product?.shopName)
+    ) {
+      currentRow.shopName = normalizeText(product.shopName);
+    }
+
+    currentRow.updatedAt = new Date().toISOString();
+    shopRowsByVendorEmail.set(vendorEmail, currentRow);
   });
 
-  await persistShops({
-    dataId,
-    shops: Array.from(map.values()),
+  return Array.from(shopRowsByVendorEmail.values())
+    .map((shop) => ({
+      ...shop,
+      categories: Array.from(shop.categories),
+    }))
+    .sort((firstShop, secondShop) =>
+      firstShop.vendorEmail.localeCompare(secondShop.vendorEmail),
+    );
+}
+
+function buildShopsPayload(snapshot, nextShops) {
+  const payload = snapshot?.payload ?? null;
+
+  if (snapshot?.storage === "nested") {
+    const currentData = Array.isArray(payload?.data) ? payload.data : [];
+    const nextData =
+      snapshot.nestedIndex >= 0
+        ? currentData.map((item, index) =>
+            index === snapshot.nestedIndex
+              ? { ...item, shops: nextShops }
+              : item,
+          )
+        : currentData;
+
+    return {
+      ...(payload ?? {}),
+      data: nextData,
+    };
+  }
+
+  return {
+    ...(payload ?? {}),
+    shops: nextShops,
+  };
+}
+
+async function persistShops(snapshot, shops) {
+  if (!snapshot?.payload || !snapshot?.dataId) {
+    return shops;
+  }
+
+  await updateResourceData({
+    resourceName: snapshot.resourceName ?? ECOMMERCE_RESOURCE_NAME,
+    dataId: snapshot.dataId,
+    payload: buildShopsPayload(snapshot, shops),
   });
+
+  return shops;
+}
+
+export async function getShops() {
+  const { shops } = await fetchShopsSnapshot();
+
+  if (Array.isArray(shops) && shops.length > 0) {
+    return shops;
+  }
+
+  return fetchFallbackShopsFromProducts();
+}
+
+export async function syncShopsFromProducts(products) {
+  const snapshot = await fetchShopsSnapshot();
+  const rebuiltShops = buildShopAggregates(
+    Array.isArray(products) ? products : [],
+    Array.isArray(snapshot?.shops) ? snapshot.shops : [],
+  );
+
+  await persistShops(snapshot, rebuiltShops).catch(() => rebuiltShops);
+
+  return rebuiltShops;
+}
+
+export async function rebuildShopsFromCurrentProducts(products) {
+  await syncShopsFromProducts(products);
 }

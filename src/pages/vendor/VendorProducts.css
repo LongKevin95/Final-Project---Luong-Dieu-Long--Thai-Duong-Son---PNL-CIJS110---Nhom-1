@@ -235,12 +235,9 @@
 }
 
 .vendor-action-control {
-  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 32px;
-  padding-left: 22px;
 }
 
 .vendor-action-btn {
@@ -276,10 +273,6 @@
   background: #3b82f6;
 }
 
-.vendor-action-btn--edit.vendor-action-btn--disabled-rejected {
-  opacity: 0.35;
-}
-
 .vendor-action-btn--hide {
   background: #e2e8f0;
   color: #334155;
@@ -294,9 +287,6 @@
 }
 
 .vendor-action-spinner {
-  position: absolute;
-  left: 0;
-  top: calc(50% - 7px);
   width: 14px;
   height: 14px;
   border: 2px solid #111;

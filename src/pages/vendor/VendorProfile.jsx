@@ -10,6 +10,8 @@ import { useAdminProductsQuery } from "../../hooks/useAdminProductsQuery";
 import { useAuth } from "../../hooks/useAuth";
 import "./VendorDashboard.css";
 
+const ITEMS_PER_PAGE = 10;
+
 export default function VendorProfile() {
   const queryClient = useQueryClient();
   const { user, updateProfile } = useAuth();
@@ -19,6 +21,7 @@ export default function VendorProfile() {
   const [draftStockById, setDraftStockById] = useState({});
   const [processingProductId, setProcessingProductId] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [profileForm, setProfileForm] = useState({
     name: "",
     shopName: "",
@@ -53,6 +56,14 @@ export default function VendorProfile() {
     };
   }, [vendorProducts]);
 
+  const paginatedVendorProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return vendorProducts.slice(startIndex, endIndex);
+  }, [currentPage, vendorProducts]);
+
+  const totalPages = Math.ceil(vendorProducts.length / ITEMS_PER_PAGE);
+
   useEffect(() => {
     setProfileForm({
       name: user?.name ?? "",
@@ -63,6 +74,14 @@ export default function VendorProfile() {
       bio: user?.bio ?? "",
     });
   }, [user]);
+
+  useEffect(() => {
+    if (currentPage <= totalPages) {
+      return;
+    }
+
+    setCurrentPage(Math.max(totalPages, 1));
+  }, [currentPage, totalPages]);
 
   const handleProfileChange = (event) => {
     const { name, value } = event.target;
@@ -271,7 +290,7 @@ export default function VendorProfile() {
               <span>Action</span>
             </div>
 
-            {vendorProducts.map((product) => {
+            {paginatedVendorProducts.map((product) => {
               const productId = String(product?.id ?? "");
               const normalizedStatus = String(product?.status ?? "")
                 .trim()
@@ -320,6 +339,32 @@ export default function VendorProfile() {
             })}
           </div>
         )}
+
+        {vendorProducts.length > 0 && totalPages > 1 ? (
+          <div className="vendor-pagination">
+            <button
+              type="button"
+              className="vendor-pagination-btn"
+              onClick={() => setCurrentPage((previous) => previous - 1)}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+
+            <span className="vendor-pagination-info">
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <button
+              type="button"
+              className="vendor-pagination-btn"
+              onClick={() => setCurrentPage((previous) => previous + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
+        ) : null}
       </section>
     </div>
   );

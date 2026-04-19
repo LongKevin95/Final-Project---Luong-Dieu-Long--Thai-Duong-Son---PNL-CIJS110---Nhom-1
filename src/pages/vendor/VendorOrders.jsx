@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { updateOrderById } from "../../api/ordersApi";
@@ -26,6 +26,7 @@ const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
   maximumFractionDigits: 0,
 });
+const ITEMS_PER_PAGE = 10;
 
 function formatDate(value) {
   if (!value) {
@@ -148,6 +149,27 @@ function getOrderDateInputValue(value) {
   return `${year}-${month}-${day}`;
 }
 
+function upsertOrderInList(list, nextOrder) {
+  const orders = Array.isArray(list) ? list : [];
+  const normalizedId = String(nextOrder?.id ?? "").trim();
+
+  if (!normalizedId) {
+    return orders;
+  }
+
+  const existingIndex = orders.findIndex(
+    (order) => String(order?.id ?? "").trim() === normalizedId,
+  );
+
+  if (existingIndex < 0) {
+    return [nextOrder, ...orders];
+  }
+
+  return orders.map((order, index) =>
+    index === existingIndex ? nextOrder : order,
+  );
+}
+
 export default function VendorOrders() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -162,6 +184,7 @@ export default function VendorOrders() {
   const [cancelTargetId, setCancelTargetId] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [processingOrderId, setProcessingOrderId] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const vendorEmail = String(user?.email ?? "")
     .trim()
@@ -257,6 +280,26 @@ export default function VendorOrders() {
     return nextOrders;
   }, [dateFilter, searchTerm, sortBy, statusFilter, vendorOrders]);
 
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return visibleOrders.slice(startIndex, endIndex);
+  }, [currentPage, visibleOrders]);
+
+  const totalPages = Math.ceil(visibleOrders.length / ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateFilter, searchTerm, sortBy, statusFilter]);
+
+  useEffect(() => {
+    if (currentPage <= totalPages) {
+      return;
+    }
+
+    setCurrentPage(Math.max(totalPages, 1));
+  }, [currentPage, totalPages]);
+
   const selectedOrder = useMemo(() => {
     const currentInVisible = visibleOrders.find(
       (order) => String(order?.id ?? "") === selectedOrderId,
@@ -295,7 +338,7 @@ export default function VendorOrders() {
     try {
       setProcessingOrderId(orderId);
 
-      await updateOrderById({
+      const updatedOrder = await updateOrderById({
         id: orderId,
         actor: "vendor",
         updates: {
@@ -304,7 +347,10 @@ export default function VendorOrders() {
         },
       });
 
-      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.setQueryData(["orders"], (previous) =>
+        upsertOrderInList(previous, updatedOrder),
+      );
+      void queryClient.invalidateQueries({ queryKey: ["orders"] });
     } catch (error) {
       window.alert(error?.message ?? "Khong the cap nhat don hang.");
     } finally {
@@ -441,7 +487,7 @@ export default function VendorOrders() {
             <span>Action</span>
           </div>
 
-          {visibleOrders.map((order, index) => {
+          {paginatedOrders.map((order, index) => {
             const orderId = String(order?.id ?? "");
             const rowKey =
               orderId || String(order?._id || `vendor-order-${index}`);
@@ -462,7 +508,8 @@ export default function VendorOrders() {
                 className="vendor-table__row vendor-table__row--orders-v1"
               >
                 <span className="vendor-order-id">
-                  {orderId || `#${index + 1}`}
+                  {orderId ||
+                    `#${(currentPage - 1) * ITEMS_PER_PAGE + index + 1}`}
                 </span>
                 <span>{formatDate(order.date)}</span>
                 <span>
@@ -564,6 +611,32 @@ export default function VendorOrders() {
         </div>
       )}
 
+      {visibleOrders.length > 0 && totalPages > 1 && (
+        <div className="vendor-pagination">
+          <button
+            type="button"
+            className="vendor-pagination-btn"
+            onClick={() => setCurrentPage((previous) => previous - 1)}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+
+          <span className="vendor-pagination-info">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            type="button"
+            className="vendor-pagination-btn"
+            onClick={() => setCurrentPage((previous) => previous + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
       {selectedOrder ? (
         <div className="vendor-modal" role="dialog" aria-modal="true">
           <div className="vendor-modal__content vendor-modal__content--wide">
@@ -596,7 +669,7 @@ export default function VendorOrders() {
                     <dt>Email</dt>
                     <dd>{selectedOrder.customer?.email}</dd>
                   </div>
-                  <div></div>
+
                   <div>
                     <dt>Payment</dt>
                     <dd>{selectedOrder.paymentMethodLabel}</dd>

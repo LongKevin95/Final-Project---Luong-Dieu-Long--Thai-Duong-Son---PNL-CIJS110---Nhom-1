@@ -204,42 +204,7 @@ export default function VendorUsers() {
       };
     });
 
-    const customerRowsMap = new Map(
-      userRows.map((item) => [`email:${item.email}`, item]),
-    );
-
-    Array.from(customerStatsMap.values()).forEach((item) => {
-      const normalizedEmail = String(item?.email ?? "")
-        .trim()
-        .toLowerCase();
-
-      if (normalizedEmail && normalizedEmail !== "n/a") {
-        const existingRow = customerRowsMap.get(`email:${normalizedEmail}`);
-
-        if (!existingRow) {
-          customerRowsMap.set(`email:${normalizedEmail}`, {
-            ...item,
-            email: normalizedEmail,
-            status: "active",
-          });
-        }
-
-        return;
-      }
-
-      const normalizedName = String(item?.name ?? "N/A").trim() || "N/A";
-      const normalizedPhone = String(item?.phone ?? "N/A").trim() || "N/A";
-      const fallbackKey = `name:${normalizedName.toLowerCase()}|phone:${normalizedPhone.toLowerCase()}`;
-
-      if (!customerRowsMap.has(fallbackKey)) {
-        customerRowsMap.set(fallbackKey, {
-          ...item,
-          status: "active",
-        });
-      }
-    });
-
-    return Array.from(customerRowsMap.values())
+    const customerRowsWithOrders = userRows
       .filter((item) => Number(item.orderCount ?? 0) > 0)
       .sort((a, b) => {
         const orderCountDiff = b.orderCount - a.orderCount;
@@ -250,6 +215,15 @@ export default function VendorUsers() {
 
         return a.name.localeCompare(b.name);
       });
+
+    if (customerRowsWithOrders.length > 0) {
+      return customerRowsWithOrders;
+    }
+
+    return Array.from(customerStatsMap.values()).map((item) => ({
+      ...item,
+      status: "active",
+    }));
   }, [customerStatsMap, users]);
 
   return (

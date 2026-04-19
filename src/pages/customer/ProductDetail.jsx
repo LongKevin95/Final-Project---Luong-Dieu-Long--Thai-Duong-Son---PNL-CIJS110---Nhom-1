@@ -32,13 +32,7 @@ function ProductDetail() {
   const location = useLocation();
   const canInspectHiddenProducts = isAdmin || isVendor;
 
-  const {
-    data: publicProducts = [],
-    isLoading: isPublicProductsLoading,
-    isError: isPublicProductsError,
-  } = useProductsQuery({
-    enabled: !canInspectHiddenProducts,
-  });
+  const { data: products = [], isLoading, isError } = useProductsQuery();
   const {
     data: adminProducts = [],
     isLoading: isAdminProductsLoading,
@@ -129,69 +123,61 @@ function ProductDetail() {
     return locationProduct;
   }, [id, location.state]);
 
-  const sourceProducts = canInspectHiddenProducts
-    ? adminProducts
-    : publicProducts;
-
-  const productById = useMemo(
-    () => new Map(sourceProducts.map((item) => [String(item?.id ?? ""), item])),
-    [sourceProducts],
-  );
-
   const resolvedProduct = useMemo(() => {
-    const matched = productById.get(String(id)) ?? null;
+    const matched =
+      products.find((item) => String(item.id) === String(id)) ?? null;
 
     if (matched) {
-      if (isVendor && !isAdmin) {
-        const productVendorEmail = String(matched?.vendorEmail ?? "")
-          .trim()
-          .toLowerCase();
-        const currentUserEmail = String(user?.email ?? "")
-          .trim()
-          .toLowerCase();
-        const productStatus = String(matched?.status ?? "")
-          .trim()
-          .toLowerCase();
-        const isPubliclyVisibleProduct =
-          productStatus === "active" || productStatus === "out_of_stock";
-
-        if (
-          productVendorEmail !== currentUserEmail &&
-          !isPubliclyVisibleProduct
-        ) {
-          return null;
-        }
-      }
-
       return withVendorDisplay(matched);
     }
 
+    if (!canInspectHiddenProducts) {
+      return null;
+    }
+
+    const adminMatched =
+      adminProducts.find((item) => String(item.id) === String(id)) ?? null;
+
+    if (!adminMatched) {
+      return null;
+    }
+
+    if (isAdmin) {
+      return withVendorDisplay(adminMatched);
+    }
+
+    const productVendorEmail = String(adminMatched?.vendorEmail ?? "")
+      .trim()
+      .toLowerCase();
+    const currentUserEmail = String(user?.email ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (isVendor && productVendorEmail === currentUserEmail) {
+      return withVendorDisplay(adminMatched);
+    }
+
     return null;
-  }, [id, isAdmin, isVendor, productById, user?.email, withVendorDisplay]);
+  }, [
+    adminProducts,
+    canInspectHiddenProducts,
+    id,
+    isAdmin,
+    isVendor,
+    products,
+    user?.email,
+    withVendorDisplay,
+  ]);
 
   const product = resolvedProduct ?? previewProduct;
 
-  const visibleSourceProducts = useMemo(() => {
-    if (!canInspectHiddenProducts) {
-      return sourceProducts;
-    }
-
-    return sourceProducts.filter((item) => {
-      const status = String(item?.status ?? "")
-        .trim()
-        .toLowerCase();
-
-      return status === "active" || status === "out_of_stock";
-    });
-  }, [canInspectHiddenProducts, sourceProducts]);
-
   const relatedProducts = useMemo(
     () =>
-      visibleSourceProducts
+      products
         .filter((item) => String(item.id) !== String(id))
         .map((item) => withVendorDisplay(item))
         .slice(0, 4),
-    [visibleSourceProducts, id, withVendorDisplay],
+    [products, id, withVendorDisplay],
   );
 
   const selectedColor =
@@ -256,28 +242,20 @@ function ProductDetail() {
   const isFavorite = hasInWishlist(product?.id);
   const isPrimaryProductLoading =
     !product &&
-    (canInspectHiddenProducts
-      ? isAdminProductsLoading
-      : isPublicProductsLoading);
-  const isPrimaryProductSettled = canInspectHiddenProducts
-    ? !isAdminProductsLoading
-    : !isPublicProductsLoading;
-  const hasPrimaryProductError = canInspectHiddenProducts
-    ? isAdminProductsError
-    : isPublicProductsError;
+    (isLoading || (canInspectHiddenProducts && isAdminProductsLoading));
+  const isPrimaryProductSettled =
+    !isLoading && (!canInspectHiddenProducts || !isAdminProductsLoading);
+  const hasPrimaryProductError =
+    isError || (canInspectHiddenProducts && isAdminProductsError);
   const shouldShowProductError =
     !product && hasPrimaryProductError && isPrimaryProductSettled;
   const shouldShowProductNotFound =
     !product && !shouldShowProductError && isPrimaryProductSettled;
-  const areRelatedProductsLoading = canInspectHiddenProducts
-    ? isAdminProductsLoading && visibleSourceProducts.length === 0
-    : isPublicProductsLoading && visibleSourceProducts.length === 0;
+  const areRelatedProductsLoading = isLoading && products.length === 0;
   const shouldShowReviewsLoading =
     Boolean(product) &&
     !Array.isArray(product?.reviewsData) &&
-    (canInspectHiddenProducts
-      ? isAdminProductsLoading
-      : isPublicProductsLoading);
+    (isLoading || (canInspectHiddenProducts && isAdminProductsLoading));
 
   const requireCustomerAccess = () => {
     if (!user) {
@@ -668,7 +646,7 @@ function ProductDetail() {
                   </div>
                 ) : (
                   <p className="product-detail-helper">
-                    There is no rating for this products.
+                    Chua co danh gia nao cho san pham nay.
                   </p>
                 )}
               </div>
