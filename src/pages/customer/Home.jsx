@@ -16,6 +16,8 @@ const timerItems = [
 ];
 const HOME_PRODUCTS_SNAPSHOT_KEY = "ls-home-products-snapshot";
 const HOME_USERS_SNAPSHOT_KEY = "ls-home-users-snapshot";
+const HOME_HERO_PRODUCT_ID_KEY = "ls-home-hero-product-id";
+const HERO_BANNER_PRODUCT_TITLE = "Iphone 17 Pro Max 256GB";
 
 function readStoredArray(storageKey) {
   if (typeof window === "undefined") {
@@ -49,6 +51,35 @@ function writeStoredArray(storageKey, items) {
   }
 }
 
+function readStoredValue(storageKey) {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  try {
+    return String(window.localStorage.getItem(storageKey) ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+function writeStoredValue(storageKey, value) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    if (!String(value ?? "").trim()) {
+      window.localStorage.removeItem(storageKey);
+      return;
+    }
+
+    window.localStorage.setItem(storageKey, String(value).trim());
+  } catch {
+    return;
+  }
+}
+
 function normalizeSearchText(value) {
   return String(value ?? "")
     .normalize("NFD")
@@ -70,6 +101,28 @@ function buildProductSearchIndex(product) {
     .join(" ");
 }
 
+function getProductDetailLink(product) {
+  const productId = String(product?.id ?? "").trim();
+
+  return productId ? `/product/${productId}` : "/";
+}
+
+function isHeroBannerCandidate(product) {
+  const normalizedTitle = normalizeSearchText(product?.title);
+  const normalizedDescription = normalizeSearchText(product?.description);
+  const normalizedModel = normalizeSearchText(product?.attributes?.model);
+
+  return (
+    normalizedTitle.includes("iphone17") ||
+    normalizedTitle.includes("17promax") ||
+    normalizedTitle.includes("iphone17promax256gb") ||
+    normalizedDescription.includes("a19pro") ||
+    normalizedDescription.includes("iphone17") ||
+    normalizedModel.includes("iphone17") ||
+    normalizedModel.includes("17series2025")
+  );
+}
+
 function Home() {
   const [searchParams] = useSearchParams();
   const [storedProducts] = useState(() =>
@@ -77,6 +130,9 @@ function Home() {
   );
   const [storedUsers] = useState(() =>
     readStoredArray(HOME_USERS_SNAPSHOT_KEY),
+  );
+  const [storedHeroProductId] = useState(() =>
+    readStoredValue(HOME_HERO_PRODUCT_ID_KEY),
   );
 
   const { data: productsData, isLoading, isError, error } = useProductsQuery();
@@ -174,11 +230,63 @@ function Home() {
       })
       .map(({ product }) => product);
   }, [preparedProducts, normalizedKeyword, normalizedCategory]);
-  const ip17 = filteredProducts.find(
-    (product) => product.title === "Iphone 17 Pro Max 256GB",
-  );
-  const ip17Id = ip17?.id;
-  const heroBannerProductLink = ip17 ? `/product/${ip17Id}` : "/";
+
+  const storedHeroBannerProductId = useMemo(() => {
+    if (storedHeroProductId) {
+      return storedHeroProductId;
+    }
+
+    const previousFeaturedProduct = storedProducts.find(
+      (product) =>
+        normalizeSearchText(product?.title) ===
+        normalizeSearchText(HERO_BANNER_PRODUCT_TITLE),
+    );
+
+    return String(previousFeaturedProduct?.id ?? "").trim();
+  }, [storedHeroProductId, storedProducts]);
+
+  const heroBannerProduct = useMemo(() => {
+    const exactMatch = products.find(
+      (product) =>
+        normalizeSearchText(product?.title) ===
+        normalizeSearchText(HERO_BANNER_PRODUCT_TITLE),
+    );
+
+    if (exactMatch) {
+      return exactMatch;
+    }
+
+    const rememberedProduct = products.find(
+      (product) =>
+        String(product?.id ?? "").trim() === storedHeroBannerProductId,
+    );
+
+    if (rememberedProduct && isHeroBannerCandidate(rememberedProduct)) {
+      return rememberedProduct;
+    }
+
+    const iphoneCandidate = products.find((product) =>
+      isHeroBannerCandidate(product),
+    );
+
+    if (iphoneCandidate) {
+      return iphoneCandidate;
+    }
+
+    return products[0] ?? filteredProducts[0] ?? null;
+  }, [filteredProducts, products, storedHeroBannerProductId]);
+
+  useEffect(() => {
+    const nextHeroProductId = String(heroBannerProduct?.id ?? "").trim();
+
+    if (!nextHeroProductId) {
+      return;
+    }
+
+    writeStoredValue(HOME_HERO_PRODUCT_ID_KEY, nextHeroProductId);
+  }, [heroBannerProduct]);
+
+  const heroBannerProductLink = getProductDetailLink(heroBannerProduct);
 
   const flashSalesProducts = filteredProducts.slice(0, 8);
   const bestSellingProducts = filteredProducts.slice(0, 4);
@@ -250,11 +358,11 @@ function Home() {
         <Link
           className="hero-banner__visual"
           to={heroBannerProductLink}
-          aria-label="View Iphone 17 Pro Max 256GB details"
+          aria-label={`View ${heroBannerProduct?.title || "featured product"} details`}
         >
           <img
             src="https://www.apple.com/v/iphone-17-pro/e/images/meta/iphone-17-pro_overview__eumhhclcpuaa_og.png"
-            alt="Iphone 17 Pro Max 256GB"
+            alt={heroBannerProduct?.title || "Featured product"}
           />
         </Link>
         <div className="hero-dots" aria-hidden="true">
