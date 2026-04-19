@@ -5,14 +5,12 @@ import "./VendorLayout.css";
 
 const navItems = [
   { label: "Dashboard", path: "/vendor" },
-  { label: "Customers", path: "/vendor/customers" },
   { label: "Products", path: "/vendor/products" },
   { label: "Orders", path: "/vendor/orders" },
   { label: "Profile", path: "/vendor/profile" },
 ];
 
 const titleMap = [
-  { path: "/vendor/customers", title: "Customer Management" },
   { path: "/vendor/products", title: "Products Management" },
   { path: "/vendor/orders", title: "Orders Management" },
   { path: "/vendor/profile", title: "Profile Management" },

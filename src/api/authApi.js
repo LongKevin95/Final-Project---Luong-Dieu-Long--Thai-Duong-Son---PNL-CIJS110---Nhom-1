@@ -1,36 +1,6 @@
-import { fetchResourceDocument, updateResourceData } from "./resourceApi";
+import { fetchUsersSnapshot, persistUsersSnapshot } from "./usersResourceApi";
 
 const DEFAULT_ROLES = ["customer"];
-const USERS_RESOURCE_NAME = "users";
-
-function buildNextUsersPayload(_payload, nextUsers) {
-  return {
-    users: nextUsers,
-  };
-}
-
-function resolveUsersSnapshot(dataItem) {
-  if (Array.isArray(dataItem?.users)) {
-    return {
-      payload: dataItem,
-      users: dataItem.users,
-      dataId: dataItem?._id ?? null,
-    };
-  }
-
-  const nestedList = Array.isArray(dataItem?.data) ? dataItem.data : [];
-  const nestedItem = nestedList.find((item) => Array.isArray(item?.users));
-
-  if (!nestedItem) {
-    return null;
-  }
-
-  return {
-    payload: nestedItem,
-    users: nestedItem.users,
-    dataId: dataItem?._id ?? null,
-  };
-}
 
 function normalizeUser(user) {
   const roles = Array.isArray(user.roles)
@@ -55,25 +25,6 @@ function normalizeUser(user) {
   };
 }
 
-async function fetchUsersPayload() {
-  const document = await fetchResourceDocument(USERS_RESOURCE_NAME);
-  const dataList = Array.isArray(document?.data) ? document.data : [];
-
-  for (let index = dataList.length - 1; index >= 0; index -= 1) {
-    const snapshot = resolveUsersSnapshot(dataList[index]);
-
-    if (snapshot) {
-      return snapshot;
-    }
-  }
-
-  return {
-    payload: null,
-    users: [],
-    dataId: null,
-  };
-}
-
 export async function registerUser({ name, email, password }) {
   const normalizedEmail = String(email ?? "")
     .trim()
@@ -85,7 +36,8 @@ export async function registerUser({ name, email, password }) {
     throw new Error("Vui lòng nhập đủ thông tin để đăng ký.");
   }
 
-  const { payload, users, dataId } = await fetchUsersPayload();
+  const snapshot = await fetchUsersSnapshot();
+  const { users } = snapshot;
   const normalizedUsers = users.map(normalizeUser);
   const existed = normalizedUsers.find(
     (user) => user.email === normalizedEmail,
@@ -107,11 +59,7 @@ export async function registerUser({ name, email, password }) {
   });
 
   const nextUsers = [...normalizedUsers, nextUser];
-  await updateResourceData({
-    resourceName: USERS_RESOURCE_NAME,
-    dataId,
-    payload: buildNextUsersPayload(payload, nextUsers),
-  });
+  await persistUsersSnapshot(snapshot, nextUsers);
 
   const { password: PASSWORD, role: _legacyRole, ...publicUser } = nextUser;
   return publicUser;
@@ -123,7 +71,7 @@ export async function loginWithCredentials({ email, password }) {
     .toLowerCase();
   const normalizedPassword = String(password ?? "");
 
-  const { users } = await fetchUsersPayload();
+  const { users } = await fetchUsersSnapshot();
   const normalizedUsers = users.map(normalizeUser);
   const matchedUser = normalizedUsers.find(
     (user) => user.email === normalizedEmail,
@@ -146,7 +94,8 @@ export async function updateUserRole(email, role) {
     .trim()
     .toLowerCase();
 
-  const { payload, users, dataId } = await fetchUsersPayload();
+  const snapshot = await fetchUsersSnapshot();
+  const { users } = snapshot;
   const normalizedUsers = users.map(normalizeUser);
   const nextUsers = normalizedUsers.map((user) => {
     if (user.email !== normalizedEmail) {
@@ -167,11 +116,7 @@ export async function updateUserRole(email, role) {
     };
   });
 
-  await updateResourceData({
-    resourceName: USERS_RESOURCE_NAME,
-    dataId,
-    payload: buildNextUsersPayload(payload, nextUsers),
-  });
+  await persistUsersSnapshot(snapshot, nextUsers);
 
   const updatedUser = nextUsers.find((user) => user.email === normalizedEmail);
 
@@ -192,7 +137,8 @@ export async function updateUserProfile(email, updates = {}) {
     throw new Error("Thiếu email tài khoản để cập nhật profile.");
   }
 
-  const { payload, users, dataId } = await fetchUsersPayload();
+  const snapshot = await fetchUsersSnapshot();
+  const { users } = snapshot;
   const normalizedUsers = users.map(normalizeUser);
 
   let updatedUser = null;
@@ -232,11 +178,7 @@ export async function updateUserProfile(email, updates = {}) {
     throw new Error("Không tìm thấy tài khoản để cập nhật profile.");
   }
 
-  await updateResourceData({
-    resourceName: USERS_RESOURCE_NAME,
-    dataId,
-    payload: buildNextUsersPayload(payload, nextUsers),
-  });
+  await persistUsersSnapshot(snapshot, nextUsers);
 
   const { password: PASSWORD, role: _legacyRole, ...publicUser } = updatedUser;
   return publicUser;

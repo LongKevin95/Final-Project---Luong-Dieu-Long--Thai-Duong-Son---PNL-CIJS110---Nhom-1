@@ -24,7 +24,6 @@ import VendorOnboarding from "../pages/vendor/VendorOnboarding";
 import VendorLayout from "../pages/vendor/VendorLayout";
 import VendorOrders from "../pages/vendor/VendorOrders";
 import VendorProfile from "../pages/vendor/VendorProfile";
-import VendorUsers from "../pages/vendor/VendorUsers";
 import PublicLayout from "../components/PublicLayout";
 import PrivateRoute from "./PrivateRoute";
 import RoleRoute from "./RoleRoute";
@@ -111,11 +110,8 @@ export default function AppRoutes() {
         }
       >
         <Route index element={<VendorDashboard />} />
-        <Route path="customers" element={<VendorUsers />} />
-        <Route
-          path="users"
-          element={<Navigate to="/vendor/customers" replace />}
-        />
+        <Route path="customers" element={<Navigate to="/vendor" replace />} />
+        <Route path="users" element={<Navigate to="/vendor" replace />} />
         <Route path="products" element={<VendorProducts />} />
         <Route path="orders" element={<VendorOrders />} />
         <Route path="profile" element={<VendorProfile />} />

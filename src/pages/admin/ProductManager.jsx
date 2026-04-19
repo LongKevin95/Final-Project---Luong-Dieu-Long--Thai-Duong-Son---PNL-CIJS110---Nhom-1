@@ -47,6 +47,77 @@ function getProductCreatedTimestamp(product) {
   return 0;
 }
 
+function isProductVisibleInPublicCache(product) {
+  const status = String(product?.status ?? "")
+    .trim()
+    .toLowerCase();
+
+  return [PRODUCT_STATUS.ACTIVE, PRODUCT_STATUS.OUT_OF_STOCK].includes(status);
+}
+
+function upsertProductInList(list, nextProduct) {
+  const products = Array.isArray(list) ? list : [];
+  const normalizedId = String(nextProduct?.id ?? "").trim();
+
+  if (!normalizedId) {
+    return products;
+  }
+
+  const existingIndex = products.findIndex(
+    (product) => String(product?.id ?? "").trim() === normalizedId,
+  );
+
+  if (existingIndex < 0) {
+    return [nextProduct, ...products];
+  }
+
+  return products.map((product, index) =>
+    index === existingIndex ? nextProduct : product,
+  );
+}
+
+function removeProductFromList(list, productId) {
+  const products = Array.isArray(list) ? list : [];
+  const normalizedId = String(productId ?? "").trim();
+
+  if (!normalizedId) {
+    return products;
+  }
+
+  return products.filter(
+    (product) => String(product?.id ?? "").trim() !== normalizedId,
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M5 12.5 9.2 16.7 19 7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M6 6 18 18M18 6 6 18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export default function ProductManager() {
   const queryClient = useQueryClient();
   const { data: products = [], isLoading, isError } = useAdminProductsQuery();
@@ -111,6 +182,27 @@ export default function ProductManager() {
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
+  function syncProductCaches(nextProduct) {
+    const normalizedId = String(nextProduct?.id ?? "").trim();
+
+    if (!normalizedId) {
+      return;
+    }
+
+    queryClient.setQueryData(["products", "admin"], (previous) =>
+      upsertProductInList(previous, nextProduct),
+    );
+    queryClient.setQueryData(["products", "public"], (previous) => {
+      const baseList = removeProductFromList(previous, normalizedId);
+
+      if (!isProductVisibleInPublicCache(nextProduct)) {
+        return baseList;
+      }
+
+      return upsertProductInList(baseList, nextProduct);
+    });
+  }
+
   async function handleAdminAction(product, action) {
     const normalizedId = String(product?.id ?? "").trim();
     const reason = getReasonValue(product).trim();
@@ -126,9 +218,10 @@ export default function ProductManager() {
 
     try {
       setProcessingId(normalizedId);
+      let updatedProduct = null;
 
       if (action === "approve") {
-        await updateProductById({
+        updatedProduct = await updateProductById({
           id: normalizedId,
           updates: {
             status: PRODUCT_STATUS.ACTIVE,
@@ -143,7 +236,7 @@ export default function ProductManager() {
       }
 
       if (action === "reject") {
-        await updateProductById({
+        updatedProduct = await updateProductById({
           id: normalizedId,
           updates: {
             status: PRODUCT_STATUS.REJECTED,
@@ -152,8 +245,14 @@ export default function ProductManager() {
         });
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["products", "admin"] });
-      await queryClient.invalidateQueries({ queryKey: ["products", "public"] });
+      if (updatedProduct) {
+        syncProductCaches(updatedProduct);
+      }
+
+      void Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ["products", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["products", "public"] }),
+      ]);
     } finally {
       setProcessingId("");
     }
@@ -209,7 +308,6 @@ export default function ProductManager() {
               <span>Reason</span>
               <span>Action</span>
             </div>
-
             {paginatedProducts.map((product, index) => {
               const productId = String(product.id ?? "");
               const isProcessing = processingId === productId;
@@ -258,21 +356,29 @@ export default function ProductManager() {
                     />
                   </span>
                   <span className="admin-actions">
-                    <span className="admin-action-control">
-                      <select
-                        className="admin-action-select"
-                        defaultValue=""
-                        disabled={isProcessing}
-                        onChange={(event) => {
-                          const action = event.target.value;
-                          event.target.value = "";
-                          handleAdminAction(product, action);
-                        }}
+                    <span className="admin-action-control admin-action-buttons">
+                      <button
+                        type="button"
+                        className="admin-action-btn admin-action-btn--primary admin-action-btn--icon"
+                        disabled={
+                          isProcessing || statusValue === PRODUCT_STATUS.ACTIVE
+                        }
+                        aria-label="Approve product"
+                        title="Approve"
+                        onClick={() => handleAdminAction(product, "approve")}
                       >
-                        <option value="">Select</option>
-                        <option value="approve">Approve</option>
-                        <option value="reject">Reject</option>
-                      </select>
+                        <CheckIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-action-btn admin-action-btn--danger admin-action-btn--icon"
+                        disabled={isProcessing || isInactive}
+                        aria-label="Reject product"
+                        title="Reject"
+                        onClick={() => handleAdminAction(product, "reject")}
+                      >
+                        <XIcon />
+                      </button>
                       {isProcessing && (
                         <span className="admin-action-spinner" />
                       )}
@@ -281,15 +387,12 @@ export default function ProductManager() {
                 </div>
               );
             })}
-
             {paginatedProducts.length === 0 && filteredProducts.length > 0 && (
               <p className="admin-status">Không có sản phẩm phù hợp.</p>
             )}
-
             {filteredProducts.length === 0 && (
               <p className="admin-status">Không có sản phẩm phù hợp.</p>
             )}
-
             {totalPages > 1 && (
               <div className="admin-pagination">
                 <button

@@ -10,7 +10,6 @@
     "build:github-pages": "node ./node_modules/vite/bin/vite.js build --mode github-pages",
     "lint": "node ./node_modules/eslint/bin/eslint.js .",
     "preview": "node ./node_modules/vite/bin/vite.js preview",
-    "restore:mockup": "node ./scripts/restoreMockupResources.mjs",
     "predeploy": "npm run build:github-pages",
     "deploy": "gh-pages -d dist"
   },

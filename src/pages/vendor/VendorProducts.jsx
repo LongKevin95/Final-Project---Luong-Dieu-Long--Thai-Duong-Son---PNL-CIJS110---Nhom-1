@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -26,6 +26,8 @@ const defaultForm = {
   warrantyMonths: "",
   expiryDate: "",
   weight: "",
+  thumbnailUrl: "",
+  galleryUrlsText: "",
 };
 
 const categoryOptions = [
@@ -60,122 +62,6 @@ const categoryOptions = [
     flags: { useSizes: false, useColors: false },
   },
 ];
-const ITEMS_PER_PAGE = 10;
-const categoryLabelByValue = Object.fromEntries(
-  categoryOptions.map(({ value, label }) => [value, label]),
-);
-const VENDOR_PRODUCTS_SNAPSHOT_KEY_PREFIX = "ls-vendor-products-snapshot:";
-const VENDOR_HIDDEN_STATUS_META_KEY = "vendorHiddenOriginalStatus";
-const VENDOR_HIDDEN_REASON_META_KEY = "vendorHiddenOriginalReason";
-
-function isPublicProductStatus(status) {
-  return [PRODUCT_STATUS.ACTIVE, PRODUCT_STATUS.OUT_OF_STOCK].includes(
-    String(status ?? "")
-      .trim()
-      .toLowerCase(),
-  );
-}
-
-function buildOptimisticProductForAction(product, action) {
-  if (!product || !action) {
-    return product;
-  }
-
-  if (action === "hide") {
-    const currentStatus = String(product?.status ?? "")
-      .trim()
-      .toLowerCase();
-
-    return {
-      ...product,
-      status: PRODUCT_STATUS.INACTIVE,
-      reason: "Vendor hidden",
-      [VENDOR_HIDDEN_STATUS_META_KEY]: currentStatus || PRODUCT_STATUS.ACTIVE,
-      [VENDOR_HIDDEN_REASON_META_KEY]: product?.reason ?? null,
-    };
-  }
-
-  if (action === "show") {
-    const restoredStatus = String(
-      product?.[VENDOR_HIDDEN_STATUS_META_KEY] ?? "",
-    )
-      .trim()
-      .toLowerCase();
-    const nextStatus = Object.values(PRODUCT_STATUS).includes(restoredStatus)
-      ? restoredStatus
-      : PRODUCT_STATUS.ACTIVE;
-    const restoredReason = product?.[VENDOR_HIDDEN_REASON_META_KEY];
-
-    return {
-      ...product,
-      status: nextStatus,
-      reason:
-        nextStatus === PRODUCT_STATUS.ACTIVE
-          ? null
-          : (restoredReason ?? product?.reason ?? null),
-      [VENDOR_HIDDEN_STATUS_META_KEY]: null,
-      [VENDOR_HIDDEN_REASON_META_KEY]: null,
-    };
-  }
-
-  return product;
-}
-
-function updateProductInList(products, productId, updater) {
-  if (!Array.isArray(products)) {
-    return products;
-  }
-
-  return products.map((item) => {
-    if (String(item?.id ?? "") !== String(productId)) {
-      return item;
-    }
-
-    return typeof updater === "function" ? updater(item) : item;
-  });
-}
-
-function removeProductFromList(products, productId) {
-  if (!Array.isArray(products)) {
-    return products;
-  }
-
-  return products.filter(
-    (item) => String(item?.id ?? "") !== String(productId),
-  );
-}
-
-function readStoredArray(storageKey) {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const rawData = window.localStorage.getItem(storageKey);
-
-    if (!rawData) {
-      return [];
-    }
-
-    const parsedData = JSON.parse(rawData);
-    return Array.isArray(parsedData) ? parsedData : [];
-  } catch {
-    window.localStorage.removeItem(storageKey);
-    return [];
-  }
-}
-
-function writeStoredArray(storageKey, items) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(storageKey, JSON.stringify(items));
-  } catch {
-    return;
-  }
-}
 
 function parseInputList(text) {
   return String(text ?? "")
@@ -191,6 +77,20 @@ function normalizeHexColors(text) {
   );
 
   return [...new Set(colors)];
+}
+
+function normalizeImageSource(value) {
+  return String(value ?? "").trim();
+}
+
+function isInlineImageSource(value) {
+  return normalizeImageSource(value).startsWith("data:");
+}
+
+function parseImageUrls(text) {
+  return [
+    ...new Set(parseInputList(text).map(normalizeImageSource).filter(Boolean)),
+  ];
 }
 
 function readFileAsDataUrl(file) {
@@ -245,6 +145,64 @@ function getStoredImageLabel(image, fallbackLabel) {
   const normalizedPath = value.split("?")[0]?.split("#")[0] ?? "";
   const pathSegments = normalizedPath.split("/").filter(Boolean);
   return pathSegments[pathSegments.length - 1] || fallbackLabel;
+}
+
+function getProductCreatedTimestamp(product) {
+  const parsedCreatedAt = Date.parse(String(product?.createdAt ?? "").trim());
+
+  if (Number.isFinite(parsedCreatedAt)) {
+    return parsedCreatedAt;
+  }
+
+  const parsedUpdatedAt = Date.parse(String(product?.updatedAt ?? "").trim());
+
+  if (Number.isFinite(parsedUpdatedAt)) {
+    return parsedUpdatedAt;
+  }
+
+  return 0;
+}
+
+function isProductVisibleInPublicCache(product) {
+  const status = String(product?.status ?? "")
+    .trim()
+    .toLowerCase();
+
+  return [PRODUCT_STATUS.ACTIVE, PRODUCT_STATUS.OUT_OF_STOCK].includes(status);
+}
+
+function upsertProductInList(list, nextProduct) {
+  const products = Array.isArray(list) ? list : [];
+  const normalizedId = String(nextProduct?.id ?? "").trim();
+
+  if (!normalizedId) {
+    return products;
+  }
+
+  const existingIndex = products.findIndex(
+    (product) => String(product?.id ?? "").trim() === normalizedId,
+  );
+
+  if (existingIndex < 0) {
+    return [nextProduct, ...products];
+  }
+
+  return products.map((product, index) =>
+    index === existingIndex ? nextProduct : product,
+  );
+}
+
+function removeProductFromList(list, productId) {
+  const products = Array.isArray(list) ? list : [];
+  const normalizedId = String(productId ?? "").trim();
+
+  if (!normalizedId) {
+    return products;
+  }
+
+  return products.filter(
+    (product) => String(product?.id ?? "").trim() !== normalizedId,
+  );
 }
 
 function EditIcon() {
@@ -345,224 +303,11 @@ function XIcon() {
   );
 }
 
-function formatStatus(status) {
-  const key = String(status ?? "")
-    .trim()
-    .toLowerCase();
-
-  switch (key) {
-    case PRODUCT_STATUS.ACTIVE:
-      return "Active";
-    case PRODUCT_STATUS.DRAFT:
-      return "Draft";
-    case PRODUCT_STATUS.PENDING:
-      return "Pending";
-    case PRODUCT_STATUS.INACTIVE:
-      return "Inactive";
-    case PRODUCT_STATUS.REJECTED:
-      return "Rejected";
-    case PRODUCT_STATUS.OUT_OF_STOCK:
-      return "Out of stock";
-    case PRODUCT_STATUS.BANNED:
-      return "Rejected";
-    default:
-      return "Unknown";
-  }
-}
-
-const VendorProductsListSection = memo(function VendorProductsListSection({
-  currentPage,
-  isError,
-  isLoading,
-  isSaving,
-  onAction,
-  paginatedVendorProducts,
-  processingProductId,
-  setCurrentPage,
-  totalPages,
-  vendorProductsCount,
-}) {
-  return (
-    <section className="vendor-products-card">
-      <h2>Danh sách sản phẩm</h2>
-
-      {isLoading && <p>Đang tải dữ liệu...</p>}
-      {isError && <p>Không thể tải danh sách sản phẩm.</p>}
-
-      {!isLoading && !isError && (
-        <div className="vendor-products-table">
-          <div className="vendor-products-table__row vendor-products-table__head">
-            <span>#</span>
-            <span>Item</span>
-            <span>Price</span>
-            <span>Stock</span>
-            <span>Status</span>
-            <span>Reason</span>
-            <span>Action</span>
-          </div>
-
-          {paginatedVendorProducts.map((product, index) => {
-            const isRowUpdating =
-              processingProductId &&
-              String(processingProductId) === String(product.id);
-            const normalizedStatus = String(product?.status ?? "")
-              .trim()
-              .toLowerCase();
-            const isRejected = normalizedStatus === PRODUCT_STATUS.REJECTED;
-            const isInactive = normalizedStatus === PRODUCT_STATUS.INACTIVE;
-
-            return (
-              <div className="vendor-products-table__row" key={product.id}>
-                <span>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</span>
-                <span>
-                  <Link to={`/product/${product.id}`} state={{ product }}>
-                    {product.title}
-                  </Link>
-                </span>
-                <span>${Number(product.price ?? 0)}</span>
-                <span>{product.stock ?? 0}</span>
-                <span>
-                  <span
-                    className={`vendor-status-pill vendor-status-pill--${String(
-                      product.status,
-                    ).replaceAll("_", "-")}`}
-                  >
-                    {formatStatus(product.status)}
-                  </span>
-                </span>
-                <span className="vendor-reason-text">
-                  {product.reason ? String(product.reason) : "-"}
-                </span>
-                <span>
-                  <span className="vendor-action-control">
-                    {isRowUpdating && (
-                      <span className="vendor-action-spinner" />
-                    )}
-
-                    <button
-                      type="button"
-                      className="vendor-action-btn vendor-action-btn--icon vendor-action-btn--edit"
-                      disabled={isSaving}
-                      onClick={() => onAction(product, "edit")}
-                      title="Edit"
-                      aria-label="Edit product"
-                    >
-                      <EditIcon />
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`vendor-action-btn vendor-action-btn--icon ${
-                        isInactive
-                          ? "vendor-action-btn--show"
-                          : "vendor-action-btn--hide"
-                      }`}
-                      disabled={isSaving || isRejected}
-                      onClick={() =>
-                        onAction(product, isInactive ? "show" : "hide")
-                      }
-                      title={isInactive ? "Show" : "Hide"}
-                      aria-label={isInactive ? "Show product" : "Hide product"}
-                    >
-                      {isInactive ? <EyeIcon /> : <EyeOffIcon />}
-                    </button>
-
-                    <button
-                      type="button"
-                      className="vendor-action-btn vendor-action-btn--icon vendor-action-btn--delete"
-                      disabled={isSaving}
-                      onClick={() => onAction(product, "delete")}
-                      title="Delete"
-                      aria-label="Delete product"
-                    >
-                      <XIcon />
-                    </button>
-                  </span>
-                </span>
-              </div>
-            );
-          })}
-
-          {paginatedVendorProducts.length === 0 && vendorProductsCount > 0 && (
-            <p className="vendor-products-empty">
-              Không có sản phẩm nào ở trang này.
-            </p>
-          )}
-
-          {vendorProductsCount === 0 && (
-            <p className="vendor-products-empty">
-              Bạn chưa có sản phẩm nào. Hãy đăng sản phẩm đầu tiên.
-            </p>
-          )}
-
-          {totalPages > 1 && (
-            <div className="vendor-pagination">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="vendor-pagination-btn"
-              >
-                Previous
-              </button>
-
-              <span className="vendor-pagination-info">
-                Page {currentPage} of {totalPages}
-              </span>
-
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className="vendor-pagination-btn"
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </section>
-  );
-});
-
 export default function VendorProducts() {
   const queryClient = useQueryClient();
   const location = useLocation();
   const { user } = useAuth();
-  const vendorEmail = String(user?.email ?? "")
-    .trim()
-    .toLowerCase();
-  const vendorProductsSnapshotKey = `${VENDOR_PRODUCTS_SNAPSHOT_KEY_PREFIX}${vendorEmail}`;
-  const [storedVendorProducts, setStoredVendorProducts] = useState(() =>
-    readStoredArray(vendorProductsSnapshotKey),
-  );
-  const selectVendorProducts = useCallback(
-    (products) =>
-      Array.isArray(products)
-        ? products.filter((product) => {
-            const productOwner = String(product?.vendorEmail ?? "")
-              .trim()
-              .toLowerCase();
-            return productOwner === vendorEmail;
-          })
-        : [],
-    [vendorEmail],
-  );
-  const {
-    data: vendorProductsData,
-    isLoading,
-    isError,
-  } = useAdminProductsQuery({
-    enabled: Boolean(vendorEmail),
-    select: selectVendorProducts,
-  });
-  const vendorProducts = Array.isArray(vendorProductsData)
-    ? vendorProductsData
-    : storedVendorProducts;
-  const shouldShowBlockingListLoading =
-    isLoading && vendorProducts.length === 0;
-  const shouldShowBlockingListError = isError && vendorProducts.length === 0;
+  const { data: products = [], isLoading, isError } = useAdminProductsQuery();
 
   const [form, setForm] = useState(defaultForm);
   const [existingThumbnail, setExistingThumbnail] = useState("");
@@ -575,32 +320,69 @@ export default function VendorProducts() {
   const [processingProductId, setProcessingProductId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const vendorEmail = String(user?.email ?? "")
+    .trim()
+    .toLowerCase();
   const vendorShopName =
     user?.name || (vendorEmail ? vendorEmail.split("@")[0] : "My Shop");
 
-  useEffect(() => {
-    setStoredVendorProducts(readStoredArray(vendorProductsSnapshotKey));
-  }, [vendorProductsSnapshotKey]);
+  const vendorProducts = useMemo(() => {
+    return [...products]
+      .filter((product) => {
+        const productOwner = String(product?.vendorEmail ?? "")
+          .trim()
+          .toLowerCase();
+        return productOwner === vendorEmail;
+      })
+      .sort(
+        (firstProduct, secondProduct) =>
+          getProductCreatedTimestamp(secondProduct) -
+          getProductCreatedTimestamp(firstProduct),
+      );
+  }, [products, vendorEmail]);
 
-  useEffect(() => {
-    if (!vendorEmail || !Array.isArray(vendorProductsData)) {
+  const paginatedVendorProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return vendorProducts.slice(startIndex, endIndex);
+  }, [vendorProducts, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(vendorProducts.length / itemsPerPage);
+
+  function syncProductCaches(nextProduct) {
+    const normalizedId = String(nextProduct?.id ?? "").trim();
+
+    if (!normalizedId) {
       return;
     }
 
-    setStoredVendorProducts(vendorProductsData);
-    writeStoredArray(vendorProductsSnapshotKey, vendorProductsData);
-  }, [vendorEmail, vendorProductsData, vendorProductsSnapshotKey]);
+    queryClient.setQueryData(["products", "admin"], (previous) =>
+      upsertProductInList(previous, nextProduct),
+    );
+    queryClient.setQueryData(["products", "public"], (previous) => {
+      const baseList = removeProductFromList(previous, normalizedId);
 
-  const paginatedVendorProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return vendorProducts.slice(startIndex, endIndex);
-  }, [vendorProducts, currentPage]);
+      if (!isProductVisibleInPublicCache(nextProduct)) {
+        return baseList;
+      }
 
-  const totalPages = Math.ceil(vendorProducts.length / ITEMS_PER_PAGE);
+      return upsertProductInList(baseList, nextProduct);
+    });
+  }
+
+  function removeProductCaches(productId) {
+    queryClient.setQueryData(["products", "admin"], (previous) =>
+      removeProductFromList(previous, productId),
+    );
+    queryClient.setQueryData(["products", "public"], (previous) =>
+      removeProductFromList(previous, productId),
+    );
+  }
 
   const categories = useMemo(() => {
-    const fromData = vendorProducts
+    const fromData = products
       .map((product) =>
         String(product?.category ?? "")
           .trim()
@@ -610,7 +392,7 @@ export default function VendorProducts() {
     const predefinedValues = categoryOptions.map((item) => item.value);
 
     return [...new Set([...predefinedValues, ...fromData])];
-  }, [vendorProducts]);
+  }, [products]);
 
   const selectedCategoryConfig = useMemo(() => {
     return (
@@ -619,20 +401,15 @@ export default function VendorProducts() {
     );
   }, [form.category]);
 
-  const vendorProductById = useMemo(
-    () =>
-      new Map(
-        vendorProducts.map((product) => [String(product?.id ?? ""), product]),
-      ),
-    [vendorProducts],
-  );
-
   const editProductIdFromQuery = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return String(params.get("edit") ?? "").trim();
   }, [location.search]);
 
-  const startEditingProduct = useCallback((product) => {
+  function startEditingProduct(product) {
+    const productThumbnail = getProductThumbnail(product);
+    const productGalleryImages = getProductGalleryImages(product);
+
     setEditingId(String(product.id));
     setForm({
       title: product.title ?? "",
@@ -650,40 +427,45 @@ export default function VendorProducts() {
       warrantyMonths: String(product?.attributes?.warrantyMonths ?? ""),
       expiryDate: String(product?.attributes?.expiryDate ?? ""),
       weight: String(product?.attributes?.weight ?? ""),
+      thumbnailUrl: isInlineImageSource(productThumbnail)
+        ? ""
+        : productThumbnail,
+      galleryUrlsText: productGalleryImages
+        .filter((image) => !isInlineImageSource(image))
+        .join("\n"),
     });
-    setExistingThumbnail(getProductThumbnail(product));
-    setExistingGalleryImages(getProductGalleryImages(product));
+    setExistingThumbnail(productThumbnail);
+    setExistingGalleryImages(productGalleryImages);
     setSelectedThumbnailFile(null);
     setSelectedGalleryFiles([]);
     setImagePendingRemoval(null);
     setErrorMessage("");
-  }, []);
+  }
 
   useEffect(() => {
     if (!editProductIdFromQuery || editingId) {
       return;
     }
 
-    const productToEdit = vendorProductById.get(editProductIdFromQuery);
+    const productToEdit = vendorProducts.find(
+      (product) => String(product?.id ?? "") === editProductIdFromQuery,
+    );
 
     if (!productToEdit) {
       return;
     }
 
     startEditingProduct(productToEdit);
-  }, [
-    editProductIdFromQuery,
-    editingId,
-    startEditingProduct,
-    vendorProductById,
-  ]);
+  }, [editProductIdFromQuery, editingId, vendorProducts]);
 
   useEffect(() => {
-    if (currentPage <= totalPages) {
+    const resolvedTotalPages = Math.max(totalPages, 1);
+
+    if (currentPage <= resolvedTotalPages) {
       return;
     }
 
-    setCurrentPage(Math.max(totalPages, 1));
+    setCurrentPage(resolvedTotalPages);
   }, [currentPage, totalPages]);
 
   function handleInputChange(event) {
@@ -816,7 +598,7 @@ export default function VendorProducts() {
     handleRemoveExistingGalleryImage(imagePendingRemoval.image);
   }
 
-  const resetForm = useCallback(() => {
+  function resetForm() {
     setForm(defaultForm);
     setExistingThumbnail("");
     setExistingGalleryImages([]);
@@ -825,295 +607,249 @@ export default function VendorProducts() {
     setImagePendingRemoval(null);
     setEditingId("");
     setErrorMessage("");
-  }, []);
+  }
 
-  const handleSubmit = useCallback(
-    async (event) => {
-      event.preventDefault();
+  async function handleSubmit(event) {
+    event.preventDefault();
 
-      const title = form.title.trim();
-      const description = form.description.trim();
-      const category = form.category.trim().toLowerCase();
-      const price = Number(form.price);
-      const stock = Number(form.stock);
+    const title = form.title.trim();
+    const description = form.description.trim();
+    const category = form.category.trim().toLowerCase();
+    const price = Number(form.price);
+    const stock = Number(form.stock);
 
-      if (!title || !description || !category) {
-        setErrorMessage("Vui lòng nhập title, category và description.");
-        return;
-      }
+    if (!title || !description || !category) {
+      setErrorMessage("Vui lòng nhập title, category và description.");
+      return;
+    }
 
-      if (!Number.isFinite(price) || price <= 0) {
-        setErrorMessage("Price phải là số lớn hơn 0.");
-        return;
-      }
+    if (!Number.isFinite(price) || price <= 0) {
+      setErrorMessage("Price phải là số lớn hơn 0.");
+      return;
+    }
 
-      if (!Number.isFinite(stock) || stock < 0) {
-        setErrorMessage("Stock phải là số lớn hơn hoặc bằng 0.");
-        return;
-      }
+    if (!Number.isFinite(stock) || stock < 0) {
+      setErrorMessage("Stock phải là số lớn hơn hoặc bằng 0.");
+      return;
+    }
 
-      if (!vendorEmail) {
-        setErrorMessage("Không tìm thấy thông tin vendor đang đăng nhập.");
-        return;
-      }
+    if (!vendorEmail) {
+      setErrorMessage("Không tìm thấy thông tin vendor đang đăng nhập.");
+      return;
+    }
 
-      try {
-        setIsSaving(true);
+    try {
+      setIsSaving(true);
 
-        const [uploadedThumbnail, uploadedGalleryImages] = await Promise.all([
-          selectedThumbnailFile ? readFileAsDataUrl(selectedThumbnailFile) : "",
-          Promise.all(
-            selectedGalleryFiles.map((file) => readFileAsDataUrl(file)),
-          ),
-        ]);
+      const [uploadedThumbnail, uploadedGalleryImages] = await Promise.all([
+        selectedThumbnailFile ? readFileAsDataUrl(selectedThumbnailFile) : "",
+        Promise.all(
+          selectedGalleryFiles.map((file) => readFileAsDataUrl(file)),
+        ),
+      ]);
 
-        const thumbnail = uploadedThumbnail || existingThumbnail;
-        const images = [
-          ...new Set([
-            ...existingGalleryImages.filter(Boolean),
-            ...uploadedGalleryImages.filter(Boolean),
-          ]),
-        ];
+      const linkedThumbnail = normalizeImageSource(form.thumbnailUrl);
+      const thumbnail =
+        normalizeImageSource(uploadedThumbnail) ||
+        linkedThumbnail ||
+        normalizeImageSource(existingThumbnail);
+      const linkedGalleryImages = parseImageUrls(form.galleryUrlsText);
+      const images = [
+        ...new Set([
+          ...existingGalleryImages.map(normalizeImageSource).filter(Boolean),
+          ...linkedGalleryImages,
+          ...uploadedGalleryImages.map(normalizeImageSource).filter(Boolean),
+        ]),
+      ];
 
-        if (!thumbnail) {
-          setErrorMessage("Bạn cần upload ảnh đại diện cho sản phẩm.");
-          return;
-        }
-
-        const colors = selectedCategoryConfig.flags.useColors
-          ? normalizeHexColors(form.colorsText)
-          : [];
-        const sizes = selectedCategoryConfig.flags.useSizes
-          ? parseInputList(form.sizesText)
-          : [];
-
-        if (selectedCategoryConfig.flags.useSizes && sizes.length === 0) {
-          setErrorMessage("Danh muc fashion can nhap it nhat 1 size.");
-          return;
-        }
-
-        const attributes = {};
-
-        if (selectedCategoryConfig.flags.useFashionFields) {
-          attributes.brand = form.brand.trim();
-          attributes.material = form.material.trim();
-        }
-
-        if (selectedCategoryConfig.flags.useElectronicsFields) {
-          attributes.model = form.model.trim();
-          attributes.warrantyMonths = Number(form.warrantyMonths || 0);
-        }
-
-        if (selectedCategoryConfig.flags.useFoodFields) {
-          attributes.expiryDate = form.expiryDate;
-          attributes.weight = form.weight.trim();
-        }
-
-        if (selectedCategoryConfig.flags.useHomeFields) {
-          attributes.material = form.material.trim();
-        }
-
-        const payload = {
-          title,
-          category,
-          description,
-          price,
-          stock,
-          image: thumbnail,
-          images,
-          colors,
-          sizes,
-          vendorEmail,
-          shopName: vendorShopName,
-          attributes,
-        };
-
-        if (editingId) {
-          await updateProductById({
-            id: editingId,
-            updates: {
-              ...payload,
-            },
-          });
-        } else {
-          await createProduct({
-            ...payload,
-            reason: null,
-            rating: 0,
-            reviews: 0,
-            discountPercentage: 0,
-            oldPrice: price,
-          });
-        }
-
-        resetForm();
-        void queryClient.invalidateQueries({ queryKey: ["products"] });
-      } catch (error) {
+      if (!thumbnail) {
         setErrorMessage(
-          error?.message ?? "Không thể lưu sản phẩm. Vui lòng thử lại.",
+          "Bạn cần upload ảnh đại diện cho sản phẩm hoặc nhập link ảnh.",
         );
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    [
-      editingId,
-      existingGalleryImages,
-      existingThumbnail,
-      form,
-      queryClient,
-      resetForm,
-      selectedCategoryConfig.flags.useColors,
-      selectedCategoryConfig.flags.useElectronicsFields,
-      selectedCategoryConfig.flags.useFashionFields,
-      selectedCategoryConfig.flags.useFoodFields,
-      selectedCategoryConfig.flags.useHomeFields,
-      selectedCategoryConfig.flags.useSizes,
-      selectedGalleryFiles,
-      selectedThumbnailFile,
-      vendorEmail,
-      vendorShopName,
-    ],
-  );
-
-  const handleAction = useCallback(
-    async (product, action) => {
-      if (!action) {
         return;
       }
 
-      const targetProductId = String(product?.id ?? "");
-      const previousAdminProducts = queryClient.getQueryData([
-        "products",
-        "admin",
-      ]);
-      const previousPublicProducts = queryClient.getQueryData([
-        "products",
-        "public",
-      ]);
-      const previousVendorProducts = vendorProducts;
+      const colors = selectedCategoryConfig.flags.useColors
+        ? normalizeHexColors(form.colorsText)
+        : [];
+      const sizes = selectedCategoryConfig.flags.useSizes
+        ? parseInputList(form.sizesText)
+        : [];
 
-      const applyOptimisticCaches = (nextProduct) => {
-        if (action === "delete") {
-          queryClient.setQueryData(["products", "admin"], (currentProducts) =>
-            removeProductFromList(currentProducts, targetProductId),
-          );
-          queryClient.setQueryData(["products", "public"], (currentProducts) =>
-            removeProductFromList(currentProducts, targetProductId),
-          );
-
-          const nextVendorProducts = removeProductFromList(
-            previousVendorProducts,
-            targetProductId,
-          );
-          setStoredVendorProducts(nextVendorProducts);
-          writeStoredArray(vendorProductsSnapshotKey, nextVendorProducts);
-          return;
-        }
-
-        queryClient.setQueryData(["products", "admin"], (currentProducts) =>
-          updateProductInList(
-            currentProducts,
-            targetProductId,
-            () => nextProduct,
-          ),
-        );
-
-        queryClient.setQueryData(["products", "public"], (currentProducts) => {
-          const nextProducts = updateProductInList(
-            currentProducts,
-            targetProductId,
-            () => nextProduct,
-          );
-
-          return Array.isArray(nextProducts)
-            ? nextProducts.filter((item) => isPublicProductStatus(item?.status))
-            : nextProducts;
-        });
-
-        const nextVendorProducts = updateProductInList(
-          previousVendorProducts,
-          targetProductId,
-          () => nextProduct,
-        );
-        setStoredVendorProducts(nextVendorProducts);
-        writeStoredArray(vendorProductsSnapshotKey, nextVendorProducts);
-      };
-
-      const rollbackOptimisticCaches = () => {
-        queryClient.setQueryData(["products", "admin"], previousAdminProducts);
-        queryClient.setQueryData(
-          ["products", "public"],
-          previousPublicProducts,
-        );
-        setStoredVendorProducts(previousVendorProducts);
-        writeStoredArray(vendorProductsSnapshotKey, previousVendorProducts);
-      };
-
-      try {
-        setIsSaving(true);
-        setProcessingProductId(targetProductId);
-
-        if (action === "edit") {
-          startEditingProduct(product);
-          return;
-        }
-
-        if (action === "hide") {
-          const nextProduct = buildOptimisticProductForAction(product, action);
-          const updatedProduct = await updateProductById({
-            id: product.id,
-            updates: {
-              status: nextProduct.status,
-              reason: nextProduct.reason,
-              [VENDOR_HIDDEN_STATUS_META_KEY]:
-                nextProduct[VENDOR_HIDDEN_STATUS_META_KEY],
-              [VENDOR_HIDDEN_REASON_META_KEY]:
-                nextProduct[VENDOR_HIDDEN_REASON_META_KEY],
-            },
-          });
-
-          applyOptimisticCaches(updatedProduct);
-        }
-
-        if (action === "show") {
-          const nextProduct = buildOptimisticProductForAction(product, action);
-          const updatedProduct = await updateProductById({
-            id: product.id,
-            updates: {
-              status: nextProduct.status,
-              reason: nextProduct.reason,
-              [VENDOR_HIDDEN_STATUS_META_KEY]:
-                nextProduct[VENDOR_HIDDEN_STATUS_META_KEY],
-              [VENDOR_HIDDEN_REASON_META_KEY]:
-                nextProduct[VENDOR_HIDDEN_REASON_META_KEY],
-            },
-          });
-
-          applyOptimisticCaches(updatedProduct);
-        }
-
-        if (action === "delete") {
-          applyOptimisticCaches(null);
-          await removeProductById(product.id);
-        }
-
-        void queryClient.invalidateQueries({ queryKey: ["products"] });
-      } catch (error) {
-        rollbackOptimisticCaches();
-        setErrorMessage(error?.message ?? "Không thể xử lý action sản phẩm.");
-      } finally {
-        setProcessingProductId("");
-        setIsSaving(false);
+      if (selectedCategoryConfig.flags.useSizes && sizes.length === 0) {
+        setErrorMessage("Danh muc fashion can nhap it nhat 1 size.");
+        return;
       }
-    },
-    [
-      queryClient,
-      startEditingProduct,
-      vendorProducts,
-      vendorProductsSnapshotKey,
-    ],
-  );
+
+      const attributes = {};
+
+      if (selectedCategoryConfig.flags.useFashionFields) {
+        attributes.brand = form.brand.trim();
+        attributes.material = form.material.trim();
+      }
+
+      if (selectedCategoryConfig.flags.useElectronicsFields) {
+        attributes.model = form.model.trim();
+        attributes.warrantyMonths = Number(form.warrantyMonths || 0);
+      }
+
+      if (selectedCategoryConfig.flags.useFoodFields) {
+        attributes.expiryDate = form.expiryDate;
+        attributes.weight = form.weight.trim();
+      }
+
+      if (selectedCategoryConfig.flags.useHomeFields) {
+        attributes.material = form.material.trim();
+      }
+
+      const payload = {
+        title,
+        category,
+        description,
+        price,
+        stock,
+        image: thumbnail,
+        images,
+        colors,
+        sizes,
+        vendorEmail,
+        shopName: vendorShopName,
+        attributes,
+      };
+
+      let savedProduct = null;
+
+      if (editingId) {
+        savedProduct = await updateProductById({
+          id: editingId,
+          updates: {
+            ...payload,
+          },
+        });
+      } else {
+        savedProduct = await createProduct({
+          ...payload,
+          reason: null,
+          rating: 0,
+          reviews: 0,
+          discountPercentage: 0,
+          oldPrice: price,
+        });
+      }
+
+      if (savedProduct) {
+        syncProductCaches(savedProduct);
+      }
+
+      resetForm();
+      void Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ["products", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["products", "public"] }),
+      ]);
+    } catch (error) {
+      setErrorMessage(
+        error?.message ?? "Không thể lưu sản phẩm. Vui lòng thử lại.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleAction(product, action) {
+    if (!action) {
+      return;
+    }
+
+    const targetProductId = String(product?.id ?? "");
+    const productStatus = String(product?.status ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (
+      ["hide", "show"].includes(action) &&
+      productStatus === PRODUCT_STATUS.REJECTED
+    ) {
+      setErrorMessage("Sản phẩm đã bị admin từ chối nên không thể ẩn/hiện.");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setProcessingProductId(targetProductId);
+      let updatedProduct = null;
+
+      if (action === "edit") {
+        startEditingProduct(product);
+        return;
+      }
+
+      if (action === "hide") {
+        updatedProduct = await updateProductById({
+          id: product.id,
+          updates: {
+            status: PRODUCT_STATUS.INACTIVE,
+            reason: "Vendor hidden",
+          },
+        });
+      }
+
+      if (action === "show") {
+        updatedProduct = await updateProductById({
+          id: product.id,
+          updates: {
+            status: PRODUCT_STATUS.ACTIVE,
+            reason: null,
+          },
+        });
+      }
+
+      if (action === "delete") {
+        await removeProductById(product.id);
+        removeProductCaches(targetProductId);
+
+        if (editingId === targetProductId) {
+          resetForm();
+        }
+      } else if (updatedProduct) {
+        syncProductCaches(updatedProduct);
+      }
+
+      void Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ["products", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["products", "public"] }),
+      ]);
+    } catch (error) {
+      setErrorMessage(error?.message ?? "Không thể xử lý action sản phẩm.");
+    } finally {
+      setProcessingProductId("");
+      setIsSaving(false);
+    }
+  }
+
+  function formatStatus(status) {
+    const key = String(status ?? "")
+      .trim()
+      .toLowerCase();
+
+    switch (key) {
+      case PRODUCT_STATUS.ACTIVE:
+        return "Active";
+      case PRODUCT_STATUS.DRAFT:
+        return "Draft";
+      case PRODUCT_STATUS.PENDING:
+        return "Pending";
+      case PRODUCT_STATUS.INACTIVE:
+        return "Inactive";
+      case PRODUCT_STATUS.REJECTED:
+        return "Rejected";
+      case PRODUCT_STATUS.OUT_OF_STOCK:
+        return "Out of stock";
+      case PRODUCT_STATUS.BANNED:
+        return "Rejected";
+      default:
+        return "Unknown";
+    }
+  }
 
   return (
     <div className={`vendor-products-page ${isSaving ? "is-saving" : ""}`}>
@@ -1140,7 +876,8 @@ export default function VendorProducts() {
               >
                 {categories.map((category) => (
                   <option key={category} value={category}>
-                    {categoryLabelByValue[category] ?? category}
+                    {categoryOptions.find((item) => item.value === category)
+                      ?.label ?? category}
                   </option>
                 ))}
               </select>
@@ -1179,13 +916,24 @@ export default function VendorProducts() {
             </label>
 
             <label>
-              Upload thumbnail
+              <div>Upload thumbnail</div>
               <div className="vendor-products-file-picker">
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleSelectThumbnailFile}
                 />
+                <input
+                  name="thumbnailUrl"
+                  type="url"
+                  placeholder="https://example.com/thumbnail.jpg"
+                  value={form.thumbnailUrl}
+                  onChange={handleInputChange}
+                />
+                <span className="vendor-products-file-summary">
+                  Bạn có thể dán link ảnh thumbnail. Nếu chọn cả file và link,
+                  file upload sẽ được ưu tiên.
+                </span>
 
                 {existingThumbnail && (
                   <div className="vendor-products-image-list">
@@ -1227,6 +975,18 @@ export default function VendorProducts() {
                   accept="image/*"
                   onChange={handleSelectGalleryFiles}
                 />
+                <textarea
+                  name="galleryUrlsText"
+                  rows="3"
+                  placeholder={
+                    "https://example.com/gallery-1.jpg\nhttps://example.com/gallery-2.jpg"
+                  }
+                  value={form.galleryUrlsText}
+                  onChange={handleInputChange}
+                />
+                <span className="vendor-products-file-summary">
+                  Mỗi link một dòng hoặc ngăn cách bằng dấu phẩy.
+                </span>
 
                 {existingGalleryImages.length > 0 && (
                   <div className="vendor-products-image-list">
@@ -1409,18 +1169,166 @@ export default function VendorProducts() {
         </form>
       </section>
 
-      <VendorProductsListSection
-        currentPage={currentPage}
-        isError={shouldShowBlockingListError}
-        isLoading={shouldShowBlockingListLoading}
-        isSaving={isSaving}
-        onAction={handleAction}
-        paginatedVendorProducts={paginatedVendorProducts}
-        processingProductId={processingProductId}
-        setCurrentPage={setCurrentPage}
-        totalPages={totalPages}
-        vendorProductsCount={vendorProducts.length}
-      />
+      <section className="vendor-products-card">
+        <h2>Danh sách sản phẩm</h2>
+
+        {isLoading && <p>Đang tải dữ liệu...</p>}
+        {isError && <p>Không thể tải danh sách sản phẩm.</p>}
+
+        {!isLoading && !isError && (
+          <div className="vendor-products-table">
+            <div className="vendor-products-table__row vendor-products-table__head">
+              <span>#</span>
+              <span>Item</span>
+              <span>Price</span>
+              <span>Stock</span>
+              <span>Status</span>
+              <span>Reason</span>
+              <span>Action</span>
+            </div>
+
+            {paginatedVendorProducts.map((product, index) => {
+              const isRowUpdating =
+                processingProductId &&
+                String(processingProductId) === String(product.id);
+              const isRejected =
+                String(product?.status ?? "")
+                  .trim()
+                  .toLowerCase() === PRODUCT_STATUS.REJECTED;
+              const isInactive =
+                String(product?.status ?? "")
+                  .trim()
+                  .toLowerCase() === PRODUCT_STATUS.INACTIVE;
+
+              return (
+                <div className="vendor-products-table__row" key={product.id}>
+                  <span>{(currentPage - 1) * itemsPerPage + index + 1}</span>
+                  <span>
+                    <Link to={`/product/${product.id}`} state={{ product }}>
+                      {product.title}
+                    </Link>
+                  </span>
+                  <span>${Number(product.price ?? 0)}</span>
+                  <span>{product.stock ?? 0}</span>
+                  <span>
+                    <span
+                      className={`vendor-status-pill vendor-status-pill--${String(
+                        product.status,
+                      ).replaceAll("_", "-")}`}
+                    >
+                      {formatStatus(product.status)}
+                    </span>
+                  </span>
+                  <span className="vendor-reason-text">
+                    {product.reason ? String(product.reason) : "-"}
+                  </span>
+                  <span>
+                    <span className="vendor-action-control">
+                      {isRowUpdating && (
+                        <span className="vendor-action-spinner" />
+                      )}
+
+                      {!isRejected && (
+                        <button
+                          type="button"
+                          className="vendor-action-btn vendor-action-btn--icon vendor-action-btn--edit"
+                          disabled={isSaving}
+                          onClick={() => handleAction(product, "edit")}
+                          title="Edit"
+                          aria-label="Edit product"
+                        >
+                          <EditIcon />
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className={`vendor-action-btn vendor-action-btn--icon ${
+                          isInactive
+                            ? "vendor-action-btn--show"
+                            : "vendor-action-btn--hide"
+                        }`}
+                        disabled={isSaving || isRejected}
+                        onClick={() =>
+                          handleAction(product, isInactive ? "show" : "hide")
+                        }
+                        title={
+                          isRejected
+                            ? "Sản phẩm bị admin từ chối nên không thể ẩn/hiện"
+                            : isInactive
+                              ? "Show"
+                              : "Hide"
+                        }
+                        aria-label={
+                          isRejected
+                            ? "Hide show disabled for rejected product"
+                            : isInactive
+                              ? "Show product"
+                              : "Hide product"
+                        }
+                      >
+                        {isInactive ? <EyeIcon /> : <EyeOffIcon />}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="vendor-action-btn vendor-action-btn--icon vendor-action-btn--delete"
+                        disabled={isSaving}
+                        onClick={() => handleAction(product, "delete")}
+                        title="Delete"
+                        aria-label="Delete product"
+                      >
+                        <XIcon />
+                      </button>
+                    </span>
+                  </span>
+                </div>
+              );
+            })}
+
+            {paginatedVendorProducts.length === 0 &&
+              vendorProducts.length > 0 && (
+                <p className="vendor-products-empty">
+                  Không có sản phẩm nào ở trang này.
+                </p>
+              )}
+
+            {vendorProducts.length === 0 && (
+              <p className="vendor-products-empty">
+                Bạn chưa có sản phẩm nào. Hãy đăng sản phẩm đầu tiên.
+              </p>
+            )}
+
+            {totalPages > 1 && (
+              <div className="vendor-pagination">
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="vendor-pagination-btn"
+                >
+                  Previous
+                </button>
+
+                <span className="vendor-pagination-info">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="vendor-pagination-btn"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
       {imagePendingRemoval && (
         <div className="vendor-products-modal" role="dialog" aria-modal="true">

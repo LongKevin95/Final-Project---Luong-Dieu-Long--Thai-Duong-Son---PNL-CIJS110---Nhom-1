@@ -5,6 +5,7 @@ import jblSpeaker from "../../assets/Images/jbl-speaker.png";
 import ProductCard from "../../components/ProductCard";
 import { formatProductCategoryLabel } from "../../api/productApi";
 import { useProductsQuery } from "../../hooks/useProductsQuery";
+import { useUsersQuery } from "../../hooks/useUsersQuery";
 import "./Home.css";
 
 const timerItems = [
@@ -14,6 +15,7 @@ const timerItems = [
   { label: "Seconds", value: "59" },
 ];
 const HOME_PRODUCTS_SNAPSHOT_KEY = "ls-home-products-snapshot";
+const HOME_USERS_SNAPSHOT_KEY = "ls-home-users-snapshot";
 
 function readStoredArray(storageKey) {
   if (typeof window === "undefined") {
@@ -73,8 +75,12 @@ function Home() {
   const [storedProducts] = useState(() =>
     readStoredArray(HOME_PRODUCTS_SNAPSHOT_KEY),
   );
+  const [storedUsers] = useState(() =>
+    readStoredArray(HOME_USERS_SNAPSHOT_KEY),
+  );
 
   const { data: productsData, isLoading, isError, error } = useProductsQuery();
+  const { data: usersData } = useUsersQuery();
 
   useEffect(() => {
     if (!Array.isArray(productsData)) {
@@ -84,7 +90,16 @@ function Home() {
     writeStoredArray(HOME_PRODUCTS_SNAPSHOT_KEY, productsData);
   }, [productsData]);
 
+  useEffect(() => {
+    if (!Array.isArray(usersData)) {
+      return;
+    }
+
+    writeStoredArray(HOME_USERS_SNAPSHOT_KEY, usersData);
+  }, [usersData]);
+
   const products = Array.isArray(productsData) ? productsData : storedProducts;
+  const users = Array.isArray(usersData) ? usersData : storedUsers;
 
   const errorMessage = error?.message ?? "Unable to load products.";
 
@@ -102,16 +117,47 @@ function Home() {
     [category],
   );
 
+  const vendorMap = useMemo(
+    () =>
+      new Map(
+        users.map((item) => [
+          String(item?.email ?? "")
+            .trim()
+            .toLowerCase(),
+          item,
+        ]),
+      ),
+    [users],
+  );
+
   const preparedProducts = useMemo(
     () =>
       products.map((product) => {
+        const vendorEmail = String(product?.vendorEmail ?? "")
+          .trim()
+          .toLowerCase();
+        const vendorProfile = vendorMap.get(vendorEmail);
+        const resolvedShopName =
+          vendorProfile?.shopName || vendorProfile?.name || product?.shopName;
+        const resolvedVendorAvatarUrl =
+          vendorProfile?.avatarUrl || product?.vendorAvatarUrl;
+        const hasVendorOverrides =
+          resolvedShopName !== product?.shopName ||
+          resolvedVendorAvatarUrl !== product?.vendorAvatarUrl;
+
         return {
-          product,
+          product: hasVendorOverrides
+            ? {
+                ...product,
+                shopName: resolvedShopName,
+                vendorAvatarUrl: resolvedVendorAvatarUrl,
+              }
+            : product,
           normalizedCategory: String(product?.category ?? "").toLowerCase(),
           searchIndex: buildProductSearchIndex(product),
         };
       }),
-    [products],
+    [products, vendorMap],
   );
 
   const filteredProducts = useMemo(() => {
@@ -133,7 +179,6 @@ function Home() {
   );
   const ip17Id = ip17?.id;
   const heroBannerProductLink = ip17 ? `/product/${ip17Id}` : "/";
-  const heroBannerProductState = ip17 ? { product: ip17 } : undefined;
 
   const flashSalesProducts = filteredProducts.slice(0, 8);
   const bestSellingProducts = filteredProducts.slice(0, 4);
@@ -197,11 +242,7 @@ function Home() {
         <div className="hero-banner__content">
           <div className="hero-banner__label">iPhone 17 Series</div>
           <h1>Up to 10% off Voucher</h1>
-          <Link
-            className="hero-banner__cta"
-            to={heroBannerProductLink}
-            state={heroBannerProductState}
-          >
+          <Link className="hero-banner__cta" to={heroBannerProductLink}>
             Shop Now
           </Link>
         </div>
@@ -209,7 +250,6 @@ function Home() {
         <Link
           className="hero-banner__visual"
           to={heroBannerProductLink}
-          state={heroBannerProductState}
           aria-label="View Iphone 17 Pro Max 256GB details"
         >
           <img

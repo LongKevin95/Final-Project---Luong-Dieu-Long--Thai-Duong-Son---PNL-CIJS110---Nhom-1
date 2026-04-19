@@ -255,21 +255,13 @@ function normalizeOrder(order) {
 async function persistOrders(nextOrders, snapshot) {
   const resolvedSnapshot = snapshot ?? (await fetchOrdersSnapshot());
   const { payload, dataId } = resolvedSnapshot;
-  const currentOrders = Array.isArray(resolvedSnapshot?.orders)
-    ? resolvedSnapshot.orders
-    : [];
-  const normalizedNextOrders = Array.isArray(nextOrders) ? nextOrders : [];
-
-  if (currentOrders.length > 0 && normalizedNextOrders.length === 0) {
-    throw new Error("Refusing to overwrite all orders with an empty snapshot.");
-  }
 
   await updateResourceData({
     resourceName: ORDERS_RESOURCE_NAME,
     dataId,
     payload: {
       ...(payload ?? {}),
-      orders: normalizedNextOrders.map(normalizeOrder),
+      orders: nextOrders.map(normalizeOrder),
     },
   });
 }

@@ -54,6 +54,50 @@ function formatCreatedSince(createdAt) {
   return date.toLocaleDateString("en-GB");
 }
 
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M5 12.5 9.2 16.7 19 7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M6 6 18 18M18 6 6 18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M4 7h16M9 7V5h6v2m-7 3v7m4-7v7m4-7v7M7 7l1 12h8l1-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function VendorManager() {
   const queryClient = useQueryClient();
   const { data: users = [], isLoading, isError } = useUsersQuery();
@@ -199,36 +243,46 @@ export default function VendorManager() {
                     </span>
                   </span>
                   <span className="admin-actions">
-                    <span className="admin-action-control">
-                      <select
-                        className="admin-action-select"
-                        defaultValue=""
-                        disabled={isRowUpdating}
-                        onChange={(event) => {
-                          const selectedAction = event.target.value;
-
-                          if (!selectedAction) {
-                            return;
-                          }
-
-                          if (selectedAction === "delete") {
-                            setDeletingVendor({
-                              email: vendor.email,
-                              vendorName: vendor.vendorName,
-                            });
-                            event.target.value = "";
-                            return;
-                          }
-
-                          handleUpdateStatus(vendor.email, selectedAction);
-                          event.target.value = "";
-                        }}
+                    <span className="admin-action-control admin-action-buttons">
+                      <button
+                        type="button"
+                        className="admin-action-btn admin-action-btn--primary admin-action-btn--icon"
+                        disabled={isRowUpdating || vendor.status === "approved"}
+                        aria-label="Approve vendor"
+                        title="Approve"
+                        onClick={() =>
+                          handleUpdateStatus(vendor.email, "approved")
+                        }
                       >
-                        <option value="">Select</option>
-                        <option value="approved">Approve</option>
-                        <option value="rejected">Reject</option>
-                        <option value="delete">Delete</option>
-                      </select>
+                        <CheckIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-action-btn admin-action-btn--muted admin-action-btn--icon"
+                        disabled={isRowUpdating || vendor.status === "rejected"}
+                        aria-label="Reject vendor"
+                        title="Reject"
+                        onClick={() =>
+                          handleUpdateStatus(vendor.email, "rejected")
+                        }
+                      >
+                        <XIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-action-btn admin-action-btn--danger admin-action-btn--icon"
+                        disabled={isRowUpdating}
+                        aria-label="Delete vendor"
+                        title="Delete"
+                        onClick={() =>
+                          setDeletingVendor({
+                            email: vendor.email,
+                            vendorName: vendor.vendorName,
+                          })
+                        }
+                      >
+                        <TrashIcon />
+                      </button>
                       {isRowUpdating && (
                         <span className="admin-action-spinner" />
                       )}

@@ -48,6 +48,50 @@ function formatCreatedSince(createdAt) {
   return date.toLocaleDateString("en-GB");
 }
 
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M5 12.5 9.2 16.7 19 7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M6 6 18 18M18 6 6 18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M4 7h16M9 7V5h6v2m-7 3v7m4-7v7m4-7v7M7 7l1 12h8l1-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function UsersManager() {
   const queryClient = useQueryClient();
   const { data: users = [], isLoading, isError } = useUsersQuery();
@@ -190,36 +234,46 @@ export default function UsersManager() {
                     </span>
                   </span>
                   <span className="admin-actions">
-                    <span className="admin-action-control">
-                      <select
-                        className="admin-action-select"
-                        defaultValue=""
+                    <span className="admin-action-control admin-action-buttons">
+                      <button
+                        type="button"
+                        className="admin-action-btn admin-action-btn--primary admin-action-btn--icon"
                         disabled={isRowUpdating}
-                        onChange={(event) => {
-                          const selectedAction = event.target.value;
-
-                          if (!selectedAction) {
-                            return;
-                          }
-
-                          if (selectedAction === "delete") {
-                            setDeletingCustomer({
-                              email: customer.email,
-                              customerName: customer.customerName,
-                            });
-                            event.target.value = "";
-                            return;
-                          }
-
-                          handleUpdateStatus(customer.email, selectedAction);
-                          event.target.value = "";
-                        }}
+                        aria-label="Approve customer"
+                        title="Approve"
+                        onClick={() =>
+                          handleUpdateStatus(customer.email, "active")
+                        }
                       >
-                        <option value="">Select</option>
-                        <option value="active">Approve</option>
-                        <option value="banned">Ban</option>
-                        <option value="delete">Delete</option>
-                      </select>
+                        <CheckIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-action-btn admin-action-btn--muted admin-action-btn--icon"
+                        disabled={isRowUpdating}
+                        aria-label="Ban customer"
+                        title="Ban"
+                        onClick={() =>
+                          handleUpdateStatus(customer.email, "banned")
+                        }
+                      >
+                        <XIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-action-btn admin-action-btn--danger admin-action-btn--icon"
+                        disabled={isRowUpdating}
+                        aria-label="Delete customer"
+                        title="Delete"
+                        onClick={() =>
+                          setDeletingCustomer({
+                            email: customer.email,
+                            customerName: customer.customerName,
+                          })
+                        }
+                      >
+                        <TrashIcon />
+                      </button>
                       {isRowUpdating && (
                         <span className="admin-action-spinner" />
                       )}

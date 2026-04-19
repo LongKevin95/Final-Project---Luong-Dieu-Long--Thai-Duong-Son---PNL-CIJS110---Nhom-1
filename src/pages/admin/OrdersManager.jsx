@@ -119,6 +119,64 @@ function getTimestamp(value) {
   return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r="2.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M6 6 18 18M18 6 6 18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function upsertOrderInList(list, nextOrder) {
+  const orders = Array.isArray(list) ? list : [];
+  const normalizedId = String(nextOrder?.id ?? "").trim();
+
+  if (!normalizedId) {
+    return orders;
+  }
+
+  const existingIndex = orders.findIndex(
+    (order) => String(order?.id ?? "").trim() === normalizedId,
+  );
+
+  if (existingIndex < 0) {
+    return [nextOrder, ...orders];
+  }
+
+  return orders.map((order, index) =>
+    index === existingIndex ? nextOrder : order,
+  );
+}
+
 export default function OrdersManager() {
   const queryClient = useQueryClient();
   const { data: orders = [], isLoading, isError, error } = useOrdersQuery();
@@ -126,7 +184,6 @@ export default function OrdersManager() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrderId, setSelectedOrderId] = useState("");
   const [selectedOrderIntent, setSelectedOrderIntent] = useState("view");
-  const [openActionMenuOrderId, setOpenActionMenuOrderId] = useState("");
   const [cancelReasonByOrder, setCancelReasonByOrder] = useState({});
   const [processingOrderId, setProcessingOrderId] = useState("");
 
@@ -176,20 +233,6 @@ export default function OrdersManager() {
     }
   }, [filteredOrders, selectedOrderId]);
 
-  useEffect(() => {
-    if (!openActionMenuOrderId) {
-      return;
-    }
-
-    const hasOpenActionMenuOrder = filteredOrders.some(
-      (order) => String(order?.id ?? "") === openActionMenuOrderId,
-    );
-
-    if (!hasOpenActionMenuOrder) {
-      setOpenActionMenuOrderId("");
-    }
-  }, [filteredOrders, openActionMenuOrderId]);
-
   const summary = useMemo(() => {
     return sortedOrders.reduce(
       (accumulator, order) => {
@@ -235,70 +278,6 @@ export default function OrdersManager() {
     setSelectedOrderIntent("view");
   };
 
-  const handleCloseActionMenu = () => {
-    setOpenActionMenuOrderId("");
-  };
-
-  const handleToggleActionMenu = (orderId) => {
-    const normalizedOrderId = String(orderId ?? "");
-
-    setOpenActionMenuOrderId((previous) =>
-      previous === normalizedOrderId ? "" : normalizedOrderId,
-    );
-  };
-
-  const handleOrderActionSelect = (order, nextAction) => {
-    const orderId = String(order?.id ?? "");
-    const normalizedStatus = normalizeStatus(order?.status);
-
-    if (nextAction === "view") {
-      handleCloseActionMenu();
-      handleSelectOrder(orderId, "view");
-      return;
-    }
-
-    if (nextAction === "cancel" && normalizedStatus === "processing") {
-      handleCloseActionMenu();
-      handleSelectOrder(orderId, "cancel");
-      return;
-    }
-
-    handleCloseActionMenu();
-  };
-
-  useEffect(() => {
-    if (!openActionMenuOrderId) {
-      return;
-    }
-
-    const handleDocumentMouseDown = (event) => {
-      if (!(event.target instanceof Element)) {
-        setOpenActionMenuOrderId("");
-        return;
-      }
-
-      if (event.target.closest(".admin-orders__action-cell")) {
-        return;
-      }
-
-      setOpenActionMenuOrderId("");
-    };
-
-    const handleDocumentKeyDown = (event) => {
-      if (event.key === "Escape") {
-        setOpenActionMenuOrderId("");
-      }
-    };
-
-    document.addEventListener("mousedown", handleDocumentMouseDown);
-    document.addEventListener("keydown", handleDocumentKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handleDocumentMouseDown);
-      document.removeEventListener("keydown", handleDocumentKeyDown);
-    };
-  }, [openActionMenuOrderId]);
-
   useEffect(() => {
     if (!selectedOrder?.id || selectedOrderIntent !== "cancel") {
       return;
@@ -337,7 +316,7 @@ export default function OrdersManager() {
     try {
       setProcessingOrderId(orderId);
 
-      await updateOrderById({
+      const updatedOrder = await updateOrderById({
         id: orderId,
         actor: "admin",
         updates: {
@@ -355,7 +334,10 @@ export default function OrdersManager() {
         [orderId]: "",
       }));
 
-      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.setQueryData(["orders"], (previous) =>
+        upsertOrderInList(previous, updatedOrder),
+      );
+      void queryClient.invalidateQueries({ queryKey: ["orders"] });
     } catch (updateError) {
       window.alert(updateError?.message ?? "Khong the cap nhat don hang.");
     } finally {
@@ -409,7 +391,6 @@ export default function OrdersManager() {
             </select>
           </label>
         </div>
-
         <div className="admin-orders__toolbar-meta">
           <span>{filteredOrders.length} orders shown</span>
         </div>
@@ -452,7 +433,6 @@ export default function OrdersManager() {
                 const isActive = String(selectedOrderId ?? "") === orderId;
                 const isBusy = String(processingOrderId ?? "") === orderId;
                 const canCancelOrder = status === "processing";
-                const isActionMenuOpen = openActionMenuOrderId === orderId;
 
                 return (
                   <div
@@ -473,61 +453,35 @@ export default function OrdersManager() {
                     <span>{currency.format(Number(order?.total ?? 0))}</span>
                     <span>{formatDate(order?.createdAt)}</span>
                     <span className="admin-orders__action-cell">
-                      <button
-                        type="button"
-                        className={`admin-orders__action-trigger ${
-                          isActionMenuOpen ? "is-open" : ""
-                        }`}
-                        aria-haspopup="menu"
-                        aria-expanded={isActionMenuOpen}
-                        aria-label={`Select action for order ${orderId || "N/A"}`}
-                        disabled={isBusy}
-                        onClick={() => handleToggleActionMenu(orderId)}
-                      >
-                        {isBusy ? "Updating..." : "Select"}
-                      </button>
-
-                      {isActionMenuOpen ? (
-                        <div
-                          className="admin-orders__action-menu"
-                          role="menu"
-                          aria-label={`Actions for order ${orderId || "N/A"}`}
+                      <div className="admin-orders__action-buttons">
+                        <button
+                          type="button"
+                          className="admin-orders__action-btn admin-orders__action-btn--muted admin-orders__action-btn--icon"
+                          disabled={isBusy}
+                          aria-label="View order details"
+                          title="View"
+                          onClick={() => handleSelectOrder(orderId, "view")}
                         >
-                          <button
-                            type="button"
-                            className="admin-orders__action-menu-item"
-                            role="menuitem"
-                            onClick={() =>
-                              handleOrderActionSelect(order, "view")
-                            }
-                          >
-                            View
-                          </button>
-                          <button
-                            type="button"
-                            className={`admin-orders__action-menu-item ${
-                              !canCancelOrder ? "is-disabled" : ""
-                            }`}
-                            role="menuitem"
-                            aria-disabled={!canCancelOrder}
-                            tabIndex={canCancelOrder ? 0 : -1}
-                            title={
-                              !canCancelOrder
-                                ? "Chỉ order ở trạng thái Processing mới có thể Cancel"
-                                : undefined
-                            }
-                            onClick={() => {
-                              if (!canCancelOrder) {
-                                return;
-                              }
-
-                              handleOrderActionSelect(order, "cancel");
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : null}
+                          <EyeIcon />
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-orders__action-btn admin-orders__action-btn--danger admin-orders__action-btn--icon"
+                          disabled={isBusy || !canCancelOrder}
+                          aria-label="Cancel order"
+                          title={
+                            !canCancelOrder
+                              ? "Chỉ order ở trạng thái Processing mới có thể Cancel"
+                              : "Cancel"
+                          }
+                          onClick={() => handleSelectOrder(orderId, "cancel")}
+                        >
+                          <XIcon />
+                        </button>
+                        {isBusy ? (
+                          <span className="admin-action-spinner" />
+                        ) : null}
+                      </div>
                     </span>
                   </div>
                 );

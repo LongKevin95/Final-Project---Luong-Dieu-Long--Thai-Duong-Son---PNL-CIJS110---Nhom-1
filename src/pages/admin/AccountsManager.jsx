@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { updateCustomerStatus, updateVendorStatus } from "../../api/usersApi";
@@ -90,35 +90,44 @@ function getCreatedAtTimestamp(createdAt) {
   return date.getTime();
 }
 
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M5 12.5 9.2 16.7 19 7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M6 6 18 18M18 6 6 18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export default function AccountsManager() {
   const queryClient = useQueryClient();
   const { data: users = [], isLoading, isError } = useUsersQuery();
-  const actionMenuRef = useRef(null);
   const [processingEmail, setProcessingEmail] = useState("");
-  const [openActionEmail, setOpenActionEmail] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [keyword, setKeyword] = useState("");
   const [reasonByEmail, setReasonByEmail] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
-  useEffect(() => {
-    if (!openActionEmail) {
-      return undefined;
-    }
-
-    const handlePointerDownOutside = (event) => {
-      if (!actionMenuRef.current?.contains(event.target)) {
-        setOpenActionEmail("");
-      }
-    };
-
-    document.addEventListener("mousedown", handlePointerDownOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDownOutside);
-    };
-  }, [openActionEmail]);
 
   const getReasonValue = (account) => {
     const accountEmail = String(account?.email ?? "")
@@ -192,7 +201,10 @@ export default function AccountsManager() {
     return filteredAccounts.slice(startIndex, endIndex);
   }, [filteredAccounts, currentPage, itemsPerPage]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredAccounts.length / itemsPerPage));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredAccounts.length / itemsPerPage),
+  );
 
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
@@ -294,7 +306,10 @@ export default function AccountsManager() {
                 .toLowerCase();
               const isRowUpdating = processingEmail === accountEmail;
               const isActiveAccount = account.status === "active";
-              const isActionMenuOpen = openActionEmail === accountEmail;
+              const isRestrictedAccount =
+                account.role === "vendor"
+                  ? account.status === "rejected"
+                  : account.status === "banned";
 
               return (
                 <div
@@ -330,74 +345,53 @@ export default function AccountsManager() {
                     />
                   </span>
                   <span className="admin-actions">
-                    <span
-                      className="admin-action-control admin-action-menu"
-                      ref={isActionMenuOpen ? actionMenuRef : null}
-                    >
+                    <span className="admin-action-control admin-action-buttons">
                       <button
                         type="button"
-                        className="admin-action-trigger"
-                        disabled={isRowUpdating}
-                        onClick={() => {
-                          setOpenActionEmail((previousState) =>
-                            previousState === accountEmail ? "" : accountEmail,
-                          );
-                        }}
+                        className="admin-action-btn admin-action-btn--primary admin-action-btn--icon"
+                        disabled={isRowUpdating || isActiveAccount}
+                        aria-label="Approve account"
+                        title={
+                          isActiveAccount
+                            ? "Tài khoản này đang ở trạng thái Active"
+                            : "Approve"
+                        }
+                        onClick={() => handleUpdateStatus(account, "active")}
                       >
-                        <span>Select</span>
-                        <span
-                          className="admin-action-trigger__arrow"
-                          aria-hidden="true"
-                        >
-                          ▾
-                        </span>
+                        <CheckIcon />
                       </button>
-                      {isActionMenuOpen && (
-                        <div className="admin-action-menu__panel">
-                          <button
-                            type="button"
-                            className={
-                              isActiveAccount
-                                ? "admin-action-menu__item admin-action-menu__item--disabled"
-                                : "admin-action-menu__item"
-                            }
-                            disabled={isActiveAccount}
-                            onClick={() => {
-                              handleUpdateStatus(account, "active");
-                              setOpenActionEmail("");
-                            }}
-                            title={
-                              isActiveAccount
-                                ? "Tài khoản này đang ở trạng thái Active"
-                                : "Approve"
-                            }
-                          >
-                            Approve
-                          </button>
-                          {account.role === "vendor" ? (
-                            <button
-                              type="button"
-                              className="admin-action-menu__item"
-                              onClick={() => {
-                                handleUpdateStatus(account, "rejected");
-                                setOpenActionEmail("");
-                              }}
-                            >
-                              Reject
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className="admin-action-menu__item"
-                              onClick={() => {
-                                handleUpdateStatus(account, "banned");
-                                setOpenActionEmail("");
-                              }}
-                            >
-                              Ban
-                            </button>
-                          )}
-                        </div>
+                      {account.role === "vendor" ? (
+                        <button
+                          type="button"
+                          className="admin-action-btn admin-action-btn--muted admin-action-btn--icon"
+                          disabled={isRowUpdating || isRestrictedAccount}
+                          aria-label="Reject vendor account"
+                          title={
+                            isRestrictedAccount
+                              ? "Tài khoản vendor này đang ở trạng thái Rejected"
+                              : "Reject"
+                          }
+                          onClick={() =>
+                            handleUpdateStatus(account, "rejected")
+                          }
+                        >
+                          <XIcon />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="admin-action-btn admin-action-btn--muted admin-action-btn--icon"
+                          disabled={isRowUpdating || isRestrictedAccount}
+                          aria-label="Ban customer account"
+                          title={
+                            isRestrictedAccount
+                              ? "Tài khoản customer này đang ở trạng thái Banned"
+                              : "Ban"
+                          }
+                          onClick={() => handleUpdateStatus(account, "banned")}
+                        >
+                          <XIcon />
+                        </button>
                       )}
                       {isRowUpdating && (
                         <span className="admin-action-spinner" />
@@ -442,4 +436,3 @@ export default function AccountsManager() {
     </div>
   );
 }
-
