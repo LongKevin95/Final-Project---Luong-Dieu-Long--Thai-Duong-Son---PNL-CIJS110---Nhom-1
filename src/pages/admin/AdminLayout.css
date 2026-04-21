@@ -15,6 +15,11 @@
 }
 
 .admin-sidebar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  height: 100vh;
+
   background: var(--admin-sidebar-bg);
   color: var(--admin-sidebar-text);
   display: flex;
