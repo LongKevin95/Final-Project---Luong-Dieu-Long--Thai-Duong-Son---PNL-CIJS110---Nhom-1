@@ -185,6 +185,7 @@ export default function OrdersManager() {
   const [selectedOrderId, setSelectedOrderId] = useState("");
   const [selectedOrderIntent, setSelectedOrderIntent] = useState("view");
   const [cancelReasonByOrder, setCancelReasonByOrder] = useState({});
+  const [cancelReasonErrorByOrder, setCancelReasonErrorByOrder] = useState({});
   const [processingOrderId, setProcessingOrderId] = useState("");
 
   const sortedOrders = useMemo(() => {
@@ -260,13 +261,42 @@ export default function OrdersManager() {
   const selectedOrderItems = Array.isArray(selectedOrder?.items)
     ? selectedOrder.items
     : [];
-  const selectedCancelReason =
-    cancelReasonByOrder[String(selectedOrder?.id ?? "")] ?? "";
+  const getCancelReasonValue = (order) => {
+    const orderId = String(order?.id ?? "").trim();
+
+    if (typeof cancelReasonByOrder[orderId] === "string") {
+      return cancelReasonByOrder[orderId];
+    }
+
+    return String(order?.cancellation?.reason ?? "");
+  };
+
+  const selectedCancelReason = getCancelReasonValue(selectedOrder);
+  const selectedCancelReasonError = Boolean(
+    cancelReasonErrorByOrder[String(selectedOrder?.id ?? "")],
+  );
   const canAdminCancelSelectedOrder =
     Boolean(selectedOrder?.id) && selectedOrderStatus === "processing";
   const isSelectedOrderBusy =
     processingOrderId &&
     String(processingOrderId) === String(selectedOrder?.id ?? "");
+
+  const handleCancelReasonChange = (orderId, value) => {
+    const normalizedOrderId = String(orderId ?? "").trim();
+
+    if (!normalizedOrderId) {
+      return;
+    }
+
+    setCancelReasonByOrder((previous) => ({
+      ...previous,
+      [normalizedOrderId]: value,
+    }));
+    setCancelReasonErrorByOrder((previous) => ({
+      ...previous,
+      [normalizedOrderId]: !String(value ?? "").trim(),
+    }));
+  };
 
   const handleSelectOrder = (orderId, intent = "view") => {
     setSelectedOrderId(String(orderId ?? ""));
@@ -306,10 +336,13 @@ export default function OrdersManager() {
       return;
     }
 
-    const reason = String(cancelReasonByOrder[orderId] ?? "").trim();
+    const reason = getCancelReasonValue(order).trim();
 
     if (!reason) {
-      window.alert("Admin cần nhập lý do khi hủy đơn.");
+      setCancelReasonErrorByOrder((previous) => ({
+        ...previous,
+        [orderId]: true,
+      }));
       return;
     }
 
@@ -331,7 +364,11 @@ export default function OrdersManager() {
 
       setCancelReasonByOrder((previous) => ({
         ...previous,
-        [orderId]: "",
+        [orderId]: reason,
+      }));
+      setCancelReasonErrorByOrder((previous) => ({
+        ...previous,
+        [orderId]: false,
       }));
 
       queryClient.setQueryData(["orders"], (previous) =>
@@ -419,6 +456,7 @@ export default function OrdersManager() {
               <span>Status</span>
               <span>Total</span>
               <span>Created</span>
+              <span>Reason</span>
               <span>Action</span>
             </div>
 
@@ -433,6 +471,10 @@ export default function OrdersManager() {
                 const isActive = String(selectedOrderId ?? "") === orderId;
                 const isBusy = String(processingOrderId ?? "") === orderId;
                 const canCancelOrder = status === "processing";
+                const orderCancelReason = getCancelReasonValue(order);
+                const hasReasonError = Boolean(
+                  cancelReasonErrorByOrder[orderId],
+                );
 
                 return (
                   <div
@@ -452,6 +494,24 @@ export default function OrdersManager() {
                     </span>
                     <span>{currency.format(Number(order?.total ?? 0))}</span>
                     <span>{formatDate(order?.createdAt)}</span>
+                    <span className="admin-orders__reason-cell">
+                      <input
+                        type="text"
+                        className={`admin-orders__reason-input${hasReasonError ? " admin-orders__reason-input--error" : ""}`}
+                        placeholder="Nhập lý do..."
+                        value={orderCancelReason}
+                        disabled={isBusy || !canCancelOrder}
+                        aria-invalid={hasReasonError}
+                        onChange={(event) => {
+                          handleCancelReasonChange(orderId, event.target.value);
+                        }}
+                      />
+                      {hasReasonError ? (
+                        <span className="admin-orders__reason-error">
+                          Vui lòng nhập lý do hủy đơn
+                        </span>
+                      ) : null}
+                    </span>
                     <span className="admin-orders__action-cell">
                       <div className="admin-orders__action-buttons">
                         <button
@@ -474,7 +534,7 @@ export default function OrdersManager() {
                               ? "Chỉ order ở trạng thái Processing mới có thể Cancel"
                               : "Cancel"
                           }
-                          onClick={() => handleSelectOrder(orderId, "cancel")}
+                          onClick={() => handleCancelOrder(order)}
                         >
                           <XIcon />
                         </button>
@@ -655,17 +715,22 @@ export default function OrdersManager() {
                         <span>Cancellation reason</span>
                         <textarea
                           id="admin-order-cancel-reason"
-                          className="admin-orders__textarea"
+                          className={`admin-orders__textarea${selectedCancelReasonError ? " admin-orders__textarea--error" : ""}`}
                           value={selectedCancelReason}
+                          aria-invalid={selectedCancelReasonError}
                           onChange={(event) => {
-                            const nextValue = event.target.value;
-                            setCancelReasonByOrder((previous) => ({
-                              ...previous,
-                              [String(selectedOrder.id)]: nextValue,
-                            }));
+                            handleCancelReasonChange(
+                              selectedOrder.id,
+                              event.target.value,
+                            );
                           }}
                           placeholder="Nhập lý do hủy đơn"
                         />
+                        {selectedCancelReasonError ? (
+                          <span className="admin-orders__reason-error">
+                            Vui lòng nhập lý do hủy đơn
+                          </span>
+                        ) : null}
                       </label>
 
                       <div className="admin-orders__action-row">

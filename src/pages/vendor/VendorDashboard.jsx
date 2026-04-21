@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { useAdminProductsQuery } from "../../hooks/useAdminProductsQuery";
 import { useAuth } from "../../hooks/useAuth";
@@ -7,7 +7,9 @@ import {
   extractVendorOrderItems,
   isOrderOfVendor,
   normalizeOrderStatus,
+  resolveOrderDate,
   resolveOrderCustomer,
+  resolveUpdatedAt,
   resolveVendorSubtotal,
 } from "./vendorDataUtils";
 import "./VendorDashboard.css";
@@ -17,12 +19,14 @@ const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
   maximumFractionDigits: 0,
 });
+const ITEMS_PER_PAGE = 10;
 
 function VendorDashboard() {
   const { user } = useAuth();
   const { data: products = [], isLoading: isProductsLoading } =
     useAdminProductsQuery();
   const { data: orders = [], isLoading: isOrdersLoading } = useOrdersQuery();
+  const [currentPage, setCurrentPage] = useState(1);
 
   const vendorEmail = String(user?.email ?? "")
     .trim()
@@ -46,7 +50,7 @@ function VendorDashboard() {
   );
 
   const vendorOrders = useMemo(() => {
-    return orders
+    const nextOrders = orders
       .filter((order) =>
         isOrderOfVendor({
           order,
@@ -67,8 +71,18 @@ function VendorDashboard() {
           status: normalizeOrderStatus(order?.status),
           total: resolveVendorSubtotal(items),
           customer: resolveOrderCustomer(order),
+          date: resolveOrderDate(order),
+          updatedAt: resolveUpdatedAt(order),
         };
       });
+
+    nextOrders.sort((left, right) => {
+      const leftTime = new Date(left.updatedAt ?? left.date ?? 0).getTime();
+      const rightTime = new Date(right.updatedAt ?? right.date ?? 0).getTime();
+      return rightTime - leftTime;
+    });
+
+    return nextOrders;
   }, [orders, vendorEmail, vendorProductIds]);
 
   const metrics = useMemo(() => {
@@ -99,7 +113,18 @@ function VendorDashboard() {
     };
   }, [vendorOrders, vendorProducts]);
 
-  const recentOrders = useMemo(() => vendorOrders.slice(0, 5), [vendorOrders]);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(vendorOrders.length / ITEMS_PER_PAGE),
+  );
+
+  const visibleCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (visibleCurrentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return vendorOrders.slice(startIndex, endIndex);
+  }, [vendorOrders, visibleCurrentPage]);
 
   return (
     <div className="vendor-dashboard">
@@ -136,39 +161,73 @@ function VendorDashboard() {
           <span>{vendorOrders.length} orders</span>
         </div>
 
-        {recentOrders.length === 0 ? (
+        {paginatedOrders.length === 0 ? (
           <p className="vendor-panel-empty">
             {isProductsLoading || isOrdersLoading
               ? "Loading data..."
               : "No order data for this shop yet."}
           </p>
         ) : (
-          <div className="vendor-table">
-            <div className="vendor-table__row vendor-table__row--five vendor-table__row--head">
-              <span>Order</span>
-              <span>Customer</span>
-              <span>Items</span>
-              <span>Status</span>
-              <span>Total</span>
+          <>
+            <div className="vendor-table">
+              <div className="vendor-table__row vendor-table__row--five vendor-table__row--head">
+                <span>Order</span>
+                <span>Customer</span>
+                <span>Items</span>
+                <span>Status</span>
+                <span>Total</span>
+              </div>
+
+              {paginatedOrders.map((order, index) => (
+                <div
+                  key={order?.id ?? order?._id ?? `order-${index}`}
+                  className="vendor-table__row vendor-table__row--five"
+                >
+                  <span>{order?.id ?? order?._id ?? `#${index + 1}`}</span>
+                  <span>{order.customer?.name}</span>
+                  <span>{order.items.length}</span>
+                  <span>
+                    <span
+                      className={`vendor-pill vendor-pill--${order.status}`}
+                    >
+                      {order.status}
+                    </span>
+                  </span>
+                  <span>{currency.format(order.total)}</span>
+                </div>
+              ))}
             </div>
 
-            {recentOrders.map((order, index) => (
-              <div
-                key={order?.id ?? order?._id ?? `order-${index}`}
-                className="vendor-table__row vendor-table__row--five"
-              >
-                <span>{order?.id ?? order?._id ?? `#${index + 1}`}</span>
-                <span>{order.customer?.name}</span>
-                <span>{order.items.length}</span>
-                <span>
-                  <span className={`vendor-pill vendor-pill--${order.status}`}>
-                    {order.status}
-                  </span>
+            {totalPages > 1 ? (
+              <div className="vendor-pagination">
+                <button
+                  type="button"
+                  className="vendor-pagination-btn"
+                  onClick={() =>
+                    setCurrentPage(Math.max(visibleCurrentPage - 1, 1))
+                  }
+                  disabled={visibleCurrentPage === 1}
+                >
+                  Previous
+                </button>
+
+                <span className="vendor-pagination-info">
+                  Page {visibleCurrentPage} of {totalPages}
                 </span>
-                <span>{currency.format(order.total)}</span>
+
+                <button
+                  type="button"
+                  className="vendor-pagination-btn"
+                  onClick={() =>
+                    setCurrentPage(Math.min(visibleCurrentPage + 1, totalPages))
+                  }
+                  disabled={visibleCurrentPage === totalPages}
+                >
+                  Next
+                </button>
               </div>
-            ))}
-          </div>
+            ) : null}
+          </>
         )}
       </section>
     </div>

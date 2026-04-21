@@ -1359,6 +1359,6 @@ export default function VendorProducts() {
           </div>
         </div>
       )}
-    </div>
+d.admin-sidebar    </div>
   );
 }

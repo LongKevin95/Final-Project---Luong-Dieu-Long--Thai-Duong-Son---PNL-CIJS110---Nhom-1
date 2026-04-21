@@ -336,8 +336,16 @@ export default function ProductManager() {
               const statusValue = String(product.status ?? "")
                 .trim()
                 .toLowerCase();
-              const isInactive = statusValue === PRODUCT_STATUS.INACTIVE;
-              const isApproveDisabled = isProcessing || isInactive;
+              const isApproveBlocked = ![
+                PRODUCT_STATUS.PENDING,
+                PRODUCT_STATUS.REJECTED,
+              ].includes(statusValue);
+              const isApproveDisabled = isProcessing || isApproveBlocked;
+              const isRejectBlocked = statusValue === PRODUCT_STATUS.REJECTED;
+              const isRejectDisabled =
+                isProcessing ||
+                statusValue === PRODUCT_STATUS.INACTIVE ||
+                isRejectBlocked;
 
               return (
                 <div className="admin-products-table__row" key={product.id}>
@@ -369,7 +377,9 @@ export default function ProductManager() {
                       type="text"
                       placeholder="Nhập lý do..."
                       value={getReasonValue(product)}
-                      disabled={isProcessing || isInactive}
+                      disabled={
+                        isProcessing || statusValue === PRODUCT_STATUS.INACTIVE
+                      }
                       onChange={(event) => {
                         setReasonByProductId((previousState) => ({
                           ...previousState,
@@ -382,31 +392,57 @@ export default function ProductManager() {
                     <span className="admin-action-control admin-action-buttons">
                       <button
                         type="button"
-                        className="admin-action-btn admin-action-btn--primary admin-action-btn--icon"
+                        className={`admin-action-btn admin-action-btn--primary admin-action-btn--icon${isApproveBlocked ? " admin-action-btn--blocked" : ""}`}
                         disabled={isApproveDisabled}
                         aria-label={
-                          isInactive
-                            ? "Approve disabled for inactive product"
-                            : "Approve product"
+                          isProcessing
+                            ? "Approve action is processing"
+                            : isApproveBlocked
+                              ? "Approve disabled for current product status"
+                              : "Approve product"
                         }
                         title={
-                          isInactive
-                            ? "Không thể duyệt sản phẩm đang inactive"
-                            : "Approve"
+                          isProcessing
+                            ? "Đang xử lý..."
+                            : isApproveBlocked
+                              ? "Chỉ có thể duyệt sản phẩm ở trạng thái Pending hoặc Rejected"
+                              : "Approve"
                         }
                         onClick={() => handleAdminAction(product, "approve")}
                       >
-                        {isInactive ? <BanIcon /> : <CheckIcon />}
+                        <span className="admin-action-btn__icon admin-action-btn__icon--default">
+                          <CheckIcon />
+                        </span>
+                        <span className="admin-action-btn__icon admin-action-btn__icon--blocked">
+                          <BanIcon />
+                        </span>
                       </button>
                       <button
                         type="button"
-                        className="admin-action-btn admin-action-btn--danger admin-action-btn--icon"
-                        disabled={isProcessing || isInactive}
-                        aria-label="Reject product"
-                        title="Reject"
+                        className={`admin-action-btn admin-action-btn--danger admin-action-btn--icon${isRejectBlocked ? " admin-action-btn--blocked" : ""}`}
+                        disabled={isRejectDisabled}
+                        aria-label={
+                          isProcessing
+                            ? "Reject action is processing"
+                            : isRejectBlocked
+                              ? "Reject disabled for rejected product"
+                              : "Reject product"
+                        }
+                        title={
+                          isProcessing
+                            ? "Đang xử lý..."
+                            : isRejectBlocked
+                              ? "Không thể từ chối sản phẩm đang ở trạng thái Rejected"
+                              : "Reject"
+                        }
                         onClick={() => handleAdminAction(product, "reject")}
                       >
-                        <XIcon />
+                        <span className="admin-action-btn__icon admin-action-btn__icon--default">
+                          <XIcon />
+                        </span>
+                        <span className="admin-action-btn__icon admin-action-btn__icon--blocked">
+                          <BanIcon />
+                        </span>
                       </button>
                       {isProcessing && (
                         <span className="admin-action-spinner" />
